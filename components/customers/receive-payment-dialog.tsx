@@ -1,7 +1,5 @@
 "use client";
 
-import React from "react"
-
 import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useOrganization } from "@/lib/context/organization";
@@ -23,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrency, type Customer } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, DollarSign } from "lucide-react";
 
 interface ReceivePaymentDialogProps {
   open: boolean;
@@ -42,10 +40,10 @@ export function ReceivePaymentDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
-    amount: "",
+    amount: customer.current_balance.toString(),
     payment_mode: "cash",
     reference_number: "",
-    narration: "",
+    notes: "",
   });
 
   const supabase = createBrowserClient(
@@ -79,81 +77,103 @@ export function ReceivePaymentDialog({
         party_name: customer.name,
         amount: amount,
         reference_number: formData.reference_number || null,
-        narration: formData.narration || `Payment received via ${formData.payment_mode}`,
+        narration: formData.notes || `Payment received from ${customer.name}`,
         voucher_date: new Date().toISOString(),
       });
 
       if (voucherError) throw voucherError;
 
       // Update customer balance
-      const { error: updateError } = await supabase
+      const newBalance = Math.max(0, customer.current_balance - amount);
+      const { error: customerError } = await supabase
         .from("customers")
         .update({
-          current_balance: customer.current_balance - amount,
+          current_balance: newBalance,
         })
         .eq("id", customer.id);
 
-      if (updateError) throw updateError;
+      if (customerError) throw customerError;
 
+      // Reset form
       setFormData({
         amount: "",
         payment_mode: "cash",
         reference_number: "",
-        narration: "",
+        notes: "",
       });
+
       onSuccess();
     } catch (error) {
-      console.error("Error recording payment:", error);
+      console.error("Error receiving payment:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const maxAmount = customer.current_balance;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Receive Payment</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-emerald-600" />
+            Receive Payment
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="bg-muted/50 rounded-lg p-3 mb-4">
-          <p className="text-sm text-muted-foreground">Receiving from</p>
+        <div className="mb-4 p-3 bg-muted rounded-lg">
+          <p className="text-sm text-muted-foreground">Customer</p>
           <p className="font-medium">{customer.name}</p>
-          <p className="text-sm">
-            Current Due: <span className="text-red-600 font-medium">{formatCurrency(customer.current_balance)}</span>
+          <p className="text-sm text-red-600">
+            Outstanding: {formatCurrency(customer.current_balance)}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount *</Label>
+            <Label htmlFor="amount">Amount to Receive *</Label>
             <Input
               id="amount"
               type="number"
+              max={maxAmount}
+              min="0.01"
+              step="0.01"
               value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, amount: e.target.value })
+              }
               placeholder="Enter amount"
               required
               autoFocus
             />
-            {customer.current_balance > 0 && (
+            <div className="flex gap-2">
               <Button
                 type="button"
-                variant="link"
+                variant="outline"
                 size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={() => setFormData({ ...formData, amount: customer.current_balance.toString() })}
+                onClick={() => setFormData({ ...formData, amount: (maxAmount / 2).toString() })}
               >
-                Receive full amount ({formatCurrency(customer.current_balance)})
+                Half
               </Button>
-            )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setFormData({ ...formData, amount: maxAmount.toString() })}
+              >
+                Full Amount
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="payment_mode">Payment Mode</Label>
+            <Label>Payment Mode</Label>
             <Select
               value={formData.payment_mode}
-              onValueChange={(value) => setFormData({ ...formData, payment_mode: value })}
+              onValueChange={(value) =>
+                setFormData({ ...formData, payment_mode: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -173,19 +193,23 @@ export function ReceivePaymentDialog({
               <Input
                 id="reference"
                 value={formData.reference_number}
-                onChange={(e) => setFormData({ ...formData, reference_number: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, reference_number: e.target.value })
+                }
                 placeholder="Transaction reference"
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="narration">Narration (Optional)</Label>
+            <Label htmlFor="notes">Notes</Label>
             <Textarea
-              id="narration"
-              value={formData.narration}
-              onChange={(e) => setFormData({ ...formData, narration: e.target.value })}
-              placeholder="Notes about this payment"
+              id="notes"
+              value={formData.notes}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
+              placeholder="Payment notes"
               rows={2}
             />
           </div>
@@ -199,9 +223,13 @@ export function ReceivePaymentDialog({
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+              disabled={isSubmitting}
+            >
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Receive
+              Receive Payment
             </Button>
           </div>
         </form>

@@ -1,21 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  formatCurrency,
-  numberToWords,
-  type Organization,
-  type Customer,
-  type BillItem,
-} from "@/lib/types";
-import { Printer, Share2, X } from "lucide-react";
+import { Printer, Download } from "lucide-react";
+import type { Organization, Customer, BillItem } from "@/lib/types";
+import { formatCurrency, numberToWords } from "@/lib/types";
 
 interface ThermalInvoiceProps {
   open: boolean;
@@ -23,17 +12,16 @@ interface ThermalInvoiceProps {
   organization: Organization;
   invoiceNumber: string;
   date: string;
-  customer: Customer | null;
+  customer?: Customer | null;
   items: BillItem[];
   totals: {
     subtotal: number;
     discountAmount: number;
-    discountPercent: number;
     cgst: number;
     sgst: number;
     igst: number;
-    roundOff: number;
     roundedTotal: number;
+    roundOff: number;
     isIGST: boolean;
   };
 }
@@ -48,82 +36,32 @@ export function ThermalInvoice({
   items,
   totals,
 }: ThermalInvoiceProps) {
-  const invoiceRef = useRef<HTMLDivElement>(null);
-
   const handlePrint = () => {
-    const printContent = invoiceRef.current;
-    if (!printContent) return;
-
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice ${invoiceNumber}</title>
-          <style>
-            @media print {
-              @page {
-                size: 80mm auto;
-                margin: 0;
-              }
-            }
-            body {
-              font-family: 'Courier New', monospace;
-              font-size: 12px;
-              line-height: 1.4;
-              width: 80mm;
-              margin: 0 auto;
-              padding: 5mm;
-            }
-            .center { text-align: center; }
-            .right { text-align: right; }
-            .bold { font-weight: bold; }
-            .divider {
-              border-top: 1px dashed #000;
-              margin: 4px 0;
-            }
-            .row {
-              display: flex;
-              justify-content: space-between;
-            }
-            .item-row {
-              margin: 4px 0;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            td, th {
-              padding: 2px 0;
-              font-size: 11px;
-            }
-            .total-row td {
-              padding-top: 4px;
-              font-weight: bold;
-            }
-          </style>
-        </head>
-        <body>
-          ${printContent.innerHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.print();
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Invoice ${invoiceNumber}`,
-          text: `Invoice from ${organization.name}\nAmount: ${formatCurrency(totals.roundedTotal)}`,
-        });
-      } catch (error) {
-        console.log("Share cancelled");
+    const printContent = document.getElementById("thermal-invoice");
+    if (printContent) {
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Invoice ${invoiceNumber}</title>
+              <style>
+                body { font-family: monospace; font-size: 12px; margin: 0; padding: 10px; }
+                .center { text-align: center; }
+                .right { text-align: right; }
+                .bold { font-weight: bold; }
+                .line { border-bottom: 1px dashed #000; margin: 5px 0; }
+                table { width: 100%; border-collapse: collapse; }
+                td { padding: 2px 0; }
+              </style>
+            </head>
+            <body>
+              ${printContent.innerHTML}
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
       }
     }
   };
@@ -131,105 +69,55 @@ export function ThermalInvoice({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Invoice</span>
-            <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={handleShare}>
-                <Share2 className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={handlePrint}>
-                <Printer className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* Thermal Invoice Layout */}
-        <div
-          ref={invoiceRef}
-          className="font-mono text-xs leading-relaxed bg-white p-4 border rounded"
-          style={{ fontFamily: "'Courier New', monospace" }}
-        >
+        <div id="thermal-invoice" className="font-mono text-xs space-y-2">
           {/* Header */}
-          <div className="text-center mb-3">
-            <p className="font-bold text-sm">{organization.name}</p>
-            {organization.address && <p>{organization.address}</p>}
-            {organization.phone && <p>Ph: {organization.phone}</p>}
-            {organization.gstin && <p>GSTIN: {organization.gstin}</p>}
+          <div className="text-center space-y-1">
+            <div className="font-bold text-sm">{organization.name}</div>
+            {organization.address && <div>{organization.address}</div>}
+            {organization.phone && <div>Ph: {organization.phone}</div>}
+            {organization.gstin && <div>GSTIN: {organization.gstin}</div>}
           </div>
 
-          <div className="border-t border-dashed border-foreground/30 my-2" />
+          <div className="border-b border-dashed border-gray-400 my-2"></div>
 
           {/* Invoice Details */}
-          <div className="mb-2">
+          <div className="space-y-1">
             <div className="flex justify-between">
-              <span>Invoice No:</span>
-              <span className="font-bold">{invoiceNumber}</span>
+              <span>Invoice: {invoiceNumber}</span>
+              <span>{new Date(date).toLocaleDateString("en-IN")}</span>
             </div>
             <div className="flex justify-between">
-              <span>Date:</span>
-              <span>
-                {new Date(date).toLocaleDateString("en-IN", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </span>
+              <span>Time: {new Date(date).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Time:</span>
-              <span>
-                {new Date(date).toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
+            {customer && (
+              <div>
+                <div>Customer: {customer.name}</div>
+                {customer.phone && <div>Ph: {customer.phone}</div>}
+              </div>
+            )}
           </div>
 
-          {/* Customer */}
-          {customer && (
-            <>
-              <div className="border-t border-dashed border-foreground/30 my-2" />
-              <div className="mb-2">
-                <p className="font-bold">{customer.name}</p>
-                {customer.phone && <p>Ph: {customer.phone}</p>}
-                {customer.gst_number && <p>GSTIN: {customer.gst_number}</p>}
-              </div>
-            </>
-          )}
-
-          <div className="border-t border-dashed border-foreground/30 my-2" />
+          <div className="border-b border-dashed border-gray-400 my-2"></div>
 
           {/* Items */}
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-dashed border-foreground/30">
-                <th className="text-left py-1">Item</th>
-                <th className="text-right">Qty</th>
-                <th className="text-right">Rate</th>
-                <th className="text-right">Amt</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, index) => (
-                <tr key={index}>
-                  <td className="py-1">
-                    <div>{item.item.name.slice(0, 15)}</div>
-                    <div className="text-[10px] text-muted-foreground">
-                      GST: {item.gst_rate}%
-                    </div>
-                  </td>
-                  <td className="text-right align-top">{item.quantity}</td>
-                  <td className="text-right align-top">{item.unit_price.toFixed(0)}</td>
-                  <td className="text-right align-top">{item.subtotal.toFixed(0)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="space-y-1">
+            {items.map((item, index) => (
+              <div key={index} className="space-y-1">
+                <div className="font-medium">{item.item.name}</div>
+                <div className="flex justify-between text-xs">
+                  <span>{item.quantity} x {formatCurrency(item.unit_price)}</span>
+                  <span>{formatCurrency(item.total)}</span>
+                </div>
+                {item.gst_rate > 0 && (
+                  <div className="text-xs text-gray-600">
+                    GST {item.gst_rate}%: {formatCurrency(item.tax_amount)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
 
-          <div className="border-t border-dashed border-foreground/30 my-2" />
+          <div className="border-b border-dashed border-gray-400 my-2"></div>
 
           {/* Totals */}
           <div className="space-y-1">
@@ -239,7 +127,7 @@ export function ThermalInvoice({
             </div>
             {totals.discountAmount > 0 && (
               <div className="flex justify-between">
-                <span>Discount ({totals.discountPercent}%):</span>
+                <span>Discount:</span>
                 <span>-{formatCurrency(totals.discountAmount)}</span>
               </div>
             )}
@@ -263,44 +151,42 @@ export function ThermalInvoice({
             {totals.roundOff !== 0 && (
               <div className="flex justify-between">
                 <span>Round Off:</span>
-                <span>
-                  {totals.roundOff > 0 ? "+" : ""}
-                  {totals.roundOff.toFixed(2)}
-                </span>
+                <span>{totals.roundOff > 0 ? "+" : ""}{totals.roundOff.toFixed(2)}</span>
               </div>
             )}
+            <div className="border-t border-gray-400 pt-1">
+              <div className="flex justify-between font-bold">
+                <span>TOTAL:</span>
+                <span>{formatCurrency(totals.roundedTotal)}</span>
+              </div>
+            </div>
           </div>
 
-          <div className="border-t border-dashed border-foreground/30 my-2" />
+          <div className="border-b border-dashed border-gray-400 my-2"></div>
 
-          <div className="flex justify-between font-bold text-sm">
-            <span>TOTAL:</span>
-            <span>{formatCurrency(totals.roundedTotal)}</span>
+          {/* Amount in Words */}
+          <div className="text-xs">
+            <div className="font-medium">Amount in Words:</div>
+            <div>{numberToWords(totals.roundedTotal)}</div>
           </div>
 
-          {/* Amount in words */}
-          <div className="mt-2 text-[10px]">
-            <p className="italic">{numberToWords(totals.roundedTotal)}</p>
-          </div>
-
-          <div className="border-t border-dashed border-foreground/30 my-3" />
+          <div className="border-b border-dashed border-gray-400 my-2"></div>
 
           {/* Footer */}
-          <div className="text-center text-[10px]">
-            <p>Thank you for your business!</p>
-            <p className="mt-1">Goods once sold will not be taken back</p>
+          <div className="text-center text-xs space-y-1">
+            <div>Thank you for your business!</div>
+            <div>Powered by Retail ERP</div>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
-          <Button variant="outline" className="flex-1 bg-transparent" onClick={() => onOpenChange(false)}>
-            <X className="h-4 w-4 mr-2" />
-            Close
-          </Button>
-          <Button className="flex-1" onClick={handlePrint}>
+          <Button variant="outline" className="flex-1" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" />
             Print
+          </Button>
+          <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+            Close
           </Button>
         </div>
       </DialogContent>

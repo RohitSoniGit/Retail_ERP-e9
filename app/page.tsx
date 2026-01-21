@@ -1,6 +1,6 @@
 "use client";
 
-import { createBrowserClient } from "@supabase/ssr";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import useSWR from "swr";
 import { useOrganization } from "@/lib/context/organization";
 import { EnhancedStats } from "@/components/dashboard/enhanced-stats";
@@ -14,21 +14,80 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, type DashboardStats, type Item, type Sale } from "@/lib/types";
-import { Loader2, AlertTriangle, Clock } from "lucide-react";
+import { demoDashboardStats, demoSales } from "@/lib/demo-data";
+import {
+  Loader2,
+  AlertTriangle,
+  Clock,
+  TrendingUp,
+  Sparkles,
+  Zap,
+  Star,
+  Rocket,
+  Crown,
+  Gem
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+
+// Floating elements component
+function FloatingElements() {
+  const [elements, setElements] = useState<Array<{ id: number; x: number; y: number; delay: number; icon: any }>>([]);
+
+  useEffect(() => {
+    const icons = [Sparkles, Star, Gem, Crown, Rocket];
+    const newElements = Array.from({ length: 8 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      delay: Math.random() * 5,
+      icon: icons[Math.floor(Math.random() * icons.length)],
+    }));
+    setElements(newElements);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {elements.map((element) => {
+        const Icon = element.icon;
+        return (
+          <Icon
+            key={element.id}
+            className="absolute w-4 h-4 text-blue-400/20 dark:text-purple-400/20 float"
+            style={{
+              left: `${element.x}%`,
+              top: `${element.y}%`,
+              animationDelay: `${element.delay}s`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { organizationId } = useOrganization();
+  const [mounted, setMounted] = useState(false);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const supabase = getSupabaseBrowserClient();
 
   const { data: stats, isLoading } = useSWR(
     organizationId ? `dashboard-${organizationId}` : null,
     async () => {
+      // In demo mode, return static demo data
+      if (organizationId === 'demo-org-id') {
+        return {
+          ...demoDashboardStats,
+          recentSales: demoSales,
+        };
+      }
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = today.toISOString();
@@ -97,7 +156,7 @@ export default function DashboardPage() {
 
         trendData.push({
           date: dateStr,
-          total: daySales?.reduce((sum, s) => sum + (s.total_amount || 0), 0) || 0,
+          total: daySales?.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0) || 0,
           count: daySales?.length || 0,
         });
       }
@@ -111,14 +170,14 @@ export default function DashboardPage() {
         .limit(5);
 
       return {
-        todaySales: todaySales?.reduce((sum, s) => sum + (s.total_amount || 0), 0) || 0,
+        todaySales: todaySales?.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0) || 0,
         todayTransactions: todaySales?.length || 0,
-        yesterdaySales: yesterdaySales?.reduce((sum, s) => sum + (s.total_amount || 0), 0) || 0,
+        yesterdaySales: yesterdaySales?.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0) || 0,
         weekSales: 0,
-        monthSales: monthSales?.reduce((sum, s) => sum + (s.total_amount || 0), 0) || 0,
+        monthSales: monthSales?.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0) || 0,
         lowStockItems: (lowStockItems as Item[]) || [],
         lowStockCount: lowStockItems?.length || 0,
-        outstandingCredit: creditSales?.reduce((sum, s) => sum + (s.credit_amount || 0), 0) || 0,
+        outstandingCredit: creditSales?.reduce((sum: number, s: any) => sum + (s.credit_amount || 0), 0) || 0,
         cashInHand: 0,
         topSellingItems: [],
         salesTrend: trendData,
@@ -129,119 +188,151 @@ export default function DashboardPage() {
 
   if (!organizationId) {
     return (
-      <div className="flex items-center justify-center h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="min-h-screen flex items-center justify-center relative">
+        <FloatingElements />
+        <div className="glass p-8 rounded-3xl text-center space-y-4 stagger-1">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto" />
+          <p className="text-lg font-semibold gradient-text">Initializing Nexus...</p>
+        </div>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="p-4 space-y-4">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4 h-24 bg-muted/50" />
-            </Card>
-          ))}
+      <div className="min-h-screen relative">
+        <FloatingElements />
+        <div className="p-6 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className={`glass border-0 shadow-2xl animate-pulse stagger-${i}`}>
+                <CardContent className="p-6 h-32 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-2xl" />
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
+  if (!mounted) return null;
+
   return (
-    <div className="p-4 pb-24 md:pb-4 space-y-4">
-      {/* Stats Cards */}
-      <EnhancedStats stats={stats!} />
+    <div className="min-h-screen bg-background">
+      <div className="p-6 pb-32 md:pb-6 space-y-6">
+        {/* Simple Header */}
 
-      {/* Sales Trend */}
-      <SalesTrendChart data={stats?.salesTrend || []} />
 
-      {/* Low Stock Alert */}
-      {stats?.lowStockItems && stats.lowStockItems.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2 text-amber-700">
-              <AlertTriangle className="h-4 w-4" />
-              Low Stock Alert
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableBody>
-                {stats.lowStockItems.slice(0, 3).map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <p className="font-medium text-sm">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.sku}</p>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300">
-                        {item.current_stock} left
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {stats.lowStockItems.length > 3 && (
-              <Link href="/items?filter=low-stock">
-                <Button variant="ghost" className="w-full text-amber-700 text-sm">
-                  View all {stats.lowStockItems.length} items
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-      )}
+        {/* Stats */}
+        <div className="fade-in">
+          <EnhancedStats stats={stats!} />
+        </div>
 
-      {/* Recent Sales */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            Recent Sales
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableBody>
-              {(stats as DashboardStats & { recentSales: Sale[] })?.recentSales?.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                    No sales yet today
-                  </TableCell>
-                </TableRow>
-              ) : (
-                (stats as DashboardStats & { recentSales: Sale[] })?.recentSales?.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell>
-                      <p className="font-medium text-sm">{sale.invoice_number}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(sale.created_at).toLocaleTimeString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm">{sale.customer_name || "Walk-in"}</p>
-                      {sale.is_credit && (
-                        <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200">
-                          Credit
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(sale.total_amount)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        {/* Sales Trend */}
+        <div className="fade-in">
+          <SalesTrendChart data={stats?.salesTrend || []} />
+        </div>
+
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Low Stock Alert */}
+          {stats?.lowStockItems && stats.lowStockItems.length > 0 && (
+            <Card className="bg-card border-border shadow-sm hover-lift">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg text-card-foreground">
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  Low Stock Alert
+                  <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                    {stats.lowStockItems.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableBody>
+                    {stats.lowStockItems.slice(0, 3).map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-sm text-card-foreground">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">{item.sku}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className="text-amber-700 border-amber-300">
+                            {item.current_stock} left
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {stats.lowStockItems.length > 3 && (
+                  <div className="mt-4">
+                    <Link href="/items?filter=low-stock">
+                      <Button className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                        View All {stats.lowStockItems.length} Items
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Recent Sales */}
+          <Card className="bg-card border-border shadow-sm hover-lift">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg text-card-foreground">
+                <Clock className="h-5 w-5 text-primary" />
+                Recent Sales
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableBody>
+                  {(stats as DashboardStats & { recentSales: Sale[] })?.recentSales?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                        No sales yet today
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (stats as DashboardStats & { recentSales: Sale[] })?.recentSales?.map((sale) => (
+                      <TableRow key={sale.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-sm text-card-foreground">{sale.invoice_number}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(sale.created_at).toLocaleTimeString("en-IN", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm text-card-foreground">{sale.customer_name || "Walk-in"}</p>
+                            {sale.is_credit && (
+                              <Badge variant="outline" className="text-xs text-red-600 border-red-200">
+                                Credit
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-accent">
+                          {formatCurrency(sale.total_amount)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

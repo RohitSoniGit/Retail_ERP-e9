@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search } from "lucide-react"
@@ -10,9 +10,8 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useOrganization } from "@/lib/context/organization"
 import type { Item } from "@/lib/types"
 import { useSearchParams } from "next/navigation"
-import { Suspense } from "react"
 
-export default function ItemsPage() {
+function ItemsContent() {
   const { organization, loading: orgLoading } = useOrganization()
   const [items, setItems] = useState<Item[]>([])
   const [filteredItems, setFilteredItems] = useState<Item[]>([])
@@ -58,8 +57,8 @@ export default function ItemsPage() {
   if (orgLoading || loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-        <div className="h-64 bg-muted animate-pulse rounded-lg" />
+        <div className="h-8 w-48 bg-gray-200 animate-pulse rounded" />
+        <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
       </div>
     )
   }
@@ -67,7 +66,7 @@ export default function ItemsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Items</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Items</h1>
         <Button onClick={() => setAddDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Add Item
@@ -75,7 +74,7 @@ export default function ItemsPage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           placeholder="Search by name or SKU..."
           value={searchQuery}
@@ -84,9 +83,7 @@ export default function ItemsPage() {
         />
       </div>
 
-      <Suspense fallback={null}>
-        <ItemsTable items={filteredItems} onStockUpdate={loadItems} />
-      </Suspense>
+      <ItemsTable items={filteredItems} onStockUpdate={loadItems} />
 
       <AddItemDialog
         open={addDialogOpen}
@@ -97,5 +94,18 @@ export default function ItemsPage() {
         }}
       />
     </div>
+  )
+}
+
+export default function ItemsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div className="h-8 w-48 bg-gray-200 animate-pulse rounded" />
+        <div className="h-64 bg-gray-200 animate-pulse rounded-lg" />
+      </div>
+    }>
+      <ItemsContent />
+    </Suspense>
   )
 }

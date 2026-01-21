@@ -10,9 +10,9 @@ export function FABMenu() {
 
   const menuItems = [
     { icon: ShoppingCart, label: "New Bill", href: "/billing", color: "bg-emerald-500 hover:bg-emerald-600" },
-    { icon: Package, label: "Add Stock", href: "/items?action=add-stock", color: "bg-blue-500 hover:bg-blue-600" },
-    { icon: Users, label: "New Customer", href: "/customers?action=add", color: "bg-purple-500 hover:bg-purple-600" },
-    { icon: Receipt, label: "New Voucher", href: "/vouchers?action=add", color: "bg-amber-500 hover:bg-amber-600" },
+    { icon: Package, label: "Purchase Order", href: "/purchase?tab=orders&action=create", color: "bg-blue-500 hover:bg-blue-600" },
+    { icon: Users, label: "Add Supplier", href: "/purchase?tab=suppliers&action=add", color: "bg-purple-500 hover:bg-purple-600" },
+    { icon: Receipt, label: "Stock Adjustment", href: "/inventory?tab=adjustment", color: "bg-amber-500 hover:bg-amber-600" },
   ];
 
   return (

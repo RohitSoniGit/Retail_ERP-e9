@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import useSWR from "swr";
 import { useOrganization } from "@/lib/context/organization";
@@ -14,24 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatCurrency, type Customer, type Sale, type Voucher } from "@/lib/types";
-import { ArrowLeft, Phone, MapPin, FileText, Loader2 } from "lucide-react";
-import Link from "next/link";
+import { formatCurrency, type Customer, type LedgerEntry } from "@/lib/types";
+import { ArrowLeft, Phone, MapPin, CreditCard, Loader2 } from "lucide-react";
 import { ReceivePaymentDialog } from "./receive-payment-dialog";
-import { useState } from "react";
+import Link from "next/link";
 
 interface CustomerLedgerProps {
   customerId: string;
-}
-
-interface LedgerEntry {
-  id: string;
-  date: string;
-  type: "sale" | "payment" | "opening";
-  description: string;
-  debit: number;
-  credit: number;
-  reference?: string;
 }
 
 export function CustomerLedger({ customerId }: CustomerLedgerProps) {
@@ -43,7 +33,7 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const { data: customer, isLoading: loadingCustomer } = useSWR(
+  const { data: customer, isLoading: loadingCustomer, mutate: mutateCustomer } = useSWR(
     customerId ? `customer-${customerId}` : null,
     async () => {
       const { data, error } = await supabase
@@ -57,76 +47,114 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
     }
   );
 
-  const { data: ledgerData, isLoading: loadingLedger, mutate } = useSWR(
+  const { data: ledgerEntries, isLoading: loadingLedger, mutate: mutateLedger } = useSWR(
     customerId && organizationId ? `ledger-${customerId}` : null,
     async () => {
-      // Fetch credit sales for this customer
+      // Fetch sales
       const { data: sales, error: salesError } = await supabase
         .from("sales")
         .select("*")
-        .eq("organization_id", organizationId)
         .eq("customer_id", customerId)
-        .order("created_at", { ascending: true });
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false });
 
       if (salesError) throw salesError;
 
-      // Fetch payment vouchers for this customer
+      // Fetch vouchers
       const { data: vouchers, error: vouchersError } = await supabase
         .from("vouchers")
         .select("*")
-        .eq("organization_id", organizationId)
         .eq("party_id", customerId)
-        .eq("voucher_type", "receipt")
-        .order("voucher_date", { ascending: true });
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false });
 
       if (vouchersError) throw vouchersError;
 
-      // Build ledger entries
+      // Combine and create ledger entries
       const entries: LedgerEntry[] = [];
+      let runningBalance = 0;
 
-      // Add sales (debit entries - money owed to us)
-      (sales as Sale[])?.forEach((sale) => {
-        if (sale.is_credit && sale.credit_amount > 0) {
+      // Add opening balance if any
+      if (customer && customer.current_balance !== 0) {
+        const totalSales = sales?.reduce((sum, s) => sum + (s.is_credit ? s.total_amount : 0), 0) || 0;
+        const totalPayments = vouchers?.filter(v => v.voucher_type === "receipt").reduce((sum, v) => sum + v.amount, 0) || 0;
+        const openingBalance = customer.current_balance - totalSales + totalPayments;
+        
+        if (openingBalance !== 0) {
           entries.push({
-            id: sale.id,
-            date: sale.created_at,
-            type: "sale",
-            description: `Invoice ${sale.invoice_number}`,
-            debit: sale.credit_amount,
-            credit: 0,
-            reference: sale.invoice_number,
+            id: "opening",
+            date: customer.created_at.split("T")[0],
+            type: "opening",
+            description: "Opening Balance",
+            debit: openingBalance > 0 ? openingBalance : 0,
+            credit: openingBalance < 0 ? Math.abs(openingBalance) : 0,
+            balance: openingBalance,
+          });
+          runningBalance = openingBalance;
+        }
+      }
+
+      // Add all transactions
+      const allTransactions = [
+        ...(sales?.map(s => ({
+          ...s,
+          transaction_type: "sale" as const,
+          date: s.created_at,
+        })) || []),
+        ...(vouchers?.map(v => ({
+          ...v,
+          transaction_type: v.voucher_type as const,
+          date: v.created_at,
+        })) || []),
+      ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      allTransactions.forEach((transaction) => {
+        let debit = 0;
+        let credit = 0;
+        let description = "";
+
+        if (transaction.transaction_type === "sale") {
+          const sale = transaction as any;
+          if (sale.is_credit) {
+            debit = sale.total_amount;
+            description = `Sale: ${sale.invoice_number}`;
+          }
+        } else if (transaction.transaction_type === "receipt") {
+          const voucher = transaction as any;
+          credit = voucher.amount;
+          description = `Payment: ${voucher.voucher_number}`;
+        }
+
+        if (debit > 0 || credit > 0) {
+          runningBalance += debit - credit;
+          entries.push({
+            id: transaction.id,
+            date: transaction.date.split("T")[0],
+            type: transaction.transaction_type,
+            description,
+            debit,
+            credit,
+            balance: runningBalance,
+            reference_id: transaction.id,
           });
         }
       });
 
-      // Add payments (credit entries - money received)
-      (vouchers as Voucher[])?.forEach((voucher) => {
-        entries.push({
-          id: voucher.id,
-          date: voucher.voucher_date,
-          type: "payment",
-          description: voucher.narration || `Receipt ${voucher.voucher_number}`,
-          debit: 0,
-          credit: voucher.amount,
-          reference: voucher.voucher_number,
-        });
-      });
-
-      // Sort by date
-      entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      return entries;
+      return entries.reverse(); // Show latest first
     }
   );
 
-  // Calculate running balance
-  let runningBalance = 0;
-  const entriesWithBalance = ledgerData?.map((entry) => {
-    runningBalance += entry.debit - entry.credit;
-    return { ...entry, balance: runningBalance };
-  });
+  const handlePaymentSuccess = () => {
+    mutateCustomer();
+    mutateLedger();
+    setShowPaymentDialog(false);
+  };
 
-  if (!organizationId || loadingCustomer) {
+  if (!organizationId) {
+    return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
+  }
+
+  if (loadingCustomer) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -136,130 +164,145 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
 
   if (!customer) {
     return (
-      <div className="p-4 text-center text-muted-foreground">Customer not found</div>
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Customer not found</p>
+        <Link href="/customers">
+          <Button variant="outline" className="mt-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Customers
+          </Button>
+        </Link>
+      </div>
     );
   }
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "wholesale":
-        return "bg-blue-100 text-blue-700";
-      case "distributor":
-        return "bg-purple-100 text-purple-700";
-      default:
-        return "bg-muted text-muted-foreground";
-    }
-  };
-
   return (
     <div className="space-y-4">
-      {/* Back Button */}
-      <Link href="/customers">
-        <Button variant="ghost" size="sm" className="gap-1">
-          <ArrowLeft className="h-4 w-4" />
-          Back
-        </Button>
-      </Link>
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <Link href="/customers">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <h1 className="text-lg font-semibold">Customer Ledger</h1>
+      </div>
 
-      {/* Customer Card */}
+      {/* Customer Info */}
       <Card>
-        <CardHeader className="pb-2">
+        <CardContent className="p-4">
           <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-lg flex items-center gap-2">
-                {customer.name}
-                <Badge variant="outline" className={getTypeColor(customer.customer_type)}>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">{customer.name}</h2>
+                <Badge variant="outline" className="text-xs">
                   {customer.customer_type}
                 </Badge>
-              </CardTitle>
+              </div>
+              
               {customer.phone && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Phone className="h-3 w-3" />
                   {customer.phone}
-                </p>
+                </div>
               )}
+              
               {customer.address && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <MapPin className="h-3 w-3" />
                   {customer.address}
-                </p>
+                </div>
+              )}
+              
+              {customer.credit_limit > 0 && (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <CreditCard className="h-3 w-3" />
+                  Credit Limit: {formatCurrency(customer.credit_limit)}
+                </div>
               )}
             </div>
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground">Balance Due</p>
-              <p className={`text-xl font-bold ${customer.current_balance > 0 ? "text-red-600" : "text-emerald-600"}`}>
-                {formatCurrency(customer.current_balance)}
-              </p>
+
+            <div className="text-right space-y-2">
+              <div>
+                <p className="text-sm text-muted-foreground">Current Balance</p>
+                <p className={`text-2xl font-bold ${
+                  customer.current_balance > 0 ? "text-red-600" : "text-emerald-600"
+                }`}>
+                  {customer.current_balance > 0 ? "Due: " : "Advance: "}
+                  {formatCurrency(Math.abs(customer.current_balance))}
+                </p>
+              </div>
+              
+              {customer.current_balance > 0 && (
+                <Button 
+                  size="sm" 
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  onClick={() => setShowPaymentDialog(true)}
+                >
+                  Receive Payment
+                </Button>
+              )}
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            <Button size="sm" className="flex-1" onClick={() => setShowPaymentDialog(true)}>
-              Receive Payment
-            </Button>
-            <Link href={`/billing?customer=${customerId}`} className="flex-1">
-              <Button size="sm" variant="outline" className="w-full bg-transparent">
-                <FileText className="h-4 w-4 mr-1" />
-                New Bill
-              </Button>
-            </Link>
           </div>
         </CardContent>
       </Card>
 
-      {/* Ledger Table */}
+      {/* Ledger */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium">Account Ledger</CardTitle>
+          <CardTitle className="text-sm font-medium">Transaction History</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {loadingLedger ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/50">
-                  <TableHead className="w-[90px]">Date</TableHead>
-                  <TableHead>Particulars</TableHead>
-                  <TableHead className="text-right w-[80px]">Debit</TableHead>
-                  <TableHead className="text-right w-[80px]">Credit</TableHead>
-                  <TableHead className="text-right w-[90px]">Balance</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Debit</TableHead>
+                  <TableHead className="text-right">Credit</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {entriesWithBalance?.length === 0 ? (
+                {ledgerEntries?.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No transactions yet
+                      No transactions found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  entriesWithBalance?.map((entry) => (
+                  ledgerEntries?.map((entry) => (
                     <TableRow key={entry.id}>
-                      <TableCell className="text-xs">
+                      <TableCell className="text-sm">
                         {new Date(entry.date).toLocaleDateString("en-IN", {
                           day: "2-digit",
                           month: "short",
+                          year: "2-digit",
                         })}
                       </TableCell>
                       <TableCell>
-                        <p className="text-sm">{entry.description}</p>
-                        {entry.reference && (
-                          <p className="text-xs text-muted-foreground">{entry.reference}</p>
-                        )}
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">{entry.description}</p>
+                          <Badge variant="outline" className="text-xs">
+                            {entry.type}
+                          </Badge>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-right text-sm">
+                      <TableCell className="text-right text-red-600">
                         {entry.debit > 0 ? formatCurrency(entry.debit) : "-"}
                       </TableCell>
-                      <TableCell className="text-right text-sm">
+                      <TableCell className="text-right text-emerald-600">
                         {entry.credit > 0 ? formatCurrency(entry.credit) : "-"}
                       </TableCell>
-                      <TableCell className={`text-right text-sm font-medium ${entry.balance > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                      <TableCell className={`text-right font-medium ${
+                        entry.balance > 0 ? "text-red-600" : "text-emerald-600"
+                      }`}>
                         {formatCurrency(Math.abs(entry.balance))}
-                        <span className="text-xs ml-1">{entry.balance > 0 ? "Dr" : "Cr"}</span>
                       </TableCell>
                     </TableRow>
                   ))
@@ -275,10 +318,7 @@ export function CustomerLedger({ customerId }: CustomerLedgerProps) {
         open={showPaymentDialog}
         onOpenChange={setShowPaymentDialog}
         customer={customer}
-        onSuccess={() => {
-          mutate();
-          setShowPaymentDialog(false);
-        }}
+        onSuccess={handlePaymentSuccess}
       />
     </div>
   );

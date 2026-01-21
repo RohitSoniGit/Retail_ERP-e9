@@ -1,9 +1,10 @@
 import React from "react"
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
+import { ThemeProvider } from 'next-themes'
 import { OrganizationProvider } from '@/lib/context/organization'
 import { AppShell } from '@/components/app-shell'
+import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 const inter = Inter({ subsets: ["latin"] });
@@ -45,14 +46,21 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <OrganizationProvider>
-          <AppShell>
-            {children}
-          </AppShell>
-        </OrganizationProvider>
-        <Analytics />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <OrganizationProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+          </OrganizationProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import useSWR from "swr";
 import { useOrganization } from "@/lib/context/organization";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -23,18 +24,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   formatCurrency,
   calculateGST,
   roundOff,
-  numberToWords,
   INDIAN_STATES,
   PAYMENT_MODES,
   type Item,
@@ -46,7 +38,6 @@ import {
   Plus,
   Minus,
   Trash2,
-  Printer,
   Check,
   User,
   Loader2,
@@ -66,6 +57,7 @@ export function EnhancedBillForm() {
   const [discount, setDiscount] = useState("");
   const [customerStateCode, setCustomerStateCode] = useState(organization?.state_code || "07");
   const [showInvoice, setShowInvoice] = useState(false);
+  const [isGstBill, setIsGstBill] = useState(true);
   const [savedInvoice, setSavedInvoice] = useState<{
     invoiceNumber: string;
     date: string;
@@ -74,10 +66,7 @@ export function EnhancedBillForm() {
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = getSupabaseBrowserClient();
 
   // Fetch items
   const { data: items } = useSWR(
@@ -124,6 +113,25 @@ export function EnhancedBillForm() {
       customer.phone?.includes(customerSearch)
   );
 
+  // Recalculate all items when GST toggle changes
+  useEffect(() => {
+    setBillItems(currentItems =>
+      currentItems.map(bi => {
+        const gstRate = isGstBill ? bi.item.gst_rate : 0;
+        const subtotal = bi.unit_price * bi.quantity * (1 - bi.discount_percent / 100);
+        const gst = calculateGST(subtotal, gstRate, organization?.state_code || "07", customerStateCode);
+        return {
+          ...bi,
+          gst_rate: gstRate,
+          subtotal: subtotal,
+          tax_amount: gst.total_tax,
+          total: gst.grand_total,
+        };
+      })
+    );
+  }, [isGstBill, customerStateCode, organization?.state_code]);
+
+
   // Add item to bill
   const addItem = (item: Item) => {
     const existing = billItems.find((bi) => bi.item_id === item.id);
@@ -132,8 +140,9 @@ export function EnhancedBillForm() {
     } else {
       const price = selectedCustomer?.customer_type === "wholesale" ? item.wholesale_price : item.retail_price;
       const subtotal = price;
-      const gst = calculateGST(subtotal, item.gst_rate, organization?.state_code || "07", customerStateCode);
-      
+      const gstRate = isGstBill ? item.gst_rate : 0;
+      const gst = calculateGST(subtotal, gstRate, organization?.state_code || "07", customerStateCode);
+
       setBillItems([
         ...billItems,
         {
@@ -142,7 +151,7 @@ export function EnhancedBillForm() {
           quantity: 1,
           unit_price: price,
           discount_percent: 0,
-          gst_rate: item.gst_rate,
+          gst_rate: gstRate,
           subtotal: subtotal,
           tax_amount: gst.total_tax,
           total: gst.grand_total,
@@ -187,7 +196,8 @@ export function EnhancedBillForm() {
     const subtotal = billItems.reduce((sum, bi) => sum + bi.subtotal, 0);
     const discountAmount = discount ? (subtotal * parseFloat(discount)) / 100 : 0;
     const afterDiscount = subtotal - discountAmount;
-    
+
+    // For Non-GST bills, these will effectively be 0
     const isIGST = customerStateCode !== (organization?.state_code || "07");
     let cgst = 0;
     let sgst = 0;
@@ -195,9 +205,9 @@ export function EnhancedBillForm() {
 
     billItems.forEach((bi) => {
       const itemDiscount = (bi.subtotal / subtotal) * discountAmount;
-      const taxableAmount = bi.subtotal - itemDiscount;
+      const taxableAmount = bi.subtotal - itemDiscount; // Prorate discount
       const tax = (taxableAmount * bi.gst_rate) / 100;
-      
+
       if (isIGST) {
         igst += tax;
       } else {
@@ -234,7 +244,8 @@ export function EnhancedBillForm() {
     const year = date.getFullYear().toString().slice(-2);
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-    return `INV${year}${month}-${random}`;
+    const prefix = isGstBill ? "INV" : "EST"; // Prefix distinction
+    return `${prefix}${year}${month}-${random}`;
   };
 
   // Save bill
@@ -270,6 +281,7 @@ export function EnhancedBillForm() {
           credit_amount: creditAmount,
           is_credit: paymentMode === "credit" || creditAmount > 0,
           is_paid: creditAmount === 0,
+          is_gst_bill: isGstBill,
           sale_date: new Date().toISOString(),
         })
         .select()
@@ -277,7 +289,7 @@ export function EnhancedBillForm() {
 
       if (saleError) throw saleError;
 
-      // Create sale items and update stock
+      // Create sale items and update stock (Same logic)
       for (const bi of billItems) {
         await supabase.from("sale_items").insert({
           sale_id: sale.id,
@@ -355,10 +367,12 @@ export function EnhancedBillForm() {
         billItems.map((bi) => {
           const price = selectedCustomer.customer_type === "wholesale" ? bi.item.wholesale_price : bi.item.retail_price;
           const subtotal = price * bi.quantity * (1 - bi.discount_percent / 100);
-          const gst = calculateGST(subtotal, bi.gst_rate, organization?.state_code || "07", selectedCustomer.state_code || "07");
+          const gstRate = isGstBill ? bi.item.gst_rate : 0;
+          const gst = calculateGST(subtotal, gstRate, organization?.state_code || "07", selectedCustomer.state_code || "07");
           return {
             ...bi,
             unit_price: price,
+            gst_rate: gstRate,
             subtotal,
             tax_amount: gst.total_tax,
             total: gst.grand_total,
@@ -376,43 +390,52 @@ export function EnhancedBillForm() {
     <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)]">
       {/* Customer Selection */}
       <div className="p-4 border-b bg-background">
-        <div className="flex items-center gap-2">
-          {selectedCustomer ? (
-            <div className="flex-1 flex items-center gap-2 p-2 bg-muted rounded-lg">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <div className="flex-1">
-                <p className="font-medium text-sm">{selectedCustomer.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {selectedCustomer.customer_type} | {selectedCustomer.phone || "No phone"}
-                </p>
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="flex-1 w-full flex items-center gap-2">
+            {selectedCustomer ? (
+              <div className="flex-1 flex items-center gap-2 p-2 bg-muted rounded-lg">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{selectedCustomer.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedCustomer.customer_type} | {selectedCustomer.phone || "No phone"}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(null)}>
-                <X className="h-4 w-4" />
+            ) : (
+              <Button
+                variant="outline"
+                className="flex-1 justify-start text-muted-foreground bg-transparent"
+                onClick={() => setShowCustomerDialog(true)}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Select Customer (Optional)
               </Button>
-            </div>
-          ) : (
-            <Button
-              variant="outline"
-              className="flex-1 justify-start text-muted-foreground bg-transparent"
-              onClick={() => setShowCustomerDialog(true)}
-            >
-              <User className="h-4 w-4 mr-2" />
-              Select Customer (Optional)
-            </Button>
-          )}
-          
-          <Select value={customerStateCode} onValueChange={setCustomerStateCode}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {INDIAN_STATES.map((state) => (
-                <SelectItem key={state.code} value={state.code}>
-                  {state.code} - {state.name.slice(0, 10)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            )}
+
+            <Select value={customerStateCode} onValueChange={setCustomerStateCode}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {INDIAN_STATES.map((state) => (
+                  <SelectItem key={state.code} value={state.code}>
+                    {state.code} - {state.name.slice(0, 10)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2 border p-2 rounded-lg bg-card">
+            <Label htmlFor="gst-mode" className="text-sm font-medium cursor-pointer">
+              {isGstBill ? "GST Invoice" : "Bill of Supply"}
+            </Label>
+            <Switch id="gst-mode" checked={isGstBill} onCheckedChange={setIsGstBill} />
+          </div>
         </div>
       </div>
 
@@ -427,7 +450,7 @@ export function EnhancedBillForm() {
             className="pl-9"
           />
         </div>
-        
+
         {/* Search Results */}
         {searchTerm && filteredItems && filteredItems.length > 0 && (
           <div className="absolute z-10 mt-1 w-[calc(100%-2rem)] bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -476,10 +499,12 @@ export function EnhancedBillForm() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-sm">{formatCurrency(bi.total)}</p>
-                      <p className="text-xs text-muted-foreground">incl. GST</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isGstBill ? "incl. GST" : "No Tax"}
+                      </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-1">
                       <Button
@@ -554,22 +579,24 @@ export function EnhancedBillForm() {
                 <span>-{formatCurrency(totals.discountAmount)}</span>
               </div>
             )}
-            {totals.isIGST ? (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">IGST</span>
-                <span>{formatCurrency(totals.igst)}</span>
-              </div>
-            ) : (
-              <>
+            {isGstBill && (
+              totals.isIGST ? (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">CGST</span>
-                  <span>{formatCurrency(totals.cgst)}</span>
+                  <span className="text-muted-foreground">IGST</span>
+                  <span>{formatCurrency(totals.igst)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">SGST</span>
-                  <span>{formatCurrency(totals.sgst)}</span>
-                </div>
-              </>
+              ) : (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">CGST</span>
+                    <span>{formatCurrency(totals.cgst)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">SGST</span>
+                    <span>{formatCurrency(totals.sgst)}</span>
+                  </div>
+                </>
+              )
             )}
             {totals.roundOff !== 0 && (
               <div className="flex justify-between">
@@ -597,7 +624,7 @@ export function EnhancedBillForm() {
                 ))}
               </SelectContent>
             </Select>
-            
+
             {paymentMode === "mixed" && (
               <Input
                 type="number"

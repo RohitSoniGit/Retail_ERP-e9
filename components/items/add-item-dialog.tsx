@@ -1,8 +1,6 @@
 "use client"
 
-import React from "react"
-
-import { useState } from "react"
+import React, { useEffect, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -22,6 +20,7 @@ import {
 } from "@/components/ui/select"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useOrganization } from "@/lib/context/organization"
+import type { Category } from "@/lib/types"
 
 interface AddItemDialogProps {
   open: boolean
@@ -34,9 +33,11 @@ const GST_RATES = [0, 5, 12, 18, 28]
 export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogProps) {
   const [loading, setLoading] = useState(false)
   const { organization } = useOrganization()
+  const [categories, setCategories] = useState<Category[]>([])
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
+    category_id: "none",
     wholesale_price: "",
     retail_price: "",
     purchase_cost: "",
@@ -46,6 +47,20 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
     gst_rate: "18",
   })
 
+  useEffect(() => {
+    if (open && organization) {
+      const fetchCategories = async () => {
+        const supabase = getSupabaseBrowserClient()
+        const { data } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("organization_id", organization.id)
+        setCategories(data || [])
+      }
+      fetchCategories()
+    }
+  }, [open, organization])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!organization) return
@@ -53,10 +68,14 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
     setLoading(true)
     const supabase = getSupabaseBrowserClient()
 
+    const categoryName = categories.find(c => c.id === formData.category_id)?.name || undefined;
+
     const { error } = await supabase.from("items").insert({
       organization_id: organization.id,
       sku: formData.sku,
       name: formData.name,
+      category_id: formData.category_id === "none" ? null : formData.category_id,
+      category: categoryName, // Keep backward compatibility
       wholesale_price: parseFloat(formData.wholesale_price),
       retail_price: parseFloat(formData.retail_price),
       purchase_cost: parseFloat(formData.purchase_cost),
@@ -70,6 +89,7 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
       setFormData({
         sku: "",
         name: "",
+        category_id: "none",
         wholesale_price: "",
         retail_price: "",
         purchase_cost: "",
@@ -79,6 +99,8 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
         gst_rate: "18",
       })
       onSuccess()
+    } else {
+      console.error(error);
     }
 
     setLoading(false)
@@ -113,6 +135,24 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select
+                value={formData.category_id}
+                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
