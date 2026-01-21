@@ -9,6 +9,8 @@ export interface Organization {
   gstin: string | null;
   logo_url?: string;
   settings?: OrganizationSettings;
+  website?: string;
+  email?: string;
   created_at: string;
 }
 

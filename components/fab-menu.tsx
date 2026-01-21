@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, X, ShoppingCart, Package, Users, Receipt } from "lucide-react";
+import { Plus, X, ShoppingCart, Package, Users, Receipt, LayoutGrid, Menu } from "lucide-react";
 import Link from "next/link";
 
 export function FABMenu() {
@@ -36,7 +36,7 @@ export function FABMenu() {
       {/* Main FAB */}
       <Button
         size="lg"
-        className={`rounded-full h-14 w-14 shadow-lg transition-transform ${isOpen ? 'rotate-45 bg-muted-foreground' : 'bg-emerald-600 hover:bg-emerald-700'}`}
+        className={`rounded-full h-14 w-14 shadow-lg transition-transform ${isOpen ? 'rotate-90 bg-muted-foreground' : 'bg-indigo-600 hover:bg-indigo-700'}`}
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}

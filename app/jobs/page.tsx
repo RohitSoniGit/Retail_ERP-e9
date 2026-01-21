@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
+import { toast } from "sonner"
 
 export default function JobsPage() {
     const { organization, loading: orgLoading } = useOrganization()
@@ -38,7 +39,9 @@ export default function JobsPage() {
             .order("created_at", { ascending: false })
 
         if (error) {
-            console.error("Error loading jobs:", error)
+            if (Object.keys(error).length > 0) {
+                console.error("Error loading jobs:", error)
+            }
             return
         }
 
@@ -84,6 +87,9 @@ export default function JobsPage() {
             router.push(`/jobs/${data.id}`);
         } else {
             console.error(error);
+            toast.error("Failed to create job card", {
+                description: error?.message || "Please check if job_cards table exists."
+            });
         }
     }
 

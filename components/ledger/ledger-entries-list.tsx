@@ -19,9 +19,12 @@ import {
 import { formatCurrency, type LedgerEntry } from "@/lib/types";
 import { Search, Plus, FileText, Loader2 } from "lucide-react";
 
+import { AddVoucherDialog } from "@/components/vouchers/add-voucher-dialog";
+
 export function LedgerEntriesList() {
   const { organizationId } = useOrganization();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddVoucherOpen, setIsAddVoucherOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
@@ -31,7 +34,7 @@ export function LedgerEntriesList() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const { data: entries, isLoading } = useSWR(
+  const { data: entries, isLoading, mutate } = useSWR(
     organizationId && selectedDate ? `ledger-entries-${organizationId}-${selectedDate}` : null,
     async () => {
       const { data, error } = await supabase
@@ -119,11 +122,18 @@ export function LedgerEntriesList() {
             className="w-auto"
           />
         </div>
-        <Button size="sm">
+        <Button size="sm" onClick={() => setIsAddVoucherOpen(true)}>
           <Plus className="h-4 w-4 mr-1" />
           Journal Entry
         </Button>
       </div>
+
+      <AddVoucherDialog
+        open={isAddVoucherOpen}
+        onOpenChange={setIsAddVoucherOpen}
+        onSuccess={() => mutate()}
+        voucherType="journal"
+      />
 
       {/* Entries */}
       {isLoading ? (

@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SupplierManagement } from "@/components/purchase/supplier-management";
+import { PurchaseOrderForm } from "@/components/purchase/purchase-order-form";
+import { GoodsReceipt } from "@/components/purchase/goods-receipt";
+import { PaymentTracking } from "@/components/purchase/payment-tracking";
 import { SuppliersTable } from "@/components/purchase/suppliers-table";
 import { PurchaseOrdersList } from "@/components/purchase/purchase-orders-list";
 import { PurchaseReceiptsList } from "@/components/purchase/purchase-receipts-list";
-import { AdvancePaymentsList } from "@/components/purchase/advance-payments-list";
+import { AdvancePaymentForm } from "@/components/purchase/advance-payment-form";
 
 export default function PurchasePage() {
   const [activeTab, setActiveTab] = useState("suppliers");
@@ -20,25 +24,33 @@ export default function PurchasePage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full mb-4">
           <TabsTrigger value="suppliers" className="flex-1">Suppliers</TabsTrigger>
-          <TabsTrigger value="orders" className="flex-1">Orders</TabsTrigger>
-          <TabsTrigger value="receipts" className="flex-1">Receipts</TabsTrigger>
+          <TabsTrigger value="orders" className="flex-1">Purchase Orders</TabsTrigger>
+          <TabsTrigger value="receipts" className="flex-1">Goods Receipt</TabsTrigger>
+          <TabsTrigger value="payments" className="flex-1">Payments</TabsTrigger>
           <TabsTrigger value="advances" className="flex-1">Advances</TabsTrigger>
         </TabsList>
 
         <TabsContent value="suppliers" className="mt-0">
-          <SuppliersTable />
+          <SupplierManagement />
         </TabsContent>
 
         <TabsContent value="orders" className="mt-0">
-          <PurchaseOrdersList />
+          <div className="space-y-6">
+            <PurchaseOrderForm />
+            <PurchaseOrdersList />
+          </div>
         </TabsContent>
 
         <TabsContent value="receipts" className="mt-0">
-          <PurchaseReceiptsList />
+          <GoodsReceipt />
+        </TabsContent>
+
+        <TabsContent value="payments" className="mt-0">
+          <PaymentTracking />
         </TabsContent>
 
         <TabsContent value="advances" className="mt-0">
-          <AdvancePaymentsList />
+          <AdvancePaymentForm />
         </TabsContent>
       </Tabs>
     </div>

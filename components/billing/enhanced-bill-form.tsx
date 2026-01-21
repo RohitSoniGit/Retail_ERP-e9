@@ -42,8 +42,10 @@ import {
   User,
   Loader2,
   X,
+  Printer,
 } from "lucide-react";
-import { ThermalInvoice } from "./thermal-invoice";
+import { InvoicePrintDialog } from "./invoice-print-dialog";
+import { toast } from "sonner";
 
 export function EnhancedBillForm() {
   const { organizationId, organization } = useOrganization();
@@ -58,6 +60,7 @@ export function EnhancedBillForm() {
   const [customerStateCode, setCustomerStateCode] = useState(organization?.state_code || "07");
   const [showInvoice, setShowInvoice] = useState(false);
   const [isGstBill, setIsGstBill] = useState(true);
+  const [printFormat, setPrintFormat] = useState<"thermal" | "a4">("thermal");
   const [savedInvoice, setSavedInvoice] = useState<{
     invoiceNumber: string;
     date: string;
@@ -67,6 +70,28 @@ export function EnhancedBillForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const supabase = getSupabaseBrowserClient();
+  const [dailyRates, setDailyRates] = useState<Map<string, number>>(new Map());
+
+  // Fetch daily commodity prices
+  useSWR(organizationId ? `commodity-prices-${organizationId}` : null, async () => {
+    const { data: prices } = await supabase
+      .from("commodity_prices")
+      .select("*")
+      .eq("organization_id", organizationId)
+      .eq("date", new Date().toISOString().split('T')[0])
+      .order("created_at", { ascending: false });
+
+    if (prices) {
+      const rates = new Map<string, number>();
+      prices.forEach((p: any) => {
+        if (!rates.has(p.commodity_name)) {
+          rates.set(p.commodity_name, p.price);
+        }
+      });
+      setDailyRates(rates);
+    }
+    return prices;
+  });
 
   // Fetch items
   const { data: items } = useSWR(
@@ -138,7 +163,18 @@ export function EnhancedBillForm() {
     if (existing) {
       updateQuantity(item.id, existing.quantity + 1);
     } else {
-      const price = selectedCustomer?.customer_type === "wholesale" ? item.wholesale_price : item.retail_price;
+      // Check if item name matches a commodity price
+      let price = selectedCustomer?.customer_type === "wholesale" ? item.wholesale_price : item.retail_price;
+
+      // Override with daily rate if matches
+      for (const [commodity, rate] of dailyRates.entries()) {
+        if (item.name.toLowerCase().includes(commodity.toLowerCase())) {
+          price = rate;
+          toast.info(`Using daily rate for ${commodity}: ₹${rate}`);
+          break;
+        }
+      }
+
       const subtotal = price;
       const gstRate = isGstBill ? item.gst_rate : 0;
       const gst = calculateGST(subtotal, gstRate, organization?.state_code || "07", customerStateCode);
@@ -636,6 +672,21 @@ export function EnhancedBillForm() {
             )}
           </div>
 
+          {/* Print Format Selection */}
+          <div className="flex items-center gap-2 pb-2">
+            <Printer className="h-4 w-4 text-muted-foreground" />
+            <Label className="text-sm whitespace-nowrap">Print Format:</Label>
+            <Select value={printFormat} onValueChange={(v: "thermal" | "a4") => setPrintFormat(v)}>
+              <SelectTrigger className="flex-1 h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="thermal">Thermal (80mm)</SelectItem>
+                <SelectItem value="a4">A4 Invoice</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Save Button */}
           <Button
             className="w-full h-12 text-lg"
@@ -704,7 +755,7 @@ export function EnhancedBillForm() {
 
       {/* Invoice Dialog */}
       {savedInvoice && (
-        <ThermalInvoice
+        <InvoicePrintDialog
           open={showInvoice}
           onOpenChange={setShowInvoice}
           organization={organization!}
@@ -713,6 +764,7 @@ export function EnhancedBillForm() {
           customer={selectedCustomer}
           items={savedInvoice.items}
           totals={savedInvoice.totals}
+          format={printFormat}
         />
       )}
     </div>
