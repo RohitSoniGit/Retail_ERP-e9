@@ -2,8 +2,8 @@
 
 @theme {
   /* Light Theme - Blue Professional */
-  --color-background: hsl(210 40% 96%);
-  /* #F1F5F9 */
+  --color-background: hsl(0 0% 100%);
+  /* #FFFFFF */
   --color-foreground: hsl(222 47% 11%);
   /* #0F172A */
   --color-card: hsl(0 0% 100%);

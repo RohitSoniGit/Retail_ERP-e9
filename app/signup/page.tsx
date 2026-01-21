@@ -1,0 +1,177 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Store, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import Link from "next/link";
+
+export default function SignupPage() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
+
+    const handleSignup = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            const supabase = getSupabaseBrowserClient();
+            const { error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            toast.success("Account created! Please check your email to verify your account.");
+            router.push("/login");
+        } catch (err: any) {
+            console.error("Signup error:", err);
+            setError(err.message || "Failed to create account");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-background px-4">
+            {/* Background decoration */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl opacity-50" />
+            </div>
+
+            <Card className="w-full max-w-md relative z-10 glass shadow-2xl">
+                <CardHeader className="space-y-2 text-center">
+                    <div className="mx-auto h-12 w-12 bg-primary rounded-xl flex items-center justify-center shadow-lg mb-4">
+                        <Store className="h-6 w-6 text-white" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+                    <CardDescription>
+                        Join efficiently to manage your retail business
+                    </CardDescription>
+                </CardHeader>
+                <form onSubmit={handleSignup}>
+                    <CardContent className="space-y-4">
+                        {error && (
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertDescription>{error}</AlertDescription>
+                            </Alert>
+                        )}
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="admin@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="bg-background/50"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="bg-background/50 pr-10"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <div className="relative">
+                                <Input
+                                    id="confirmPassword"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    className="bg-background/50 pr-10"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                        <Eye className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex flex-col gap-4">
+                        <Button
+                            type="submit"
+                            className="w-full holographic text-white"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating account...
+                                </>
+                            ) : (
+                                "Create Account"
+                            )}
+                        </Button>
+                        <div className="text-center text-sm text-muted-foreground">
+                            Already have an account?{" "}
+                            <Link href="/login" className="text-primary hover:underline font-medium">
+                                Sign in
+                            </Link>
+                        </div>
+                    </CardFooter>
+                </form>
+            </Card>
+        </div>
+    );
+}

@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PrintFormatManager } from "@/components/settings/print-format-manager";
-import { CommodityPriceManager } from "@/components/settings/commodity-price-manager";
 import {
   Settings,
   Building2,
@@ -20,7 +19,6 @@ import {
   Globe,
   Printer,
   FileText,
-  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,7 +27,7 @@ function FloatingIcons() {
   const [icons, setIcons] = useState<Array<{ id: number; x: number; y: number; delay: number; icon: any; size: string }>>([]);
 
   useEffect(() => {
-    const iconList = [Sparkles, Settings, Building2, TrendingUp];
+    const iconList = [Sparkles, Settings, Building2];
     const newIcons = Array.from({ length: 6 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
@@ -174,12 +172,12 @@ export default function SettingsPage() {
       <FloatingIcons />
 
       {/* Animated Background */}
-      {/* Background - Offwhite */}
-      <div className="fixed inset-0 bg-background" />
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-50 via-blue-50 via-purple-50 to-emerald-50 dark:from-slate-950 dark:via-blue-950 dark:via-purple-950 dark:to-slate-950"
+        style={{ backgroundSize: '400% 400%', animation: 'gradient-shift 15s ease infinite' }} />
 
       <div className="relative z-10 w-full p-6 space-y-8">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 glass border-0 shadow-lg h-auto p-1">
+          <TabsList className="grid w-full grid-cols-3 glass border-0 shadow-lg">
             <TabsTrigger value="general" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
               General
@@ -191,10 +189,6 @@ export default function SettingsPage() {
             <TabsTrigger value="preferences" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Preferences
-            </TabsTrigger>
-            <TabsTrigger value="commodities" className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              Commodity Prices
             </TabsTrigger>
           </TabsList>
 
@@ -227,9 +221,9 @@ export default function SettingsPage() {
                       <div className="flex items-center gap-4">
                         {formData.logoUrl && (
                           <div className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-                            <img
-                              src={formData.logoUrl}
-                              alt="Company Logo"
+                            <img 
+                              src={formData.logoUrl} 
+                              alt="Company Logo" 
                               className="w-full h-full object-contain"
                             />
                           </div>
@@ -484,28 +478,6 @@ export default function SettingsPage() {
                   </div>
                   <ThemeToggle />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="commodities" className="space-y-8">
-            <Card className="glass border-0 shadow-2xl hover-lift relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-orange-500/5 to-red-500/5" />
-              <CardHeader className="pb-6 relative z-10">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-2xl holographic">
-                    <TrendingUp className="h-6 w-6 text-white drop-shadow-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <CardTitle className="text-2xl gradient-text">Commodity Daily Rates</CardTitle>
-                    <CardDescription className="text-base">
-                      Set daily rates for commodities like Gold, Silver etc. to be used in calculations.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <CommodityPriceManager />
               </CardContent>
             </Card>
           </TabsContent>

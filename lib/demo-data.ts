@@ -398,9 +398,7 @@ export const demoDashboardStats: DashboardStats = {
 
 // Demo mode detection
 export const isDemoMode = () => {
-  return !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://demo.supabase.co' ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL.includes('demo');
+  return false; // User requested to remove demo mode
 }
 
 // Mock Supabase responses for demo
@@ -479,7 +477,7 @@ export const createDemoSupabaseClient = () => {
         eq: (column: string, value: any) => ({
           then: (callback: any) => {
             // Simulate update
-            const index = currentData.findIndex(d => d[column] === value);
+            const index = currentData.findIndex((d: any) => d[column] === value);
             if (index !== -1) {
               currentData[index] = { ...currentData[index], ...updateData };
             }
@@ -492,7 +490,7 @@ export const createDemoSupabaseClient = () => {
         eq: (column: string, value: any) => ({
           then: (callback: any) => {
             // Simulate delete by splicing
-            const index = currentData.findIndex(d => d[column] === value);
+            const index = currentData.findIndex((d: any) => d[column] === value);
             if (index !== -1) {
               currentData.splice(index, 1);
             }

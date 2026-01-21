@@ -18,16 +18,19 @@ import {
 import { formatCurrency, type LedgerAccount } from "@/lib/types";
 import { Search, Plus, Building, Loader2 } from "lucide-react";
 
+import { AddAccountDialog } from "./add-account-dialog";
+
 export function LedgerAccountsList() {
   const { organizationId } = useOrganization();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
-  const { data: accounts, isLoading } = useSWR(
+  const { data: accounts, isLoading, mutate } = useSWR(
     organizationId ? `ledger-accounts-${organizationId}` : null,
     async () => {
       const { data, error } = await supabase
@@ -93,11 +96,17 @@ export function LedgerAccountsList() {
             className="pl-9"
           />
         </div>
-        <Button size="sm">
+        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-1" />
           Add Account
         </Button>
       </div>
+
+      <AddAccountDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={() => mutate()}
+      />
 
       {/* Accounts by Type */}
       {isLoading ? (
@@ -116,7 +125,7 @@ export function LedgerAccountsList() {
                   {typeAccounts.length} accounts
                 </span>
               </div>
-              
+
               <div className="border rounded-lg overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -167,7 +176,7 @@ export function LedgerAccountsList() {
               </div>
             </div>
           ))}
-          
+
           {(!groupedAccounts || Object.keys(groupedAccounts).length === 0) && (
             <div className="text-center py-12 text-muted-foreground">
               <Building className="h-8 w-8 mx-auto mb-2 opacity-50" />

@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/lib/context/organization";
 import { FABMenu } from "./fab-menu";
@@ -11,6 +11,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { isDemoMode } from "@/lib/demo-data";
 import {
   LayoutDashboard,
+  LayoutList,
   Package,
   ShoppingCart,
   Users,
@@ -21,6 +22,15 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { href: "/", label: "Home", icon: LayoutDashboard },
@@ -34,13 +44,13 @@ const navItems = [
 const sideNavItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/items", label: "Items", icon: Package },
+  { href: "/categories", label: "Categories", icon: LayoutList },
   { href: "/billing", label: "Billing", icon: ShoppingCart },
   { href: "/purchase", label: "Purchase", icon: Receipt },
   { href: "/customers", label: "Customers", icon: Users },
   { href: "/ledger", label: "Ledger", icon: BarChart3 },
   { href: "/inventory", label: "Inventory", icon: Package },
-  { href: "/categories", label: "Categories", icon: Store }, // Using Store icon as placeholder
-  { href: "/jobs", label: "Job Work", icon: Zap }, // Using Zap icon
+  { href: "/jobs", label: "Job Work", icon: Zap },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -92,9 +102,40 @@ export function AppShell({ children }: { children: ReactNode }) {
     return pathname.startsWith(href);
   };
 
-  const sidebarTop = showDemoBanner ? "top-[88px]" : "top-14";
+  const sidebarTop = showDemoBanner ? "top-[104px]" : "top-20";
+
+  const router = useRouter();
+  const [isPublicRoute, setIsPublicRoute] = useState(false);
+
+  useEffect(() => {
+    const publicRoutes = ["/login", "/signup", "/forgot-password"];
+    const isPublic = publicRoutes.includes(pathname);
+    setIsPublicRoute(isPublic);
+
+    const checkAuth = async () => {
+      if (!isPublic) {
+        const supabase = (await import("@/lib/supabase/client")).getSupabaseBrowserClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          router.push("/login");
+        }
+      }
+    };
+    checkAuth();
+  }, [pathname, router]);
 
   if (!mounted) return null;
+
+  // On public routes (like login), only render the content without the app shell
+  if (isPublicRoute) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="w-full h-full">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -107,12 +148,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {/* Clean Header */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border">
-        <div className="flex items-center justify-between h-16 px-6 w-full md:pl-20">
+      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+        <div className="flex items-center justify-between h-[88px] px-6 w-full md:pl-[126px]">
           <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <Store className="h-5 w-5 text-primary-foreground" />
-            </div>
+            {/* Logo removed from header as requested */}
             <div>
               <span className="font-semibold text-lg text-foreground">
                 {loading ? "Loading..." : organization?.name || "Business Hub"}
@@ -128,12 +167,46 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-4">
 
             <ThemeToggle />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <Users className="h-4 w-4 text-primary" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="cursor-pointer">
+                    <Users className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-600 focus:text-red-600 cursor-pointer">
+                  <span onClick={async () => {
+                    const supabase = (await import("@/lib/supabase/client")).getSupabaseBrowserClient();
+                    await supabase.auth.signOut();
+                    window.location.href = '/login';
+                  }}>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex-1 w-full md:pl-20">
+      <main className="relative z-10 flex-1 w-full md:pl-[126px]">
         <div className="w-full">
           {children}
         </div>
@@ -169,9 +242,27 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Desktop Sidebar */}
       <nav className={cn(
-        "hidden md:flex fixed left-0 bottom-0 w-20 flex-col items-center gap-2 py-4 bg-card border-r border-border z-40",
-        sidebarTop
+        "hidden md:flex fixed left-0 top-0 h-screen w-[110px] flex-col items-center gap-2 py-4 bg-card border-r border-border z-[60] overflow-y-auto"
       )}>
+        {/* Company Logo at Top */}
+        <div className="mb-4 p-2 sticky top-0 bg-card z-10 w-full flex justify-center pb-4 border-b border-border/10">
+          <Link href="/">
+            {organization?.logo_url ? (
+              <div className="h-12 w-12 rounded-xl overflow-hidden shadow-lg hover:opacity-90 transition-opacity cursor-pointer bg-white flex items-center justify-center">
+                <img
+                  src={organization.logo_url}
+                  alt={organization.name || "Logo"}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ) : (
+              <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity cursor-pointer">
+                <Store className="h-6 w-6 text-primary-foreground" />
+              </div>
+            )}
+          </Link>
+        </div>
+
         <div className="flex flex-col gap-2 w-full px-2">
           {sideNavItems.map((item) => {
             const Icon = item.icon;

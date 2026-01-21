@@ -46,12 +46,14 @@ export default function CategoriesPage() {
             .order("name", { ascending: true })
 
         if (error) {
-            console.error("Error loading categories:", error)
             // Check if it's likely a missing table error
             if (error.code === '42P01') { // undefined_table
                 toast.error("Setup Required", {
-                    description: "Please run the migration script scripts/006-erp-enhancements.sql to create the categories table."
+                    description: "Categories table missing. Please look for migration scripts."
                 })
+            } else if (Object.keys(error).length > 0 && (error.message || error.code || error.plugin || 'details' in error)) {
+                // Log only if it seems to be a real error object
+                console.error("Error loading categories:", error)
             }
             return
         }

@@ -40,7 +40,7 @@ const SUPPLIER_TYPES = [
 export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplierDialogProps) {
   const { organizationId } = useOrganization();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     supplier_code: "",
     name: "",
@@ -58,7 +58,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
     ifsc_code: "",
     payment_terms: "30",
     credit_limit: "",
-    supplier_type: "regular" as const,
+    supplier_type: "regular" as "regular" | "manufacturer" | "distributor" | "importer",
   });
 
   const supabase = createBrowserClient(
@@ -78,7 +78,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
     setIsSubmitting(true);
     try {
       const supplierCode = formData.supplier_code || generateSupplierCode();
-      
+
       const { error } = await supabase.from("suppliers").insert({
         organization_id: organizationId,
         supplier_code: supplierCode,
@@ -124,7 +124,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
         credit_limit: "",
         supplier_type: "regular",
       });
-      
+
       onSuccess();
     } catch (error) {
       console.error("Error adding supplier:", error);
@@ -135,7 +135,7 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Supplier</DialogTitle>
         </DialogHeader>

@@ -29,7 +29,7 @@ import { Loader2, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 interface AddVoucherDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  voucherType: "receipt" | "payment";
+  voucherType: "receipt" | "payment" | "journal";
   onSuccess: () => void;
 }
 
@@ -273,11 +273,10 @@ export function AddVoucherDialog({
             </Button>
             <Button
               type="submit"
-              className={`flex-1 ${
-                isReceipt
+              className={`flex-1 ${isReceipt
                   ? "bg-emerald-600 hover:bg-emerald-700"
                   : "bg-red-600 hover:bg-red-700"
-              }`}
+                }`}
               disabled={isSubmitting}
             >
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
