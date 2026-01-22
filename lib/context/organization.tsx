@@ -79,32 +79,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           setOrganization(data[0])
           setError(null)
         } else {
-          // Auto-create default organization "Ronak Jewellers"
-          console.log('No organizations found, creating default organization...')
-          const { data: newOrg, error: createError } = await supabase
-            .from("organizations")
-            .insert({
-              name: "Ronak Jewellers",
-              gst_number: "24ABCDE1234F1Z5",
-              address: "123 Jewellery Market, Surat, Gujarat 395003",
-              phone: "+91 8233189764",
-              state_code: "24",
-              gstin: "24ABCDE1234F1Z5"
-            })
-            .select()
-            .single()
-
-          if (createError) {
-            console.error('Error creating default organization:', createError)
-            setError('Failed to create default organization. Please check your database setup.')
-            return
-          }
-
-          if (newOrg) {
-            setOrganization(newOrg)
-            setError(null)
-            console.log('Default organization "Ronak Jewellers" created successfully')
-          }
+          console.warn('No organizations found in database')
+          setError('No organizations found. Please run the setup script first.')
         }
       } catch (error) {
         console.error('Failed to load organization:', error)

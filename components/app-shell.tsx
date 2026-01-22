@@ -143,8 +143,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="space-y-4">
             <p className="text-sm">Please follow these steps:</p>
             <ol className="text-sm text-left space-y-2">
-              <li>1. Run the database schema in Supabase</li>
-              <li>2. Create an organization record</li>
+              <li>1. Run the database schema in Supabase SQL Editor: <code>master_setup.sql</code></li>
+              <li>2. Run the setup script: <code>scripts/setup-ronak-jewellers.sql</code></li>
               <li>3. Refresh this page</li>
             </ol>
             <button 
