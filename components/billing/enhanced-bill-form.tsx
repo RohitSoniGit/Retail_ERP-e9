@@ -45,6 +45,7 @@ import {
   Printer,
 } from "lucide-react";
 import { InvoicePrintDialog } from "./invoice-print-dialog";
+import { InvoiceManager } from "./invoice-manager";
 import { toast } from "sonner";
 
 export function EnhancedBillForm() {
@@ -711,6 +712,11 @@ export function EnhancedBillForm() {
             )}
             Save Bill
           </Button>
+
+          {/* Invoice Manager */}
+          <div className="pt-2">
+            <InvoiceManager organizationId={organizationId} />
+          </div>
         </div>
       )}
 

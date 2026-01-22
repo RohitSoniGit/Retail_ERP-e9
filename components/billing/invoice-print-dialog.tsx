@@ -3,10 +3,13 @@
 import { useState, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, Download, Share2, Mail } from "lucide-react";
+import { Printer, Download, Share2, Mail, Cloud, CheckCircle } from "lucide-react";
 import type { Organization, Customer, BillItem } from "@/lib/types";
 import { formatCurrency, numberToWords } from "@/lib/types";
 import { useReactToPrint } from "react-to-print";
+import { PDFGenerator } from "@/lib/pdf-generator";
+import { InvoiceStorageService } from "@/lib/supabase/storage";
+import { toast } from "sonner";
 
 interface InvoicePrintDialogProps {
     open: boolean;
@@ -41,10 +44,56 @@ export function InvoicePrintDialog({
     format,
 }: InvoicePrintDialogProps) {
     const componentRef = useRef<HTMLDivElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isUploaded, setIsUploaded] = useState(false);
 
     const handlePrint = useReactToPrint({
         content: () => componentRef.current,
     } as any);
+
+    const handleDownloadPDF = async () => {
+        if (!componentRef.current) return;
+        
+        try {
+            const filename = `Invoice_${invoiceNumber}_${new Date(date).toLocaleDateString('en-IN').replace(/\//g, '-')}.pdf`;
+            await PDFGenerator.downloadPDF(componentRef.current, filename, { format });
+            toast.success("PDF downloaded successfully!");
+        } catch (error) {
+            console.error('Download error:', error);
+            toast.error("Failed to download PDF");
+        }
+    };
+
+    const handleSaveToCloud = async () => {
+        if (!componentRef.current) return;
+        
+        setIsUploading(true);
+        try {
+            // Generate PDF blob
+            const pdfBlob = await PDFGenerator.generatePDFFromElement(componentRef.current, { format });
+            
+            // Upload to Supabase Storage
+            const result = await InvoiceStorageService.uploadInvoicePDF(pdfBlob, {
+                invoiceNumber,
+                customerName: customer?.name || 'Walk-in Customer',
+                totalAmount: totals.roundedTotal,
+                invoiceDate: date,
+                organizationId: organization.id,
+            });
+
+            if (result.success) {
+                setIsUploaded(true);
+                toast.success("Invoice saved to cloud successfully!");
+            } else {
+                toast.error(result.error || "Failed to save invoice to cloud");
+            }
+        } catch (error) {
+            console.error('Cloud save error:', error);
+            toast.error("Failed to save invoice to cloud");
+        } finally {
+            setIsUploading(false);
+        }
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,9 +103,33 @@ export function InvoicePrintDialog({
                         <Printer className="h-4 w-4 mr-2" />
                         Print Invoice
                     </Button>
-                    <Button variant="ghost" size="sm" className="hover:bg-white/10 text-white">
+                    <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="holographic text-white border-0 shadow-md">
                         <Download className="h-4 w-4 mr-2" />
                         Download PDF
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleSaveToCloud}
+                        disabled={isUploading || isUploaded}
+                        className="holographic text-white border-0 shadow-md"
+                    >
+                        {isUploading ? (
+                            <>
+                                <div className="animate-spin h-4 w-4 mr-2 border-2 border-white border-t-transparent rounded-full" />
+                                Saving...
+                            </>
+                        ) : isUploaded ? (
+                            <>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Saved to Cloud
+                            </>
+                        ) : (
+                            <>
+                                <Cloud className="h-4 w-4 mr-2" />
+                                Save to Cloud
+                            </>
+                        )}
                     </Button>
                 </div>
 
