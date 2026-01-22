@@ -149,17 +149,17 @@ body {
 }
 
 /* Clean scrollbar */
+/* Clean scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--color-muted);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-muted-foreground);
-  border-radius: 3px;
+/* Hide scrollbar for IE, Edge and Firefox */
+html {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Focus styles */

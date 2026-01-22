@@ -6,6 +6,9 @@ import { StockAdjustment } from "@/components/inventory/stock-adjustment";
 import { ReorderAlerts } from "@/components/inventory/reorder-alerts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useOrganization } from "@/lib/context/organization";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import useSWR from "swr";
 import {
   Table,
   TableBody,
@@ -21,6 +24,7 @@ import {
   AlertTriangle,
   BarChart3,
   Activity,
+  Loader2,
 } from "lucide-react";
 
 // Mock inventory data
@@ -69,10 +73,37 @@ const mockInventoryItems = [
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState("overview");
 
-  const totalItems = mockInventoryItems.length;
-  const lowStockItems = mockInventoryItems.filter(item => item.current_stock <= item.min_stock_level);
-  const outOfStockItems = mockInventoryItems.filter(item => item.current_stock === 0);
-  const totalValue = mockInventoryItems.reduce((sum, item) => sum + (item.current_stock * item.purchase_cost), 0);
+  const { organizationId } = useOrganization();
+  const supabase = getSupabaseBrowserClient();
+
+  const { data: inventoryItems, isLoading } = useSWR(
+    organizationId ? `inventory-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase
+        .from("items")
+        .select(`
+          *,
+          category:categories(name)
+        `)
+        .eq("organization_id", organizationId)
+        .order("name");
+      return data || [];
+    }
+  );
+
+  const items = inventoryItems || [];
+  const totalItems = items.length;
+  const lowStockItems = items.filter((item: any) => item.current_stock <= (item.low_stock_threshold || 5));
+  const outOfStockItems = items.filter((item: any) => item.current_stock === 0);
+  const totalValue = items.reduce((sum: number, item: any) => sum + (item.current_stock * (item.purchase_price || 0)), 0);
+
+  if (isLoading) {
+    return (
+      <div className="p-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 pb-24 md:pb-4">
@@ -147,64 +178,64 @@ export default function InventoryPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Current Stock</TableHead>
-                    <TableHead>Min Level</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Last Movement</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockInventoryItems.map((item) => {
-                    const getStockStatus = () => {
-                      if (item.current_stock === 0) return { label: "Out of Stock", variant: "destructive" };
-                      if (item.current_stock <= item.min_stock_level) return { label: "Low Stock", variant: "secondary" };
-                      return { label: "In Stock", variant: "default" };
-                    };
-                    
-                    const status = getStockStatus();
-                    
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{item.name}</p>
-                            <p className="text-sm text-muted-foreground">{item.sku}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>
-                          <span className={item.current_stock <= item.min_stock_level ? "text-red-600 font-medium" : ""}>
-                            {item.current_stock} {item.unit_name}
-                          </span>
-                        </TableCell>
-                        <TableCell>{item.min_stock_level} {item.unit_name}</TableCell>
-                        <TableCell>
-                          <Badge variant={status.variant as any}>
-                            {status.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>₹{(item.current_stock * item.purchase_cost).toLocaleString()}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {item.movement_type === "sale" ? (
-                              <TrendingDown className="h-4 w-4 text-red-500" />
-                            ) : (
-                              <TrendingUp className="h-4 w-4 text-green-500" />
-                            )}
-                            <span className="text-sm">{new Date(item.last_movement).toLocaleDateString()}</span>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              {items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
+                  <Package className="h-10 w-10 mb-2 opacity-50" />
+                  <p>No items in inventory.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Item</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Current Stock</TableHead>
+                      <TableHead>Min Level</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Value</TableHead>
+                      <TableHead>Last Movement</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {items.map((item: any) => {
+                      const getStockStatus = () => {
+                        if (item.current_stock === 0) return { label: "Out of Stock", variant: "destructive" };
+                        if (item.current_stock <= (item.low_stock_threshold || 5)) return { label: "Low Stock", variant: "secondary" };
+                        return { label: "In Stock", variant: "default" };
+                      };
+
+                      const status = getStockStatus();
+
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{item.name}</p>
+                              <p className="text-sm text-muted-foreground">{item.sku || '-'}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{item.category?.name || '-'}</TableCell>
+                          <TableCell>
+                            <span className={item.current_stock <= (item.low_stock_threshold || 5) ? "text-red-600 font-medium" : ""}>
+                              {item.current_stock} {item.unit_type || 'PCS'}
+                            </span>
+                          </TableCell>
+                          <TableCell>{item.low_stock_threshold || 5} {item.unit_type || 'PCS'}</TableCell>
+                          <TableCell>
+                            <Badge variant={status.variant as any}>
+                              {status.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>₹{(item.current_stock * (item.purchase_price || 0)).toLocaleString()}</TableCell>
+                          <TableCell>
+                            <span className="text-sm">-</span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

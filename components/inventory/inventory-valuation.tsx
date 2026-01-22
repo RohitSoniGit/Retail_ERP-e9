@@ -47,7 +47,7 @@ export function InventoryValuation() {
         const stockValue = item.current_stock * item.purchase_cost;
         const retailValue = item.current_stock * item.retail_price;
         const wholesaleValue = item.current_stock * item.wholesale_price;
-        
+
         return {
           ...item,
           stock_value: stockValue,
@@ -107,21 +107,23 @@ export function InventoryValuation() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Package className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold">Inventory Valuation</h2>
+          <div className="p-2 rounded-lg bg-indigo-500/10">
+            <Package className="h-6 w-6 text-indigo-500" />
+          </div>
+          <h2 className="text-2xl font-bold gradient-text">Inventory Valuation</h2>
         </div>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="valuation_date" className="text-sm">As on:</Label>
+        <div className="flex items-center gap-2 glass p-1.5 rounded-lg border-0 shadow-sm">
+          <Label htmlFor="valuation_date" className="text-sm font-medium px-2">As upon:</Label>
           <Input
             id="valuation_date"
             type="date"
             value={valuationDate}
             onChange={(e) => setValuationDate(e.target.value)}
-            className="w-auto"
+            className="w-auto bg-transparent border-0 h-8 focus-visible:ring-0 px-2 shadow-none"
           />
         </div>
       </div>
@@ -129,32 +131,36 @@ export function InventoryValuation() {
       {/* Summary Cards */}
       {inventoryData && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="bg-blue-50 border-blue-200">
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-blue-700">Stock Value</p>
-              <p className="text-xl font-bold text-blue-700">{formatCurrency(inventoryData.totals.totalStockValue)}</p>
-              <p className="text-xs text-blue-600 mt-1">At cost price</p>
+          <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent group-hover:from-blue-500/20 transition-all" />
+            <CardContent className="p-6 text-center relative">
+              <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">Stock Value</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(inventoryData.totals.totalStockValue)}</p>
+              <p className="text-xs text-muted-foreground mt-1 bg-blue-500/10 inline-block px-2 py-0.5 rounded-full">At cost price</p>
             </CardContent>
           </Card>
-          <Card className="bg-emerald-50 border-emerald-200">
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-emerald-700">Retail Value</p>
-              <p className="text-xl font-bold text-emerald-700">{formatCurrency(inventoryData.totals.totalRetailValue)}</p>
-              <p className="text-xs text-emerald-600 mt-1">At selling price</p>
+          <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent group-hover:from-emerald-500/20 transition-all" />
+            <CardContent className="p-6 text-center relative">
+              <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Retail Value</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(inventoryData.totals.totalRetailValue)}</p>
+              <p className="text-xs text-muted-foreground mt-1 bg-emerald-500/10 inline-block px-2 py-0.5 rounded-full">At selling price</p>
             </CardContent>
           </Card>
-          <Card className="bg-green-50 border-green-200">
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-green-700">Potential Profit</p>
-              <p className="text-xl font-bold text-green-700">{formatCurrency(inventoryData.totals.totalPotentialProfit)}</p>
-              <p className="text-xs text-green-600 mt-1">{inventoryData.totals.averageMargin.toFixed(1)}% margin</p>
+          <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent group-hover:from-green-500/20 transition-all" />
+            <CardContent className="p-6 text-center relative">
+              <p className="text-sm font-semibold text-green-600 dark:text-green-400">Potential Profit</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{formatCurrency(inventoryData.totals.totalPotentialProfit)}</p>
+              <p className="text-xs text-muted-foreground mt-1 bg-green-500/10 inline-block px-2 py-0.5 rounded-full">{inventoryData.totals.averageMargin.toFixed(1)}% margin</p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-muted-foreground">Items in Stock</p>
-              <p className="text-xl font-bold">{inventoryData.totals.inStockItems}</p>
-              <p className="text-xs text-muted-foreground mt-1">of {inventoryData.totals.totalItems} total</p>
+          <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent group-hover:from-indigo-500/20 transition-all" />
+            <CardContent className="p-6 text-center relative">
+              <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">Items in Stock</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{inventoryData.totals.inStockItems}</p>
+              <p className="text-xs text-muted-foreground mt-1 bg-indigo-500/10 inline-block px-2 py-0.5 rounded-full">of {inventoryData.totals.totalItems} total</p>
             </CardContent>
           </Card>
         </div>
@@ -162,37 +168,46 @@ export function InventoryValuation() {
 
       {/* Category Summary */}
       {inventoryData && (
-        <div className="grid grid-cols-3 gap-4">
-          <Card className="border-yellow-200 bg-yellow-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingDown className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm text-yellow-700">Low Stock Items</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent group-hover:from-yellow-500/20 transition-all duration-500" />
+            <CardContent className="p-4 flex items-center justify-between relative">
+              <div>
+                <p className="text-sm text-yellow-500 font-semibold">Low Stock Items</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{inventoryData.categories.lowStock.length}</p>
+                <p className="text-xs text-muted-foreground mt-1 bg-yellow-500/10 inline-block px-2 py-0.5 rounded-full">Need restocking</p>
               </div>
-              <p className="text-2xl font-bold text-yellow-700">{inventoryData.categories.lowStock.length}</p>
-              <p className="text-xs text-yellow-600 mt-1">Need restocking</p>
+              <div className="p-3 bg-yellow-500/10 rounded-2xl text-yellow-500 shadow-inner">
+                <TrendingDown className="h-6 w-6" />
+              </div>
             </CardContent>
           </Card>
-          
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-blue-700">High Value Items</span>
+
+          <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent group-hover:from-blue-500/20 transition-all duration-500" />
+            <CardContent className="p-4 flex items-center justify-between relative">
+              <div>
+                <p className="text-sm text-blue-500 font-semibold">High Value Items</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{inventoryData.categories.highValue.length}</p>
+                <p className="text-xs text-muted-foreground mt-1 bg-blue-500/10 inline-block px-2 py-0.5 rounded-full">Value &gt; ₹10,000</p>
               </div>
-              <p className="text-2xl font-bold text-blue-700">{inventoryData.categories.highValue.length}</p>
-              <p className="text-xs text-blue-600 mt-1">Value &gt; ₹10,000</p>
+              <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-500 shadow-inner">
+                <TrendingUp className="h-6 w-6" />
+              </div>
             </CardContent>
           </Card>
-          
-          <Card className="border-purple-200 bg-purple-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Package className="h-4 w-4 text-purple-600" />
-                <span className="text-sm text-purple-700">Overstock Items</span>
+
+          <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent group-hover:from-purple-500/20 transition-all duration-500" />
+            <CardContent className="p-4 flex items-center justify-between relative">
+              <div>
+                <p className="text-sm text-purple-500 font-semibold">Overstock Items</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{inventoryData.categories.deadStock.length}</p>
+                <p className="text-xs text-muted-foreground mt-1 bg-purple-500/10 inline-block px-2 py-0.5 rounded-full">Consider clearance</p>
               </div>
-              <p className="text-2xl font-bold text-purple-700">{inventoryData.categories.deadStock.length}</p>
-              <p className="text-xs text-purple-600 mt-1">Consider clearance</p>
+              <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-500 shadow-inner">
+                <Package className="h-6 w-6" />
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -200,59 +215,58 @@ export function InventoryValuation() {
 
       {/* Inventory Table */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="flex items-center justify-center py-12 text-indigo-500">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              Inventory Valuation as on {new Date(valuationDate).toLocaleDateString("en-IN", {
-                day: "2-digit",
-                month: "long",
-                year: "numeric",
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
+        <div className="rounded-xl border-0 overflow-hidden glass shadow-xl">
+          <div className="px-6 py-4 border-b border-white/10 bg-white/5 backdrop-blur-md">
+            <h3 className="font-semibold text-lg text-foreground">
+              Detailed Valuation Report
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              As on {new Date(valuationDate).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" })}
+            </p>
+          </div>
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Item</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                  <TableHead className="text-right">Cost Value</TableHead>
-                  <TableHead className="text-right">Retail Value</TableHead>
-                  <TableHead className="text-right">Profit</TableHead>
-                  <TableHead>Status</TableHead>
+              <TableHeader className="bg-white/10 backdrop-blur-md">
+                <TableRow className="border-b border-white/10 hover:bg-transparent">
+                  <TableHead className="font-bold text-foreground">Item</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Stock</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Cost Value</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Retail Value</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Profit</TableHead>
+                  <TableHead className="font-bold text-foreground">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {inventoryData?.items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                       No inventory items found
                     </TableCell>
                   </TableRow>
                 ) : (
                   inventoryData?.items.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <TableCell>
                         <div className="space-y-1">
-                          <p className="font-medium text-sm">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">{item.sku}</p>
+                          <p className="font-semibold text-sm text-foreground">{item.name}</p>
+                          <p className="text-xs text-indigo-400 font-mono">{item.sku}</p>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="space-y-1">
-                          <p className="font-medium">{item.current_stock} {item.unit_type}</p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-bold text-sm">{item.current_stock} <span className="text-xs font-normal text-muted-foreground">{item.unit_type}</span></p>
+                          <p className="text-[10px] text-muted-foreground bg-white/5 inline-block px-1 rounded">
                             Min: {item.min_stock_level}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="space-y-1">
-                          <p className="font-medium">{formatCurrency(item.stock_value)}</p>
+                          <p className="font-medium text-sm">{formatCurrency(item.stock_value)}</p>
                           <p className="text-xs text-muted-foreground">
                             @ {formatCurrency(item.purchase_cost)}
                           </p>
@@ -260,7 +274,7 @@ export function InventoryValuation() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="space-y-1">
-                          <p className="font-medium">{formatCurrency(item.retail_value)}</p>
+                          <p className="font-medium text-sm">{formatCurrency(item.retail_value)}</p>
                           <p className="text-xs text-muted-foreground">
                             @ {formatCurrency(item.retail_price)}
                           </p>
@@ -268,7 +282,7 @@ export function InventoryValuation() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="space-y-1">
-                          <p className={`font-medium ${item.potential_profit >= 0 ? "text-emerald-600" : "text-red-600"}`}>
+                          <p className={`font-bold text-sm ${item.potential_profit >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                             {formatCurrency(Math.abs(item.potential_profit))}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -277,7 +291,7 @@ export function InventoryValuation() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={`text-xs ${getStockStatusColor(item)}`}>
+                        <Badge variant="outline" className={`text-xs border-0 shadow-sm ${getStockStatusColor(item)}`}>
                           {getStockStatus(item)}
                         </Badge>
                       </TableCell>
@@ -286,8 +300,8 @@ export function InventoryValuation() {
                 )}
               </TableBody>
             </Table>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   );

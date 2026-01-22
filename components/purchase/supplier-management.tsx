@@ -40,6 +40,11 @@ import {
 import { Supplier, INDIAN_STATES } from "@/lib/types";
 import { toast } from "sonner";
 
+import { useOrganization } from "@/lib/context/organization";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import useSWR from "swr";
+import { Loader2 } from "lucide-react";
+
 const SUPPLIER_TYPES = [
   { value: "regular", label: "Regular" },
   { value: "manufacturer", label: "Manufacturer" },
@@ -48,7 +53,9 @@ const SUPPLIER_TYPES = [
 ];
 
 export function SupplierManagement() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const { organizationId } = useOrganization();
+  const supabase = getSupabaseBrowserClient();
+
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,59 +79,19 @@ export function SupplierManagement() {
     supplier_type: "regular" as "regular" | "manufacturer" | "distributor" | "importer",
   });
 
-  // Mock data
-  useEffect(() => {
-    const mockSuppliers: Supplier[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        supplier_code: "SUP001",
-        name: "ABC Electronics Pvt Ltd",
-        contact_person: "Rajesh Kumar",
-        phone: "+91 98765 43210",
-        email: "rajesh@abcelectronics.com",
-        address: "123 Industrial Area, Phase 1",
-        city: "Mumbai",
-        state_code: "27",
-        pincode: "400001",
-        gstin: "27ABCDE1234F1Z5",
-        pan_number: "ABCDE1234F",
-        bank_name: "HDFC Bank",
-        bank_account: "1234567890",
-        ifsc_code: "HDFC0001234",
-        payment_terms: 30,
-        credit_limit: 500000,
-        current_balance: 125000,
-        supplier_type: "manufacturer",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        organization_id: "org1",
-        supplier_code: "SUP002",
-        name: "XYZ Trading Company",
-        contact_person: "Priya Sharma",
-        phone: "+91 87654 32109",
-        email: "priya@xyztrading.com",
-        address: "456 Market Street",
-        city: "Delhi",
-        state_code: "07",
-        pincode: "110001",
-        gstin: "07XYZAB5678G2H9",
-        pan_number: "XYZAB5678G",
-        payment_terms: 15,
-        credit_limit: 200000,
-        current_balance: 45000,
-        supplier_type: "distributor",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
-    setSuppliers(mockSuppliers);
-  }, []);
+  const { data: suppliersData, isLoading, mutate } = useSWR(
+    organizationId ? `suppliers-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase
+        .from("suppliers")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false });
+      return (data as Supplier[]) || [];
+    }
+  );
+
+  const suppliers = suppliersData || [];
 
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -132,28 +99,62 @@ export function SupplierManagement() {
     supplier.contact_person?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSave = () => {
-    const newSupplier: Supplier = {
-      id: selectedSupplier?.id || Date.now().toString(),
-      organization_id: "org1",
-      ...formData,
-      current_balance: selectedSupplier?.current_balance || 0,
-      is_active: true,
-      created_at: selectedSupplier?.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+  const handleSave = async () => {
+    if (!organizationId) return;
 
-    if (selectedSupplier) {
-      setSuppliers(suppliers.map(s => s.id === selectedSupplier.id ? newSupplier : s));
-      toast.success("Supplier updated successfully!");
-    } else {
-      setSuppliers([...suppliers, newSupplier]);
-      toast.success("Supplier created successfully!");
+    try {
+      if (selectedSupplier) {
+        // Update
+        const { error } = await supabase
+          .from("suppliers")
+          .update({
+            ...formData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", selectedSupplier.id);
+
+        if (error) throw error;
+        toast.success("Supplier updated successfully!");
+      } else {
+        // Create
+        const { error } = await supabase
+          .from("suppliers")
+          .insert({
+            organization_id: organizationId,
+            ...formData,
+            current_balance: 0,
+            is_active: true,
+          });
+
+        if (error) throw error;
+        toast.success("Supplier created successfully!");
+      }
+
+      mutate(); // Refresh list
+      setIsEditing(false);
+      setSelectedSupplier(null);
+      resetForm();
+    } catch (error: any) {
+      console.error("Error saving supplier:", error);
+      toast.error(`Failed to save supplier: ${error.message}`);
     }
+  };
 
-    setIsEditing(false);
-    setSelectedSupplier(null);
-    resetForm();
+  const handleDelete = async (supplierId: string) => {
+    try {
+      const { error } = await supabase
+        .from("suppliers")
+        .delete()
+        .eq("id", supplierId);
+
+      if (error) throw error;
+
+      toast.success("Supplier deleted successfully!");
+      mutate();
+    } catch (error: any) {
+      console.error("Error deleting supplier:", error);
+      toast.error("Failed to delete supplier");
+    }
   };
 
   const resetForm = () => {
@@ -178,6 +179,18 @@ export function SupplierManagement() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="p-8 flex justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // Helper for edit (reuse logic)
+  // ... (rest of render)
+
+
   const handleEdit = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
     setFormData({
@@ -200,11 +213,6 @@ export function SupplierManagement() {
       supplier_type: supplier.supplier_type,
     });
     setIsEditing(true);
-  };
-
-  const handleDelete = (supplierId: string) => {
-    setSuppliers(suppliers.filter(s => s.id !== supplierId));
-    toast.success("Supplier deleted successfully!");
   };
 
   const generateSupplierCode = () => {
@@ -233,8 +241,8 @@ export function SupplierManagement() {
         </Button>
       </div>
 
-      {/* Search and Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="glass border-0 shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -270,15 +278,17 @@ export function SupplierManagement() {
             </div>
           </CardContent>
         </Card>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search suppliers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 glass border-0 shadow-lg"
-          />
-        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="Search suppliers..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 glass border-0 shadow-lg h-11"
+        />
       </div>
 
       {/* Suppliers Table */}

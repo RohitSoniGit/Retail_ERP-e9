@@ -77,94 +77,112 @@ export function VouchersList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="bg-emerald-50 border-emerald-200 cursor-pointer hover:bg-emerald-100 transition-colors" onClick={() => openAddDialog("receipt")}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ArrowDownLeft className="h-4 w-4 text-emerald-600" />
-              <span className="text-sm text-emerald-700">Receipts Today</span>
+      <div className="grid grid-cols-2 gap-4">
+        <Card
+          className="glass border-0 shadow-lg cursor-pointer hover:scale-[1.02] transition-transform duration-200 group overflow-hidden relative"
+          onClick={() => openAddDialog("receipt")}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent group-hover:from-emerald-500/20 transition-all" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-full bg-emerald-500/20 text-emerald-500">
+                <ArrowDownLeft className="h-5 w-5" />
+              </div>
+              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">Receipts Today</span>
             </div>
-            <p className="text-xl font-bold text-emerald-700">{formatCurrency(todayReceipts)}</p>
-            <p className="text-xs text-emerald-600 mt-1">Tap to add receipt</p>
+            <p className="text-2xl font-bold text-foreground">{formatCurrency(todayReceipts)}</p>
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1 group-hover:text-emerald-500 transition-colors">
+              <Plus className="h-3 w-3" /> Tap to add receipt
+            </p>
           </CardContent>
         </Card>
-        
-        <Card className="bg-red-50 border-red-200 cursor-pointer hover:bg-red-100 transition-colors" onClick={() => openAddDialog("payment")}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <ArrowUpRight className="h-4 w-4 text-red-600" />
-              <span className="text-sm text-red-700">Payments Today</span>
+
+        <Card
+          className="glass border-0 shadow-lg cursor-pointer hover:scale-[1.02] transition-transform duration-200 group overflow-hidden relative"
+          onClick={() => openAddDialog("payment")}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent group-hover:from-red-500/20 transition-all" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="p-2 rounded-full bg-red-500/20 text-red-500">
+                <ArrowUpRight className="h-5 w-5" />
+              </div>
+              <span className="text-sm font-semibold text-red-600 dark:text-red-400">Payments Today</span>
             </div>
-            <p className="text-xl font-bold text-red-700">{formatCurrency(todayPayments)}</p>
-            <p className="text-xs text-red-600 mt-1">Tap to add payment</p>
+            <p className="text-2xl font-bold text-foreground">{formatCurrency(todayPayments)}</p>
+            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1 group-hover:text-red-500 transition-colors">
+              <Plus className="h-3 w-3" /> Tap to add payment
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Search & Tabs */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search vouchers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-10 glass border-0 shadow-sm h-11"
           />
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full">
-            <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
-            <TabsTrigger value="receipt" className="flex-1">Receipts</TabsTrigger>
-            <TabsTrigger value="payment" className="flex-1">Payments</TabsTrigger>
+          <TabsList className="w-full glass border-0 p-1 h-12">
+            <TabsTrigger value="all" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-foreground data-[state=active]:shadow-md transition-all text-xs sm:text-sm">All</TabsTrigger>
+            <TabsTrigger value="receipt" className="flex-1 data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-500 data-[state=active]:shadow-md transition-all text-xs sm:text-sm">Receipts</TabsTrigger>
+            <TabsTrigger value="payment" className="flex-1 data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 data-[state=active]:shadow-md transition-all text-xs sm:text-sm">Payments</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
 
       {/* Vouchers Table */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="flex items-center justify-center py-12 text-indigo-500">
+          <Loader2 className="h-8 w-8 animate-spin" />
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="rounded-xl border-0 overflow-hidden glass shadow-xl">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>Voucher</TableHead>
-                <TableHead>Party</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+            <TableHeader className="bg-white/10 backdrop-blur-md">
+              <TableRow className="border-b border-white/10 hover:bg-transparent">
+                <TableHead className="font-bold text-foreground">Voucher</TableHead>
+                <TableHead className="font-bold text-foreground">Party</TableHead>
+                <TableHead className="text-right font-bold text-foreground">Amount</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredVouchers?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                    No vouchers found
+                  <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
+                    <div className="flex flex-col items-center gap-3">
+                      <Search className="h-8 w-8 opacity-50" />
+                      <p>No vouchers found</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredVouchers?.map((voucher) => (
-                  <TableRow key={voucher.id}>
+                  <TableRow key={voucher.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <TableCell>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Badge
                             variant="outline"
-                            className={
-                              voucher.voucher_type === "receipt"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : "bg-red-50 text-red-700 border-red-200"
-                            }
+                            className={`border-0 shadow-sm ${voucher.voucher_type === "receipt"
+                                ? "bg-emerald-500/10 text-emerald-600"
+                                : "bg-red-500/10 text-red-600"
+                              }`}
                           >
                             {voucher.voucher_type === "receipt" ? "RV" : "PV"}
                           </Badge>
-                          <span className="text-sm font-medium">{voucher.voucher_number}</span>
+                          <span className="text-sm font-semibold font-mono">{voucher.voucher_number}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground pl-1">
                           {new Date(voucher.voucher_date).toLocaleDateString("en-IN", {
                             day: "2-digit",
                             month: "short",
@@ -174,20 +192,19 @@ export function VouchersList() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <p className="text-sm">{voucher.party_name || "-"}</p>
+                      <p className="text-sm font-medium">{voucher.party_name || "-"}</p>
                       {voucher.narration && (
-                        <p className="text-xs text-muted-foreground truncate max-w-[150px]">
+                        <p className="text-xs text-muted-foreground truncate max-w-[150px] opacity-80">
                           {voucher.narration}
                         </p>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       <span
-                        className={`font-medium ${
-                          voucher.voucher_type === "receipt"
+                        className={`font-bold font-mono ${voucher.voucher_type === "receipt"
                             ? "text-emerald-600"
-                            : "text-red-600"
-                        }`}
+                            : "text-red-500"
+                          }`}
                       >
                         {voucher.voucher_type === "receipt" ? "+" : "-"}
                         {formatCurrency(voucher.amount)}

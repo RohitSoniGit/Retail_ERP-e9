@@ -108,45 +108,51 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl glass border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Add New Item</DialogTitle>
+          <DialogTitle className="text-2xl gradient-text">Add New Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-6 py-6 px-2 max-h-[60vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-6 py-6 px-2 max-h-[60vh] overflow-y-auto scrollbar-none">
+            <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="sku">SKU</Label>
+                <Label htmlFor="sku" className="text-sm font-semibold flex items-center gap-2">
+                  SKU
+                </Label>
                 <Input
                   id="sku"
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   placeholder="ITM001"
                   required
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="name">Item Name</Label>
+                <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-2">
+                  Item Name
+                </Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Product name"
                   required
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category" className="text-sm font-semibold">Category</Label>
               <Select
                 value={formData.category_id}
                 onValueChange={(value) => setFormData({ ...formData, category_id: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass border-0">
                   <SelectItem value="none">None</SelectItem>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
@@ -157,7 +163,7 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="purchase_cost">Cost</Label>
+                <Label htmlFor="purchase_cost" className="text-sm font-semibold">Cost</Label>
                 <Input
                   id="purchase_cost"
                   type="number"
@@ -167,10 +173,11 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
                   onChange={(e) => setFormData({ ...formData, purchase_cost: e.target.value })}
                   placeholder="0"
                   required
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="wholesale_price">Wholesale</Label>
+                <Label htmlFor="wholesale_price" className="text-sm font-semibold">Wholesale</Label>
                 <Input
                   id="wholesale_price"
                   type="number"
@@ -180,10 +187,11 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
                   onChange={(e) => setFormData({ ...formData, wholesale_price: e.target.value })}
                   placeholder="0"
                   required
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="retail_price">Retail</Label>
+                <Label htmlFor="retail_price" className="text-sm font-semibold">Retail</Label>
                 <Input
                   id="retail_price"
                   type="number"
@@ -193,21 +201,22 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
                   onChange={(e) => setFormData({ ...formData, retail_price: e.target.value })}
                   placeholder="0"
                   required
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="unit_type">Unit Type</Label>
+                <Label htmlFor="unit_type" className="text-sm font-semibold">Unit Type</Label>
                 <Select
                   value={formData.unit_type}
                   onValueChange={(value) => setFormData({ ...formData, unit_type: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="glass border-0 h-11 shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="glass border-0">
                     <SelectItem value="pcs">Pieces</SelectItem>
                     <SelectItem value="box">Box</SelectItem>
                     <SelectItem value="kg">Kg</SelectItem>
@@ -217,7 +226,7 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pieces_per_unit">Pcs/Unit</Label>
+                <Label htmlFor="pieces_per_unit" className="text-sm font-semibold">Pcs/Unit</Label>
                 <Input
                   id="pieces_per_unit"
                   type="number"
@@ -225,10 +234,11 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
                   value={formData.pieces_per_unit}
                   onChange={(e) => setFormData({ ...formData, pieces_per_unit: e.target.value })}
                   placeholder="1"
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="current_stock">Stock</Label>
+                <Label htmlFor="current_stock" className="text-sm font-semibold">Stock</Label>
                 <Input
                   id="current_stock"
                   type="number"
@@ -237,20 +247,21 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
                   onChange={(e) => setFormData({ ...formData, current_stock: e.target.value })}
                   placeholder="0"
                   required
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gst_rate">GST Rate (%)</Label>
+              <Label htmlFor="gst_rate" className="text-sm font-semibold">GST Rate (%)</Label>
               <Select
                 value={formData.gst_rate}
                 onValueChange={(value) => setFormData({ ...formData, gst_rate: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass border-0">
                   {GST_RATES.map((rate) => (
                     <SelectItem key={rate} value={rate.toString()}>
                       {rate}%
@@ -260,11 +271,11 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="hover:bg-white/10">
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="holographic text-white shadow-lg border-0">
               {loading ? "Adding..." : "Add Item"}
             </Button>
           </DialogFooter>

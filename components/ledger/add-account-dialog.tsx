@@ -103,36 +103,38 @@ export function AddAccountDialog({ open, onOpenChange, onSuccess }: AddAccountDi
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md glass border-0 shadow-2xl">
                 <DialogHeader>
-                    <DialogTitle>Add New Ledger Account</DialogTitle>
+                    <DialogTitle className="text-2xl gradient-text">Add New Ledger Account</DialogTitle>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6 pt-4">
                     <div className="space-y-2">
-                        <Label htmlFor="account_name">Account Name *</Label>
+                        <Label htmlFor="account_name" className="text-sm font-semibold">Account Name *</Label>
                         <Input
                             id="account_name"
                             value={formData.account_name}
                             onChange={(e) => setFormData({ ...formData, account_name: e.target.value })}
                             placeholder="e.g. HDFC Bank"
                             required
+                            className="glass border-0 shadow-inner h-11"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="account_code">Account Code (Optional)</Label>
+                        <Label htmlFor="account_code" className="text-sm font-semibold">Account Code (Optional)</Label>
                         <Input
                             id="account_code"
                             value={formData.account_code}
                             onChange={(e) => setFormData({ ...formData, account_code: e.target.value })}
                             placeholder="Auto-generated if empty"
+                            className="glass border-0 shadow-inner h-11"
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="account_type">Type</Label>
+                            <Label htmlFor="account_type" className="text-sm font-semibold">Type</Label>
                             <Select
                                 value={formData.account_type}
                                 onValueChange={(value) => {
@@ -143,10 +145,10 @@ export function AddAccountDialog({ open, onOpenChange, onSuccess }: AddAccountDi
                                     });
                                 }}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="glass border-0">
                                     {ACCOUNT_TYPES.map((type) => (
                                         <SelectItem key={type.value} value={type.value}>
                                             {type.label}
@@ -157,15 +159,15 @@ export function AddAccountDialog({ open, onOpenChange, onSuccess }: AddAccountDi
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="account_group">Group</Label>
+                            <Label htmlFor="account_group" className="text-sm font-semibold">Group</Label>
                             <Select
                                 value={formData.account_group}
                                 onValueChange={(value) => setFormData({ ...formData, account_group: value })}
                             >
-                                <SelectTrigger>
+                                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="glass border-0">
                                     {ACCOUNT_GROUPS[formData.account_type as keyof typeof ACCOUNT_GROUPS].map((group) => (
                                         <SelectItem key={group} value={group}>
                                             {group}
@@ -177,27 +179,28 @@ export function AddAccountDialog({ open, onOpenChange, onSuccess }: AddAccountDi
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="opening_balance">Opening Balance</Label>
+                        <Label htmlFor="opening_balance" className="text-sm font-semibold">Opening Balance</Label>
                         <Input
                             id="opening_balance"
                             type="number"
                             value={formData.opening_balance}
                             onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
                             placeholder="0.00"
+                            className="glass border-0 shadow-inner h-11"
                         />
                         <p className="text-xs text-muted-foreground">Negative value for Credit balance</p>
                     </div>
 
-                    <div className="flex gap-2 pt-4">
+                    <div className="flex gap-4 pt-4">
                         <Button
                             type="button"
-                            variant="outline"
-                            className="flex-1"
+                            variant="ghost"
+                            className="flex-1 hover:bg-white/10"
                             onClick={() => onOpenChange(false)}
                         >
                             Cancel
                         </Button>
-                        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                        <Button type="submit" className="flex-1 holographic text-white shadow-lg border-0" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                             Create Account
                         </Button>

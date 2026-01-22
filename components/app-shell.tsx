@@ -138,7 +138,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-x-hidden">
       {/* Floating Particles Background */}
       <FloatingParticles />
 
@@ -147,17 +147,17 @@ export function AppShell({ children }: { children: ReactNode }) {
         <DemoBanner />
       </div>
 
-      {/* Clean Header */}
-      <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
+      {/* Clean Header - Glassmorphism */}
+      <header className="sticky top-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/40">
         <div className="flex items-center justify-between h-[88px] px-6 w-full md:pl-[126px]">
           <div className="flex items-center gap-4">
             {/* Logo removed from header as requested */}
             <div>
-              <span className="font-semibold text-lg text-foreground">
+              <span className="font-bold text-xl gradient-text">
                 {loading ? "Loading..." : organization?.name || "Business Hub"}
               </span>
               {organization?.gstin && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">
                   GST: {organization.gstin}
                 </p>
               )}
@@ -170,13 +170,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                    <Users className="h-4 w-4 text-primary" />
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-secondary/50 transition-colors">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex items-center justify-center border border-indigo-200/20 shadow-sm">
+                    <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 glass border-border/50">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -216,7 +216,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <FABMenu />
 
       {/* Bottom Navigation - Mobile */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/40 pb-safe">
         <div className="flex justify-around py-3 px-2">
           {navItems.map((item, index) => {
             const Icon = item.icon;
@@ -226,13 +226,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[60px]",
+                  "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 min-w-[60px]",
                   active
-                    ? "text-primary bg-primary/10"
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 scale-105"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className={cn("h-5 w-5 transition-transform", active && "-translate-y-0.5")} />
                 <span className="text-[10px] font-medium">{item.label}</span>
               </Link>
             );
@@ -240,15 +240,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </nav>
 
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - Premium Glass */}
       <nav className={cn(
-        "hidden md:flex fixed left-0 top-0 h-screen w-[110px] flex-col items-center gap-2 py-4 bg-card border-r border-border z-[60] overflow-y-auto"
+        "hidden md:flex fixed left-0 top-0 h-screen w-[110px] flex-col items-center gap-2 py-4 bg-background/60 backdrop-blur-2xl border-r border-border/40 z-[60] overflow-y-auto scrollbar-none"
       )}>
         {/* Company Logo at Top */}
-        <div className="mb-4 p-2 sticky top-0 bg-card z-10 w-full flex justify-center pb-4 border-b border-border/10">
+        <div className="mb-2 p-4 sticky top-0 z-20 w-full flex justify-center bg-background/80 backdrop-blur-xl border-b border-border/40">
           <Link href="/">
             {organization?.logo_url ? (
-              <div className="h-12 w-12 rounded-xl overflow-hidden shadow-lg hover:opacity-90 transition-opacity cursor-pointer bg-white flex items-center justify-center">
+              <div className="h-12 w-12 rounded-2xl overflow-hidden shadow-xl hover:scale-105 transition-transform cursor-pointer bg-white flex items-center justify-center border border-white/20">
                 <img
                   src={organization.logo_url}
                   alt={organization.name || "Logo"}
@@ -256,15 +256,15 @@ export function AppShell({ children }: { children: ReactNode }) {
                 />
               </div>
             ) : (
-              <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity cursor-pointer">
-                <Store className="h-6 w-6 text-primary-foreground" />
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer">
+                <Store className="h-5 w-5 text-white" />
               </div>
             )}
           </Link>
         </div>
 
-        <div className="flex flex-col gap-2 w-full px-2">
-          {sideNavItems.map((item) => {
+        <div className="flex flex-col gap-3 w-full px-3">
+          {sideNavItems.map((item, index) => {
             const Icon = item.icon;
             const active = isActive(item.href);
             return (
@@ -272,15 +272,19 @@ export function AppShell({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 p-3 rounded-lg transition-colors hover-lift",
+                  "group flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all duration-300 relative overflow-hidden",
                   active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25 scale-105"
+                    : "text-muted-foreground hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/10"
                 )}
                 title={item.label}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-[10px] font-medium text-center">{item.label}</span>
+                <Icon className={cn("h-5 w-5 transition-transform duration-300", !active && "group-hover:scale-110")} />
+                <span className={cn("text-[10px] font-semibold text-center transition-colors", active ? "text-white/90" : "")}>{item.label}</span>
+
+                {active && (
+                  <div className="absolute inset-0 bg-white/20 animate-pulse rounded-2xl pointer-events-none" />
+                )}
               </Link>
             );
           })}

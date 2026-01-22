@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, type DashboardStats, type Item, type Sale } from "@/lib/types";
-import { demoDashboardStats, demoSales } from "@/lib/demo-data";
+import { DEMO_ORG_ID } from "@/lib/constants";
 import {
   Loader2,
   AlertTriangle,
@@ -102,38 +102,9 @@ export default function DashboardPage() {
   const { data: stats, isLoading } = useSWR(
     organizationId ? `dashboard-${organizationId}` : null,
     async () => {
-      // Enhanced demo data with more business metrics
-      if (organizationId === 'demo-org-id') {
-        return {
-          ...demoDashboardStats,
-          recentSales: demoSales,
-          // Enhanced metrics
-          totalCustomers: 156,
-          activeSuppliers: 8,
-          totalItems: 245,
-          outOfStockItems: 3,
-          pendingOrders: 5,
-          completedOrders: 23,
-          bankBalance: 850000,
-          advancesPaid: 45000,
-          inventoryValue: 2450000,
-          monthlyTarget: 1500000,
-          targetAchieved: 75,
-          topSellingItems: [
-            { item_name: "Smartphone XYZ", total_quantity: 25, total_revenue: 450000, growth: 15 },
-            { item_name: "Laptop ABC", total_quantity: 12, total_revenue: 600000, growth: 8 },
-            { item_name: "Tablet DEF", total_quantity: 18, total_revenue: 504000, growth: 22 },
-            { item_name: "Headphones GHI", total_quantity: 45, total_revenue: 135000, growth: -5 },
-          ],
-          recentTransactions: [
-            { id: "INV2024-001", customer: "John Doe", amount: 15000, time: "2 hours ago", status: "completed" },
-            { id: "INV2024-002", customer: "Jane Smith", amount: 8500, time: "4 hours ago", status: "completed" },
-            { id: "INV2024-003", customer: "ABC Company", amount: 25000, time: "6 hours ago", status: "pending" },
-          ],
-        };
-      }
-
       // Real data fetching logic (existing code)
+      if (!organizationId) return null;
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = today.toISOString();
@@ -179,11 +150,12 @@ export default function DashboardPage() {
       // Outstanding credit
       const { data: creditSales } = await supabase
         .from("sales")
-        .select("credit_amount")
+        .select("total_amount, credit_paid")
         .eq("organization_id", organizationId)
         .eq("is_credit", true)
         .eq("is_paid", false);
 
+      // ... inside fetcher
       // 7-day sales trend
       const trendData: { date: string; total: number; count: number }[] = [];
       for (let i = 6; i >= 0; i--) {
@@ -215,6 +187,32 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false })
         .limit(5);
 
+      // Cash in Hand (Latest Cash Register Closing Balance)
+      const { data: cashRegister } = await supabase
+        .from("cash_register")
+        .select("closing_balance")
+        .eq("organization_id", organizationId)
+        .order("register_date", { ascending: false })
+        .limit(1)
+        .single();
+
+      const cashInHand = cashRegister?.closing_balance || 0;
+
+      // Pending Purchase Orders
+      const { count: pendingPO } = await supabase
+        .from("purchase_orders")
+        .select("*", { count: 'exact', head: true })
+        .eq("organization_id", organizationId)
+        .neq("status", "completed");
+
+      // Top Selling Items (Simplified: just getting most recent sold for now to avoid heavy aggregation on client)
+      // In a real app, you'd use a robust RPC or view for this. 
+      const { data: topItems } = await supabase
+        .from("sale_items")
+        .select("item_name, quantity, total_price")
+        .order("quantity", { ascending: false })
+        .limit(5);
+
       return {
         todaySales: todaySales?.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0) || 0,
         todayTransactions: todaySales?.length || 0,
@@ -223,12 +221,13 @@ export default function DashboardPage() {
         monthSales: monthSales?.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0) || 0,
         lowStockItems: (lowStockItems as Item[]) || [],
         lowStockCount: lowStockItems?.length || 0,
-        outstandingCredit: creditSales?.reduce((sum: number, s: any) => sum + (s.credit_amount || 0), 0) || 0,
-        cashInHand: 0,
-        topSellingItems: [],
+        outstandingCredit: creditSales?.reduce((sum: number, s: any) => sum + ((s.total_amount || 0) - (s.credit_paid || 0)), 0) || 0,
+        cashInHand: cashInHand,
+        topSellingItems: topItems || [],
         salesTrend: trendData,
         recentSales: (recentSales as Sale[]) || [],
-      } as DashboardStats & { recentSales: Sale[] };
+        pendingOrdersCount: pendingPO || 0,
+      } as DashboardStats & { recentSales: Sale[], topSellingItems: any[], pendingOrdersCount: number };
     }
   );
 
@@ -261,31 +260,25 @@ export default function DashboardPage() {
     );
   }
 
-  if (!mounted) return null;
+  if (!mounted || !stats) return null;
 
   // Calculate enhanced metrics
-  const salesGrowth = stats?.yesterdaySales > 0
+  const salesGrowth = (stats.yesterdaySales || 0) > 0
     ? ((stats.todaySales - stats.yesterdaySales) / stats.yesterdaySales) * 100
     : 0;
 
-  const inventoryHealth = stats?.lowStockItems
+  const inventoryHealth = stats.lowStockItems
     ? ((245 - stats.lowStockItems.length - 3) / 245) * 100
-    : 85;
+    : 100;
 
-  const orderFulfillment = (23 / (23 + 5)) * 100;
+  const orderFulfillment = 100; // Placeholder
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Enhanced Floating Background */}
       <FloatingElements />
-
-      {/* Animated Background - Changed to Offwhite */}
-      {/* <div className="fixed inset-0 bg-white dark:bg-slate-950/50" /> */}
       <div className="fixed inset-0 bg-background" />
 
-
       <div className="relative z-10 p-6 pb-32 md:pb-6 space-y-6">
-        {/* Enhanced Header with Status */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold gradient-text">Business Command Center</h1>
@@ -368,7 +361,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-right">
                   <Progress value={orderFulfillment} className="w-16 h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">5 pending</p>
+                  <p className="text-xs text-muted-foreground mt-1">{stats.pendingOrdersCount || 0} pending</p>
                 </div>
               </div>
             </CardContent>
@@ -388,8 +381,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <Progress value={75} className="w-16 h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">75% achieved</p>
+                  <Progress value={Math.min(((stats.monthSales || 0) / 100000) * 100, 100)} className="w-16 h-2" />
+                  <p className="text-xs text-muted-foreground mt-1">Goal: ₹100k</p>
                 </div>
               </div>
             </CardContent>
@@ -415,11 +408,11 @@ export default function DashboardPage() {
             <CardContent className="space-y-4 relative z-10">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Cash in Hand</span>
-                <span className="font-semibold text-green-600">₹{(stats?.cashInHand || 125000).toLocaleString()}</span>
+                <span className="font-semibold text-green-600">₹{(stats?.cashInHand || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Bank Balance</span>
-                <span className="font-semibold text-blue-600">₹850,000</span>
+                <span className="font-semibold text-blue-600">₹0</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Outstanding Credit</span>
@@ -427,12 +420,14 @@ export default function DashboardPage() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Advances Paid</span>
-                <span className="font-semibold text-orange-600">₹45,000</span>
+                <span className="font-semibold text-orange-600">₹0</span>
               </div>
               <div className="pt-2 border-t">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Net Position</span>
-                  <span className="font-bold text-green-600">₹930,000</span>
+                  <span className="font-bold text-green-600">
+                    ₹{((stats?.cashInHand || 0) - (stats?.outstandingCredit || 0)).toLocaleString()}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -495,39 +490,34 @@ export default function DashboardPage() {
                 <TrendingUp className="h-5 w-5" />
                 Top Performing Products
               </CardTitle>
-              <CardDescription>Best sellers this month with growth trends</CardDescription>
+              <CardDescription>Best sellers this month</CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Qty Sold</TableHead>
-                    <TableHead>Revenue</TableHead>
-                    <TableHead>Growth</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[
-                    { name: "Smartphone XYZ", quantity: 25, revenue: 450000, growth: 15 },
-                    { name: "Laptop ABC", quantity: 12, revenue: 600000, growth: 8 },
-                    { name: "Tablet DEF", quantity: 18, revenue: 504000, growth: 22 },
-                    { name: "Headphones GHI", quantity: 45, revenue: 135000, growth: -5 },
-                  ].map((item, index) => (
-                    <TableRow key={item.name}>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>₹{item.revenue.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <div className={`flex items-center gap-1 ${item.growth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {item.growth >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          <span className="text-xs">{item.growth >= 0 ? '+' : ''}{item.growth}%</span>
-                        </div>
-                      </TableCell>
+              {stats.topSellingItems && stats.topSellingItems.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Qty Sold</TableHead>
+                      <TableHead>Revenue</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {stats.topSellingItems.map((item: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{item.item_name}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>₹{item.total_price?.toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
+                  <Package className="h-10 w-10 mb-2 opacity-50" />
+                  <p>No sales data available yet.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -543,31 +533,30 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="space-y-4">
-                {[
-                  { id: "INV2024-001", customer: "John Doe", amount: 15000, time: "2 hours ago", status: "completed" },
-                  { id: "INV2024-002", customer: "Jane Smith", amount: 8500, time: "4 hours ago", status: "completed" },
-                  { id: "INV2024-003", customer: "ABC Company", amount: 25000, time: "6 hours ago", status: "pending" },
-                ].map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-3 rounded-lg glass">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${transaction.status === 'completed' ? 'bg-green-500/10' : 'bg-orange-500/10'
-                        }`}>
-                        {transaction.status === 'completed' ?
-                          <CheckCircle className="h-4 w-4 text-green-500" /> :
-                          <Clock className="h-4 w-4 text-orange-500" />
-                        }
+                {stats.recentSales && stats.recentSales.length > 0 ? (
+                  stats.recentSales.map((sale: any) => (
+                    <div key={sale.id} className="flex items-center justify-between p-3 rounded-lg glass">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full bg-green-500/10`}>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{sale.invoice_number}</p>
+                          <p className="text-xs text-muted-foreground">{sale.customer_name || 'Walk-in Customer'}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">{transaction.id}</p>
-                        <p className="text-xs text-muted-foreground">{transaction.customer}</p>
+                      <div className="text-right">
+                        <p className="font-semibold">₹{sale.total_amount?.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(sale.created_at).toLocaleTimeString()}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">₹{transaction.amount.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">{transaction.time}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
+                    <Clock className="h-10 w-10 mb-2 opacity-50" />
+                    <p>No recent activity.</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -591,7 +580,9 @@ export default function DashboardPage() {
                   <span className="font-medium text-red-700 dark:text-red-400">Inventory Alert</span>
                 </div>
                 <p className="text-sm text-red-600 dark:text-red-300">
-                  3 items out of stock, {stats?.lowStockCount || 0} running low
+                  {stats?.lowStockCount > 0
+                    ? `${stats.lowStockCount} items running low`
+                    : "No low stock items"}
                 </p>
                 <Link href="/inventory?tab=alerts">
                   <Button size="sm" variant="outline" className="mt-2 text-red-600 border-red-200">
@@ -606,7 +597,7 @@ export default function DashboardPage() {
                   <span className="font-medium text-orange-700 dark:text-orange-400">Pending Orders</span>
                 </div>
                 <p className="text-sm text-orange-600 dark:text-orange-300">
-                  5 purchase orders awaiting delivery
+                  {stats.pendingOrdersCount || 0} purchase orders awaiting delivery
                 </p>
                 <Link href="/purchase?tab=orders">
                   <Button size="sm" variant="outline" className="mt-2 text-orange-600 border-orange-200">

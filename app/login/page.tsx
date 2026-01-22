@@ -64,7 +64,15 @@ export default function LoginPage() {
             router.push("/");
             router.refresh();
         } catch (err: any) {
-            console.error("Login error:", err);
+            // Only log unexpected errors, not expected auth failures
+            const isExpectedAuthError = err.message?.includes("Invalid login credentials") ||
+                err.message?.includes("Email not confirmed") ||
+                err.message?.includes("User not found");
+
+            if (!isExpectedAuthError) {
+                console.error("Login error:", err);
+            }
+
             setError(err.message || "Invalid email or password");
         } finally {
             setLoading(false);

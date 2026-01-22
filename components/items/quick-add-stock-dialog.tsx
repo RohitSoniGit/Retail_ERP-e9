@@ -85,21 +85,22 @@ export function QuickAddStockDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm glass border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Add Stock</DialogTitle>
+          <DialogTitle className="text-2xl gradient-text">Add Stock</DialogTitle>
         </DialogHeader>
 
-        <div className="mb-4">
-          <p className="font-medium">{item.name}</p>
-          <p className="text-sm text-muted-foreground">
-            Current: {item.current_stock} {item.unit_type}
+        <div className="mb-4 bg-white/10 p-4 rounded-lg backdrop-blur-sm border border-white/10">
+          <p className="font-bold text-lg text-foreground">{item.name}</p>
+          <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+            Current Stock: <span className="text-foreground font-semibold">{item.current_stock} {item.unit_type}</span>
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity to Add *</Label>
+            <Label htmlFor="quantity" className="text-sm font-semibold">Quantity to Add *</Label>
             <Input
               id="quantity"
               type="number"
@@ -109,11 +110,12 @@ export function QuickAddStockDialog({
               placeholder="Enter quantity"
               required
               autoFocus
+              className="glass border-0 shadow-inner h-11 text-lg font-bold"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cost">Purchase Cost per {item.unit_type}</Label>
+            <Label htmlFor="cost" className="text-sm font-semibold">Purchase Cost per {item.unit_type}</Label>
             <Input
               id="cost"
               type="number"
@@ -122,19 +124,24 @@ export function QuickAddStockDialog({
               value={cost}
               onChange={(e) => setCost(e.target.value)}
               placeholder={`Current: ₹${item.purchase_cost}`}
+              className="glass border-0 shadow-inner h-11"
             />
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-4 pt-4">
             <Button
               type="button"
-              variant="outline"
-              className="flex-1 bg-transparent"
+              variant="ghost"
+              className="flex-1 hover:bg-white/10"
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
+            <Button
+              type="submit"
+              className="flex-1 holographic text-white shadow-lg border-0"
+              disabled={loading}
+            >
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Add Stock
             </Button>

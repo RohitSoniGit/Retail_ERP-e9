@@ -135,35 +135,36 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto glass border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Add New Supplier</DialogTitle>
+          <DialogTitle className="text-2xl gradient-text">Add New Supplier</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           {/* Basic Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="supplier_code">Supplier Code</Label>
+              <Label htmlFor="supplier_code" className="text-sm font-semibold">Supplier Code</Label>
               <Input
                 id="supplier_code"
                 value={formData.supplier_code}
                 onChange={(e) => setFormData({ ...formData, supplier_code: e.target.value })}
                 placeholder="Auto-generated if empty"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="supplier_type">Type</Label>
+              <Label htmlFor="supplier_type" className="text-sm font-semibold">Type</Label>
               <Select
                 value={formData.supplier_type}
                 onValueChange={(value: "regular" | "manufacturer" | "distributor" | "importer") =>
                   setFormData({ ...formData, supplier_type: value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass border-0">
                   {SUPPLIER_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
@@ -175,79 +176,85 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Company Name *</Label>
+            <Label htmlFor="name" className="text-sm font-semibold">Company Name *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Supplier company name"
               required
+              className="glass border-0 shadow-inner h-11 text-lg font-medium"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="contact_person">Contact Person</Label>
+              <Label htmlFor="contact_person" className="text-sm font-semibold">Contact Person</Label>
               <Input
                 id="contact_person"
                 value={formData.contact_person}
                 onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
                 placeholder="Contact person name"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone" className="text-sm font-semibold">Phone</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="Mobile number"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="Email address"
+              className="glass border-0 shadow-inner h-11"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address" className="text-sm font-semibold">Address</Label>
             <Textarea
               id="address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="Full address"
               rows={2}
+              className="glass border-0 shadow-inner min-h-[80px]"
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city" className="text-sm font-semibold">City</Label>
               <Input
                 id="city"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 placeholder="City"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
+              <Label htmlFor="state" className="text-sm font-semibold">State</Label>
               <Select
                 value={formData.state_code}
                 onValueChange={(value) => setFormData({ ...formData, state_code: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass border-0 max-h-[200px]">
                   {INDIAN_STATES.map((state) => (
                     <SelectItem key={state.code} value={state.code}>
                       {state.name}
@@ -257,106 +264,114 @@ export function AddSupplierDialog({ open, onOpenChange, onSuccess }: AddSupplier
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pincode">Pincode</Label>
+              <Label htmlFor="pincode" className="text-sm font-semibold">Pincode</Label>
               <Input
                 id="pincode"
                 value={formData.pincode}
                 onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
                 placeholder="Pincode"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
           </div>
 
           {/* Tax Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="gstin">GSTIN</Label>
+              <Label htmlFor="gstin" className="text-sm font-semibold">GSTIN</Label>
               <Input
                 id="gstin"
                 value={formData.gstin}
                 onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
                 placeholder="15-digit GST number"
                 maxLength={15}
+                className="glass border-0 shadow-inner h-11 font-mono"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pan">PAN Number</Label>
+              <Label htmlFor="pan" className="text-sm font-semibold">PAN Number</Label>
               <Input
                 id="pan"
                 value={formData.pan_number}
                 onChange={(e) => setFormData({ ...formData, pan_number: e.target.value.toUpperCase() })}
                 placeholder="10-digit PAN"
                 maxLength={10}
+                className="glass border-0 shadow-inner h-11 font-mono"
               />
             </div>
           </div>
 
           {/* Bank Details */}
           <div className="space-y-2">
-            <Label htmlFor="bank_name">Bank Name</Label>
+            <Label htmlFor="bank_name" className="text-sm font-semibold">Bank Name</Label>
             <Input
               id="bank_name"
               value={formData.bank_name}
               onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
               placeholder="Bank name"
+              className="glass border-0 shadow-inner h-11"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="bank_account">Account Number</Label>
+              <Label htmlFor="bank_account" className="text-sm font-semibold">Account Number</Label>
               <Input
                 id="bank_account"
                 value={formData.bank_account}
                 onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
                 placeholder="Bank account number"
+                className="glass border-0 shadow-inner h-11 font-mono"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ifsc">IFSC Code</Label>
+              <Label htmlFor="ifsc" className="text-sm font-semibold">IFSC Code</Label>
               <Input
                 id="ifsc"
                 value={formData.ifsc_code}
                 onChange={(e) => setFormData({ ...formData, ifsc_code: e.target.value.toUpperCase() })}
                 placeholder="IFSC code"
+                className="glass border-0 shadow-inner h-11 font-mono"
               />
             </div>
           </div>
 
           {/* Payment Terms */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="payment_terms">Payment Terms (Days)</Label>
+              <Label htmlFor="payment_terms" className="text-sm font-semibold">Payment Terms (Days)</Label>
               <Input
                 id="payment_terms"
                 type="number"
                 value={formData.payment_terms}
                 onChange={(e) => setFormData({ ...formData, payment_terms: e.target.value })}
                 placeholder="30"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="credit_limit">Credit Limit</Label>
+              <Label htmlFor="credit_limit" className="text-sm font-semibold">Credit Limit</Label>
               <Input
                 id="credit_limit"
                 type="number"
                 value={formData.credit_limit}
                 onChange={(e) => setFormData({ ...formData, credit_limit: e.target.value })}
                 placeholder="0"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
           </div>
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-4 pt-6">
             <Button
               type="button"
-              variant="outline"
-              className="flex-1 bg-transparent"
+              variant="ghost"
+              className="flex-1 hover:bg-white/10"
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            <Button type="submit" className="flex-1 holographic text-white shadow-lg border-0" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Add Supplier
             </Button>

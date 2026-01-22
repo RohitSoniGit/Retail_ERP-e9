@@ -351,52 +351,61 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
   const totals = calculateTotals();
 
   return (
-    <div className="space-y-6">
-      <Card className="glass border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            {existingPO ? "Edit Purchase Order" : "Create Purchase Order"}
-          </CardTitle>
-          <CardDescription>
-            Create purchase orders to manage your inventory procurement
-          </CardDescription>
+    <div className="space-y-8">
+      <Card className="glass border-0 shadow-2xl overflow-hidden">
+        <CardHeader className="bg-white/5 backdrop-blur-md border-b border-white/10 pb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-indigo-500/20 rounded-xl text-indigo-400">
+              <ShoppingCart className="h-6 w-6" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bold gradient-text">
+                {existingPO ? "Edit Purchase Order" : "Create Purchase Order"}
+              </CardTitle>
+              <CardDescription className="text-muted-foreground mt-1">
+                Manage your inventory procurement with professional purchase orders
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="p-8 space-y-8">
           {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="po_number">PO Number</Label>
+              <Label htmlFor="po_number" className="font-semibold text-sm">PO Number</Label>
               <Input
                 id="po_number"
                 value={formData.po_number}
                 onChange={(e) => setFormData({ ...formData, po_number: e.target.value })}
                 placeholder="PO202401001"
+                className="glass border-0 shadow-inner h-11 font-mono"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="po_date">PO Date</Label>
+              <Label htmlFor="po_date" className="font-semibold text-sm">PO Date</Label>
               <Input
                 id="po_date"
                 type="date"
                 value={formData.po_date}
                 onChange={(e) => setFormData({ ...formData, po_date: e.target.value })}
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="expected_delivery_date">Expected Delivery</Label>
+              <Label htmlFor="expected_delivery_date" className="font-semibold text-sm">Expected Delivery</Label>
               <Input
                 id="expected_delivery_date"
                 type="date"
                 value={formData.expected_delivery_date}
                 onChange={(e) => setFormData({ ...formData, expected_delivery_date: e.target.value })}
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
           </div>
 
           {/* Supplier Selection */}
           <div className="space-y-2">
-            <Label htmlFor="supplier_id">Supplier</Label>
+            <Label htmlFor="supplier_id" className="font-semibold text-sm">Supplier</Label>
             <Select
               value={formData.supplier_id}
               onValueChange={(value) => {
@@ -408,15 +417,15 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
                 }
               }}
             >
-              <SelectTrigger>
+              <SelectTrigger className="glass border-0 shadow-sm h-12 text-base">
                 <SelectValue placeholder="Select supplier" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-0 backdrop-blur-xl">
                 {suppliers.map((supplier) => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    <div className="flex flex-col">
-                      <span>{supplier.name}</span>
-                      <span className="text-sm text-muted-foreground">{supplier.supplier_code}</span>
+                  <SelectItem key={supplier.id} value={supplier.id} className="py-3">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">{supplier.name}</span>
+                      <span className="text-xs text-muted-foreground font-mono">{supplier.supplier_code}</span>
                     </div>
                   </SelectItem>
                 ))}
@@ -425,34 +434,52 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
           </div>
 
           {selectedSupplier && (
-            <Card className="bg-muted/50">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p><strong>Contact:</strong> {selectedSupplier.contact_person}</p>
-                    <p><strong>Phone:</strong> {selectedSupplier.phone}</p>
-                    <p><strong>Email:</strong> {selectedSupplier.email}</p>
+            <Card className="bg-white/5 border-white/10 shadow-inner">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+                  <div className="space-y-3">
+                    <div className="flex justify-between border-b border-white/5 pb-2">
+                      <span className="text-muted-foreground">Contact Person</span>
+                      <span className="font-medium">{selectedSupplier.contact_person}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-white/5 pb-2">
+                      <span className="text-muted-foreground">Phone</span>
+                      <span className="font-medium">{selectedSupplier.phone}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-white/5 pb-2">
+                      <span className="text-muted-foreground">Email</span>
+                      <span className="font-medium">{selectedSupplier.email}</span>
+                    </div>
                   </div>
-                  <div>
-                    <p><strong>GSTIN:</strong> {selectedSupplier.gstin}</p>
-                    <p><strong>Payment Terms:</strong> {selectedSupplier.payment_terms} days</p>
-                    <p><strong>Outstanding:</strong> ₹{selectedSupplier.current_balance.toLocaleString()}</p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between border-b border-white/5 pb-2">
+                      <span className="text-muted-foreground">GSTIN</span>
+                      <span className="font-mono">{selectedSupplier.gstin}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-white/5 pb-2">
+                      <span className="text-muted-foreground">Payment Terms</span>
+                      <span className="font-medium">{selectedSupplier.payment_terms} days</span>
+                    </div>
+                    <div className="flex justify-between border-b border-white/5 pb-2">
+                      <span className="text-muted-foreground">Outstanding</span>
+                      <span className="font-medium text-red-400">₹{selectedSupplier.current_balance.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          <Separator />
+          <Separator className="bg-white/10" />
 
           {/* Items Section */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Items</h3>
+              <h3 className="text-lg font-bold">Items</h3>
               <Button
                 onClick={() => setShowItemDialog(true)}
                 disabled={!selectedSupplier}
-                className="holographic text-white"
+                className="holographic text-white shadow-lg border-0"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Item
@@ -460,95 +487,99 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
             </div>
 
             {poItems.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Item</TableHead>
-                    <TableHead>HSN</TableHead>
-                    <TableHead>Qty</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Disc%</TableHead>
-                    <TableHead>GST%</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {poItems.map((item, index) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{item.item_name}</p>
-                          <p className="text-sm text-muted-foreground">{item.item?.sku}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{item.hsn_code}</TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => updatePOItem(index, 'quantity', Number(e.target.value))}
-                          className="w-20"
-                          min="1"
-                        />
-                      </TableCell>
-                      <TableCell>{item.unit_name}</TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={item.unit_price}
-                          onChange={(e) => updatePOItem(index, 'unit_price', Number(e.target.value))}
-                          className="w-24"
-                          min="0"
-                          step="0.01"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={item.discount_percent}
-                          onChange={(e) => updatePOItem(index, 'discount_percent', Number(e.target.value))}
-                          className="w-20"
-                          min="0"
-                          max="100"
-                        />
-                      </TableCell>
-                      <TableCell>{item.gst_rate}%</TableCell>
-                      <TableCell className="font-medium">
-                        ₹{item.total_price.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => removePOItem(index)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </TableCell>
+              <div className="rounded-xl border border-white/10 overflow-hidden glass shadow-md">
+                <Table>
+                  <TableHeader className="bg-white/5">
+                    <TableRow className="border-b border-white/10 hover:bg-transparent">
+                      <TableHead className="font-bold text-foreground">Item</TableHead>
+                      <TableHead className="font-bold text-foreground">HSN</TableHead>
+                      <TableHead className="font-bold text-foreground">Qty</TableHead>
+                      <TableHead className="font-bold text-foreground">Unit</TableHead>
+                      <TableHead className="font-bold text-foreground">Rate</TableHead>
+                      <TableHead className="font-bold text-foreground">Disc%</TableHead>
+                      <TableHead className="font-bold text-foreground">GST%</TableHead>
+                      <TableHead className="font-bold text-foreground text-right w-32">Amount</TableHead>
+                      <TableHead className="w-12"></TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {poItems.map((item, index) => (
+                      <TableRow key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                        <TableCell>
+                          <div className="py-1">
+                            <p className="font-semibold text-sm">{item.item_name}</p>
+                            <p className="text-xs text-muted-foreground font-mono">{item.item?.sku}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{item.hsn_code}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updatePOItem(index, 'quantity', Number(e.target.value))}
+                            className="w-20 h-9 glass border-0 shadow-inner text-center"
+                            min="1"
+                          />
+                        </TableCell>
+                        <TableCell className="text-sm font-medium">{item.unit_name}</TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.unit_price}
+                            onChange={(e) => updatePOItem(index, 'unit_price', Number(e.target.value))}
+                            className="w-24 h-9 glass border-0 shadow-inner text-right"
+                            min="0"
+                            step="0.01"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.discount_percent}
+                            onChange={(e) => updatePOItem(index, 'discount_percent', Number(e.target.value))}
+                            className="w-16 h-9 glass border-0 shadow-inner text-center"
+                            min="0"
+                            max="100"
+                          />
+                        </TableCell>
+                        <TableCell className="text-sm">{item.gst_rate}%</TableCell>
+                        <TableCell className="text-right font-bold text-sm">
+                          ₹{item.total_price.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => removePOItem(index)}
+                            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-500/10 rounded-full"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No items added yet. Click "Add Item" to get started.
+              <div className="text-center py-16 text-muted-foreground glass rounded-xl border-dashed border-2 border-white/10">
+                <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-lg font-medium">No items added yet</p>
+                <p className="text-sm opacity-70">Click "Add Item" to start building your PO</p>
               </div>
             )}
           </div>
 
           {poItems.length > 0 && (
             <>
-              <Separator />
+              <Separator className="bg-white/10" />
 
               {/* Calculations */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="discount_percent">Overall Discount (%)</Label>
+                      <Label htmlFor="discount_percent" className="text-sm font-semibold">Overall Discount (%)</Label>
                       <Input
                         id="discount_percent"
                         type="number"
@@ -556,139 +587,148 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
                         onChange={(e) => setFormData({ ...formData, discount_percent: Number(e.target.value) })}
                         min="0"
                         max="100"
+                        className="glass border-0 shadow-inner h-10"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="other_charges">Other Charges (₹)</Label>
+                      <Label htmlFor="other_charges" className="text-sm font-semibold">Other Charges (₹)</Label>
                       <Input
                         id="other_charges"
                         type="number"
                         value={formData.other_charges}
                         onChange={(e) => setFormData({ ...formData, other_charges: Number(e.target.value) })}
                         min="0"
+                        className="glass border-0 shadow-inner h-10"
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="advance_paid">Advance Paid (₹)</Label>
+                      <Label htmlFor="advance_paid" className="text-sm font-semibold">Advance Paid (₹)</Label>
                       <Input
                         id="advance_paid"
                         type="number"
                         value={formData.advance_paid}
                         onChange={(e) => setFormData({ ...formData, advance_paid: Number(e.target.value) })}
                         min="0"
+                        className="glass border-0 shadow-inner h-10"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="payment_terms">Payment Terms (Days)</Label>
+                      <Label htmlFor="payment_terms" className="text-sm font-semibold">Payment Terms (Days)</Label>
                       <Input
                         id="payment_terms"
                         type="number"
                         value={formData.payment_terms}
                         onChange={(e) => setFormData({ ...formData, payment_terms: Number(e.target.value) })}
                         min="0"
+                        className="glass border-0 shadow-inner h-10"
                       />
                     </div>
                   </div>
                 </div>
 
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Calculator className="h-4 w-4" />
+                <Card className="bg-white/5 border-0 shadow-inner">
+                  <CardHeader className="pb-4 pt-6 px-6 border-b border-white/5">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Calculator className="h-5 w-5" />
                       Order Summary
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>₹{totals.subtotal.toLocaleString()}</span>
+                  <CardContent className="p-6 space-y-3 text-sm">
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Subtotal</span>
+                      <span className="text-foreground font-medium">₹{totals.subtotal.toLocaleString()}</span>
                     </div>
                     {formData.discount_percent > 0 && (
-                      <div className="flex justify-between text-red-600">
-                        <span>Discount ({formData.discount_percent}%):</span>
+                      <div className="flex justify-between items-center text-red-400">
+                        <span>Discount ({formData.discount_percent}%)</span>
                         <span>-₹{totals.discountAmount.toLocaleString()}</span>
                       </div>
                     )}
                     {totals.cgstAmount > 0 && (
-                      <div className="flex justify-between">
-                        <span>CGST:</span>
-                        <span>₹{totals.cgstAmount.toLocaleString()}</span>
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span>CGST</span>
+                        <span className="text-foreground">₹{totals.cgstAmount.toLocaleString()}</span>
                       </div>
                     )}
                     {totals.sgstAmount > 0 && (
-                      <div className="flex justify-between">
-                        <span>SGST:</span>
-                        <span>₹{totals.sgstAmount.toLocaleString()}</span>
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span>SGST</span>
+                        <span className="text-foreground">₹{totals.sgstAmount.toLocaleString()}</span>
                       </div>
                     )}
                     {totals.igstAmount > 0 && (
-                      <div className="flex justify-between">
-                        <span>IGST:</span>
-                        <span>₹{totals.igstAmount.toLocaleString()}</span>
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span>IGST</span>
+                        <span className="text-foreground">₹{totals.igstAmount.toLocaleString()}</span>
                       </div>
                     )}
                     {formData.other_charges > 0 && (
-                      <div className="flex justify-between">
-                        <span>Other Charges:</span>
-                        <span>₹{formData.other_charges.toLocaleString()}</span>
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span>Other Charges</span>
+                        <span className="text-foreground">₹{formData.other_charges.toLocaleString()}</span>
                       </div>
                     )}
-                    <Separator />
-                    <div className="flex justify-between font-medium">
-                      <span>Total Amount:</span>
-                      <span>₹{totals.totalAmount.toLocaleString()}</span>
+
+                    <Separator className="bg-white/10 my-2" />
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold">Total Amount</span>
+                      <span className="text-xl font-bold gradient-text">₹{totals.totalAmount.toLocaleString()}</span>
                     </div>
+
                     {formData.advance_paid > 0 && (
-                      <>
-                        <div className="flex justify-between text-green-600">
-                          <span>Advance Paid:</span>
+                      <div className="pt-2 space-y-2">
+                        <div className="flex justify-between items-center text-emerald-400">
+                          <span>Advance Paid</span>
                           <span>-₹{formData.advance_paid.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between font-medium">
-                          <span>Balance Amount:</span>
+                        <div className="flex justify-between items-center font-bold bg-white/5 p-2 rounded-lg">
+                          <span>Balance Due</span>
                           <span>₹{totals.balanceAmount.toLocaleString()}</span>
                         </div>
-                      </>
+                      </div>
                     )}
                   </CardContent>
                 </Card>
               </div>
 
-              <Separator />
+              <Separator className="bg-white/10" />
 
               {/* Notes and Terms */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
+                  <Label htmlFor="notes" className="font-semibold text-sm">Notes</Label>
                   <Textarea
                     id="notes"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Internal notes..."
                     rows={3}
+                    className="glass border-0 shadow-inner resize-none focus-visible:ring-offset-0"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="terms_conditions">Terms & Conditions</Label>
+                  <Label htmlFor="terms_conditions" className="font-semibold text-sm">Terms & Conditions</Label>
                   <Textarea
                     id="terms_conditions"
                     value={formData.terms_conditions}
                     onChange={(e) => setFormData({ ...formData, terms_conditions: e.target.value })}
                     placeholder="Terms and conditions..."
                     rows={3}
+                    className="glass border-0 shadow-inner resize-none focus-visible:ring-offset-0"
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => handleSave("draft")}>
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="ghost" onClick={() => handleSave("draft")} className="hover:bg-white/10">
                   <Save className="h-4 w-4 mr-2" />
                   Save as Draft
                 </Button>
-                <Button onClick={() => handleSave("sent")} className="holographic text-white">
+                <Button onClick={() => handleSave("sent")} className="holographic text-white shadow-lg border-0 px-8">
                   <Send className="h-4 w-4 mr-2" />
                   Send to Supplier
                 </Button>
@@ -700,68 +740,76 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
 
       {/* Add Item Dialog */}
       <Dialog open={showItemDialog} onOpenChange={setShowItemDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add Items to Purchase Order</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto glass border-0 shadow-2xl p-0 gap-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="text-2xl font-bold gradient-text">Add Items to Purchase Order</DialogTitle>
             <DialogDescription>
               Select items to add to your purchase order
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="p-6 space-y-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search items..."
+                placeholder="Search items by name or SKU..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 glass border-0 shadow-inner h-11"
               />
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>HSN</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Purchase Cost</TableHead>
-                  <TableHead>GST%</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-muted-foreground">{item.sku}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{item.hsn_code}</TableCell>
-                    <TableCell>
-                      <Badge variant={item.current_stock <= item.min_stock_level ? "destructive" : "secondary"}>
-                        {item.current_stock} {item.unit_name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
-                    <TableCell>{item.gst_rate}%</TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        onClick={() => addItemToPO(item)}
-                        disabled={poItems.some(poItem => poItem.item_id === item.id)}
-                        className="holographic text-white"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
-                    </TableCell>
+            <div className="rounded-xl border-0 overflow-hidden glass shadow-md">
+              <Table>
+                <TableHeader className="bg-white/10">
+                  <TableRow className="border-b border-white/10 hover:bg-transparent">
+                    <TableHead className="font-bold text-foreground">Item</TableHead>
+                    <TableHead className="font-bold text-foreground">HSN</TableHead>
+                    <TableHead className="font-bold text-foreground">Stock</TableHead>
+                    <TableHead className="font-bold text-foreground">Purchase Cost</TableHead>
+                    <TableHead className="font-bold text-foreground">GST%</TableHead>
+                    <TableHead className="font-bold text-foreground text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredItems.map((item) => (
+                    <TableRow key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">{item.name}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{item.sku}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm font-mono">{item.hsn_code}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`border-0 shadow-sm ${item.current_stock <= item.min_stock_level
+                              ? "bg-red-500/10 text-red-500"
+                              : "bg-emerald-500/10 text-emerald-500"
+                            }`}
+                        >
+                          {item.current_stock} {item.unit_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium text-sm">₹{item.purchase_cost.toLocaleString()}</TableCell>
+                      <TableCell className="text-sm">{item.gst_rate}%</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          onClick={() => addItemToPO(item)}
+                          disabled={poItems.some(poItem => poItem.item_id === item.id)}
+                          className="holographic text-white shadow-md border-0 h-8 text-xs"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

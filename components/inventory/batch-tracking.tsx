@@ -122,7 +122,7 @@ export function BatchTracking() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -130,66 +130,80 @@ export function BatchTracking() {
           placeholder="Search batches..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-9"
+          className="pl-10 glass border-0 shadow-inner h-11"
         />
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-          <p className="text-sm text-green-700">Active Batches</p>
-          <p className="text-2xl font-bold text-green-700">{activeBatches}</p>
+        <div className="glass border-0 shadow-lg rounded-xl p-6 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent group-hover:from-green-500/20 transition-all duration-500" />
+          <div className="relative">
+            <p className="text-sm font-medium text-green-600 mb-1">Active Batches</p>
+            <p className="text-3xl font-bold text-foreground">{activeBatches}</p>
+          </div>
         </div>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-          <p className="text-sm text-yellow-700">Expiring Soon</p>
-          <p className="text-2xl font-bold text-yellow-700">{expiringSoonBatches}</p>
-          <p className="text-xs text-yellow-600">Within 30 days</p>
+        <div className="glass border-0 shadow-lg rounded-xl p-6 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent group-hover:from-yellow-500/20 transition-all duration-500" />
+          <div className="relative">
+            <p className="text-sm font-medium text-yellow-600 mb-1">Expiring Soon</p>
+            <p className="text-3xl font-bold text-foreground">{expiringSoonBatches}</p>
+            <p className="text-xs text-yellow-600/80 mt-1 font-medium">Within 30 days</p>
+          </div>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p className="text-sm text-red-700">Expired</p>
-          <p className="text-2xl font-bold text-red-700">{expiredBatches}</p>
+        <div className="glass border-0 shadow-lg rounded-xl p-6 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent group-hover:from-red-500/20 transition-all duration-500" />
+          <div className="relative">
+            <p className="text-sm font-medium text-red-600 mb-1">Expired</p>
+            <p className="text-3xl font-bold text-foreground">{expiredBatches}</p>
+          </div>
         </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <p className="text-sm text-blue-700">Total Value</p>
-          <p className="text-xl font-bold text-blue-700">{formatCurrency(totalValue)}</p>
+        <div className="glass border-0 shadow-lg rounded-xl p-6 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent group-hover:from-blue-500/20 transition-all duration-500" />
+          <div className="relative">
+            <p className="text-sm font-medium text-blue-600 mb-1">Total Value</p>
+            <p className="text-2xl font-bold text-foreground font-mono">{formatCurrency(totalValue)}</p>
+          </div>
         </div>
       </div>
 
       {/* Batches Table */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="flex items-center justify-center py-12 glass rounded-xl border-dashed border-2 border-white/10">
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="glass border-0 rounded-xl shadow-xl overflow-hidden">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>Item & Batch</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead>Dates</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                <TableHead>Status</TableHead>
+            <TableHeader className="bg-white/5 backdrop-blur-md">
+              <TableRow className="border-b border-white/10 hover:bg-transparent">
+                <TableHead className="font-bold text-foreground pl-6">Item & Batch</TableHead>
+                <TableHead className="font-bold text-foreground">Supplier</TableHead>
+                <TableHead className="text-right font-bold text-foreground">Quantity</TableHead>
+                <TableHead className="font-bold text-foreground">Dates</TableHead>
+                <TableHead className="text-right font-bold text-foreground">Value</TableHead>
+                <TableHead className="font-bold text-foreground pr-6">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredBatches?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    No batches found
+                  <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center">
+                      <Package className="h-12 w-12 mb-3 opacity-20" />
+                      <p>No batches found</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredBatches?.map((batch) => (
-                  <TableRow key={batch.id}>
-                    <TableCell>
+                  <TableRow key={batch.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <TableCell className="pl-6">
                       <div className="space-y-1">
-                        <p className="font-medium text-sm">{batch.items?.name}</p>
-                        <p className="text-xs text-muted-foreground">{batch.items?.sku}</p>
+                        <p className="font-medium text-sm text-foreground">{batch.items?.name}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{batch.items?.sku}</p>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs font-mono glass border-0 bg-white/5 shadow-sm">
                             Batch: {batch.batch_number}
                           </Badge>
                         </div>
@@ -197,7 +211,7 @@ export function BatchTracking() {
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <p className="text-sm">{batch.suppliers?.name || "Unknown"}</p>
+                        <p className="text-sm font-medium">{batch.suppliers?.name || "Unknown"}</p>
                         <p className="text-xs text-muted-foreground">
                           {batch.suppliers?.supplier_code}
                         </p>
@@ -205,19 +219,19 @@ export function BatchTracking() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="space-y-1">
-                        <p className="font-medium text-sm">
-                          {batch.quantity_available} / {batch.quantity_received}
+                        <p className="font-bold text-sm">
+                          {batch.quantity_available} <span className="text-muted-foreground font-normal text-xs">/ {batch.quantity_received}</span>
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Available / Received
                         </p>
                         {batch.quantity_sold > 0 && (
-                          <p className="text-xs text-blue-600">
+                          <p className="text-xs text-blue-500 font-medium">
                             Sold: {batch.quantity_sold}
                           </p>
                         )}
                         {batch.quantity_damaged > 0 && (
-                          <p className="text-xs text-red-600">
+                          <p className="text-xs text-red-500 font-medium">
                             Damaged: {batch.quantity_damaged}
                           </p>
                         )}
@@ -228,32 +242,31 @@ export function BatchTracking() {
                         {batch.manufacturing_date && (
                           <p className="text-xs">
                             <span className="text-muted-foreground">Mfg:</span>{" "}
-                            {new Date(batch.manufacturing_date).toLocaleDateString("en-IN", {
+                            <span className="font-medium">{new Date(batch.manufacturing_date).toLocaleDateString("en-IN", {
                               day: "2-digit",
                               month: "short",
                               year: "2-digit",
-                            })}
+                            })}</span>
                           </p>
                         )}
                         {batch.expiry_date && (
-                          <p className={`text-xs ${
-                            isExpired(batch.expiry_date) 
-                              ? "text-red-600" 
-                              : isExpiringSoon(batch.expiry_date) 
-                                ? "text-yellow-600" 
-                                : "text-muted-foreground"
-                          }`}>
-                            <span className="text-muted-foreground">Exp:</span>{" "}
+                          <p className={`text-xs ${isExpired(batch.expiry_date)
+                              ? "text-red-500 font-bold"
+                              : isExpiringSoon(batch.expiry_date)
+                                ? "text-yellow-500 font-bold"
+                                : "text-foreground"
+                            }`}>
+                            <span className="text-muted-foreground font-normal">Exp:</span>{" "}
                             {new Date(batch.expiry_date).toLocaleDateString("en-IN", {
                               day: "2-digit",
                               month: "short",
                               year: "2-digit",
                             })}
                             {isExpiringSoon(batch.expiry_date) && !isExpired(batch.expiry_date) && (
-                              <span className="ml-1 text-yellow-600">⚠️</span>
+                              <span className="ml-1 text-yellow-500">⚠️</span>
                             )}
                             {isExpired(batch.expiry_date) && (
-                              <span className="ml-1 text-red-600">❌</span>
+                              <span className="ml-1 text-red-500">❌</span>
                             )}
                           </p>
                         )}
@@ -261,33 +274,39 @@ export function BatchTracking() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="space-y-1">
-                        <p className="font-medium">
+                        <p className="font-bold font-mono text-sm">
                           {formatCurrency(batch.quantity_available * (batch.purchase_price || 0))}
                         </p>
                         {batch.purchase_price && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground font-mono">
                             @ {formatCurrency(batch.purchase_price)}
                           </p>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(batch.status)}
-                        <Badge variant="outline" className={`text-xs ${getStatusColor(batch.status)}`}>
-                          {batch.status.charAt(0).toUpperCase() + batch.status.slice(1)}
-                        </Badge>
+                    <TableCell className="pr-6">
+                      <div className="flex flex-col gap-2 items-start">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`text-xs border-0 shadow-sm ${batch.status === 'active' ? 'bg-green-500/10 text-green-500' :
+                              batch.status === 'expired' ? 'bg-red-500/10 text-red-500' :
+                                batch.status === 'damaged' ? 'bg-orange-500/10 text-orange-500' :
+                                  batch.status === 'recalled' ? 'bg-purple-500/10 text-purple-500' :
+                                    'bg-slate-500/10 text-slate-500'
+                            }`}>
+                            {batch.status.charAt(0).toUpperCase() + batch.status.slice(1)}
+                          </Badge>
+                        </div>
+                        {isExpiringSoon(batch.expiry_date) && !isExpired(batch.expiry_date) && (
+                          <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-500 border-0 shadow-sm">
+                            Expiring Soon
+                          </Badge>
+                        )}
+                        {isExpired(batch.expiry_date) && (
+                          <Badge variant="outline" className="text-xs bg-red-500/10 text-red-500 border-0 shadow-sm">
+                            Expired
+                          </Badge>
+                        )}
                       </div>
-                      {isExpiringSoon(batch.expiry_date) && !isExpired(batch.expiry_date) && (
-                        <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200 mt-1">
-                          Expiring Soon
-                        </Badge>
-                      )}
-                      {isExpired(batch.expiry_date) && (
-                        <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200 mt-1">
-                          Expired
-                        </Badge>
-                      )}
                     </TableCell>
                   </TableRow>
                 ))

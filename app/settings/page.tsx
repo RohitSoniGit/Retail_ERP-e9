@@ -10,9 +10,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PrintFormatManager } from "@/components/settings/print-format-manager";
 import { CommodityPriceManager } from "@/components/settings/commodity-price-manager";
+import { UserManagement } from "@/components/settings/user-management";
 import {
   Settings,
   Building2,
+  Users,
   Sparkles,
   Save,
   RefreshCw,
@@ -21,8 +23,21 @@ import {
   Printer,
   FileText,
   TrendingUp,
+  Bell,
+  Mail,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Floating icons for background
 function FloatingIcons() {
@@ -65,6 +80,9 @@ export default function SettingsPage() {
   const { organization, updateOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -84,6 +102,32 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setMounted(true);
+    checkUserRole();
+  }, []);
+
+  const checkUserRole = async () => {
+    const supabase = getSupabaseBrowserClient();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (roleData?.role === 'admin') {
+          setIsAdmin(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error checking role:", error);
+    } finally {
+      setCheckingRole(false);
+    }
+  };
+
+  useEffect(() => {
     if (organization) {
       setFormData({
         name: organization.name || "",
@@ -166,7 +210,45 @@ export default function SettingsPage() {
     }
   };
 
+  const handleFactoryReset = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/settings/reset-data", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("System reset successfully. All transactions cleared.");
+        setResetConfirmOpen(false);
+      } else {
+        toast.error("Failed to reset system: " + data.error);
+      }
+    } catch (e) {
+      toast.error("An error occurred during reset.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!mounted) return null;
+
+  if (checkingRole) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#f8f9fa] dark:bg-slate-950">
+        <div className="text-center space-y-4">
+          <Shield className="h-12 w-12 text-red-500 mx-auto" />
+          <h1 className="text-2xl font-bold">Access Denied</h1>
+          <p className="text-muted-foreground">You need administrator privileges to view this page.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -179,22 +261,34 @@ export default function SettingsPage() {
 
       <div className="relative z-10 w-full p-6 space-y-8">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 glass border-0 shadow-lg h-auto p-1">
-            <TabsTrigger value="general" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 glass border-0 shadow-lg h-auto p-1 gap-1">
+            <TabsTrigger value="general" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
               <Building2 className="h-4 w-4" />
               General
             </TabsTrigger>
-            <TabsTrigger value="print-formats" className="flex items-center gap-2">
+            <TabsTrigger value="users" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
+              <Users className="h-4 w-4" />
+              Users & Roles
+            </TabsTrigger>
+            <TabsTrigger value="print-formats" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
               <Printer className="h-4 w-4" />
               Print Formats
             </TabsTrigger>
-            <TabsTrigger value="preferences" className="flex items-center gap-2">
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
               <Settings className="h-4 w-4" />
               Preferences
             </TabsTrigger>
-            <TabsTrigger value="commodities" className="flex items-center gap-2">
+            <TabsTrigger value="commodities" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
               <TrendingUp className="h-4 w-4" />
-              Commodity Prices
+              Commodities
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
+              <Bell className="h-4 w-4" />
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="danger-zone" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2 hover:bg-red-500/10">
+              <AlertTriangle className="h-4 w-4" />
+              Danger Zone
             </TabsTrigger>
           </TabsList>
 
@@ -438,6 +532,10 @@ export default function SettingsPage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="users" className="mt-6">
+            <UserManagement />
+          </TabsContent>
+
           <TabsContent value="print-formats" className="space-y-8">
             <Card className="glass border-0 shadow-2xl hover-lift relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-emerald-500/5" />
@@ -509,7 +607,161 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-8">
+            <Card className="glass border-0 shadow-2xl hover-lift relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-pink-500/5 to-purple-500/5" />
+              <CardHeader className="pb-6 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl holographic">
+                    <Bell className="h-6 w-6 text-white drop-shadow-lg" />
+                  </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl gradient-text">Email & Notifications</CardTitle>
+                    <CardDescription className="text-base">
+                      Configure email settings for OTPs, invoices, and alerts
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="senderEmail" className="text-sm font-bold flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-pink-500" />
+                      Sender Email
+                    </Label>
+                    <Input
+                      id="senderEmail"
+                      placeholder="noreply@yourdomain.com"
+                      className="glass border-0 shadow-lg h-12"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Email address to display in sent emails
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="smtpHost" className="text-sm font-bold">SMTP Host</Label>
+                    <Input
+                      id="smtpHost"
+                      placeholder="smtp.gmail.com"
+                      className="glass border-0 shadow-lg h-12"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="smtpPort" className="text-sm font-bold">SMTP Port</Label>
+                    <Input
+                      id="smtpPort"
+                      placeholder="587"
+                      className="glass border-0 shadow-lg h-12"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label htmlFor="smtpUser" className="text-sm font-bold">SMTP Username</Label>
+                    <Input
+                      id="smtpUser"
+                      placeholder="Enter SMTP username"
+                      className="glass border-0 shadow-lg h-12"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-sm font-bold">Features</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-2 p-4 rounded-xl glass">
+                      <div className="h-4 w-4 rounded-full bg-green-500" />
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">Email OTP for Login</p>
+                        <p className="text-xs text-muted-foreground">Enable OTP verification for users</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2 p-4 rounded-xl glass">
+                      <div className="h-4 w-4 rounded-full bg-green-500" />
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">Password Reset Emails</p>
+                        <p className="text-xs text-muted-foreground">Allow users to reset password via email</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-4">
+                  <Button className="holographic text-white">
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Email Settings
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="danger-zone" className="space-y-8">
+            <Card className="glass border-0 shadow-2xl hover-lift relative overflow-hidden border-l-4 border-l-red-500">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-orange-500/5" />
+              <CardHeader className="pb-6 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl bg-red-500/10 text-red-500 shadow-inner">
+                    <AlertTriangle className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-2xl text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+                    <CardDescription className="text-base">
+                      Destructive actions that cannot be undone. Please proceed with caution.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="relative z-10">
+                <div className="flex items-center justify-between p-6 rounded-2xl bg-red-500/5 border border-red-500/10">
+                  <div className="space-y-1">
+                    <p className="font-bold text-lg text-red-600 dark:text-red-400">Factory Reset</p>
+                    <p className="text-sm text-muted-foreground max-w-xl">
+                      This action will permanently delete all transaction data including sales, purchases, inventory movements, vouchers, and logs. Settings, Users, and Master Data (Items, Customers) will be preserved.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    className="holographic-red shadow-lg"
+                    onClick={() => setResetConfirmOpen(true)}
+                  >
+                    Reset All Data
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
+
+        <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+          <DialogContent className="glass border-0 shadow-2xl max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-2 text-red-500 mb-2">
+                <AlertTriangle className="h-6 w-6" />
+                <DialogTitle className="text-xl">Confirm System Reset</DialogTitle>
+              </div>
+              <DialogDescription className="text-base text-foreground/80">
+                Are you absolutely sure you want to proceed? This will wipe all transactional data from the system. This action <span className="font-bold text-red-500">cannot be undone</span>.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 mt-4">
+              <Button variant="outline" onClick={() => setResetConfirmOpen(false)} disabled={loading}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleFactoryReset}
+                disabled={loading}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Yes, Wipe Everything
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

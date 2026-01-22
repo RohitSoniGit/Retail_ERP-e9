@@ -55,17 +55,17 @@ export function LedgerAccountsList() {
   const getAccountTypeColor = (type: string) => {
     switch (type) {
       case "asset":
-        return "bg-green-100 text-green-700 border-green-200";
+        return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
       case "liability":
-        return "bg-red-100 text-red-700 border-red-200";
+        return "bg-red-500/10 text-red-600 dark:text-red-400";
       case "equity":
-        return "bg-blue-100 text-blue-700 border-blue-200";
+        return "bg-blue-500/10 text-blue-600 dark:text-blue-400";
       case "income":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+        return "bg-green-500/10 text-green-600 dark:text-green-400";
       case "expense":
-        return "bg-orange-100 text-orange-700 border-orange-200";
+        return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
       default:
-        return "bg-muted text-muted-foreground";
+        return "bg-muted/50 text-muted-foreground";
     }
   };
 
@@ -87,16 +87,16 @@ export function LedgerAccountsList() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <div className="relative flex-1">
+        <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search accounts..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-9 glass border-0 shadow-sm h-10"
           />
         </div>
-        <Button size="sm" onClick={() => setIsAddDialogOpen(true)}>
+        <Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="holographic text-white shadow-lg border-0">
           <Plus className="h-4 w-4 mr-1" />
           Add Account
         </Button>
@@ -110,61 +110,63 @@ export function LedgerAccountsList() {
 
       {/* Accounts by Type */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <div className="flex items-center justify-center py-12 text-indigo-500">
+          <Loader2 className="h-6 w-6 animate-spin" />
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Object.entries(groupedAccounts || {}).map(([type, typeAccounts]) => (
-            <div key={type} className="space-y-2">
+            <div key={type} className="space-y-3">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className={`${getAccountTypeColor(type)} font-medium`}>
+                <Badge variant="outline" className={`${getAccountTypeColor(type)} font-bold px-3 py-1 shadow-sm border-0 glass`}>
                   {type.toUpperCase()}
                 </Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm font-medium text-muted-foreground">
                   {typeAccounts.length} accounts
                 </span>
               </div>
 
-              <div className="border rounded-lg overflow-hidden">
+              <div className="rounded-xl border-0 overflow-hidden glass shadow-md">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Account</TableHead>
-                      <TableHead>Group</TableHead>
-                      <TableHead className="text-right">Opening Balance</TableHead>
-                      <TableHead className="text-right">Current Balance</TableHead>
+                  <TableHeader className="bg-white/10 backdrop-blur-md">
+                    <TableRow className="border-b border-white/10 hover:bg-transparent">
+                      <TableHead className="font-bold text-foreground">Account</TableHead>
+                      <TableHead className="font-bold text-foreground">Group</TableHead>
+                      <TableHead className="text-right font-bold text-foreground">Opening Balance</TableHead>
+                      <TableHead className="text-right font-bold text-foreground">Current Balance</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {typeAccounts.map((account) => (
-                      <TableRow key={account.id}>
+                      <TableRow key={account.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                         <TableCell>
                           <div className="space-y-1">
-                            <p className="font-medium text-sm">{account.account_name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Code: {account.account_code}
-                            </p>
-                            {account.is_system_account && (
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-                                System
-                              </Badge>
-                            )}
+                            <p className="font-semibold text-sm text-foreground">{account.account_name}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground font-mono bg-white/5 px-1.5 py-0.5 rounded">
+                                {account.account_code}
+                              </span>
+                              {account.is_system_account && (
+                                <Badge variant="outline" className="text-[10px] bg-blue-500/10 text-blue-600 border-0 shadow-none px-1.5 py-0">
+                                  System
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm capitalize">
+                          <span className="text-sm capitalize text-muted-foreground font-medium">
                             {account.account_group.replace("_", " ")}
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className={account.opening_balance >= 0 ? "text-emerald-600" : "text-red-600"}>
+                          <span className={`font-mono text-sm ${account.opening_balance >= 0 ? "text-emerald-500" : "text-red-500"}`}>
                             {formatCurrency(Math.abs(account.opening_balance))}
                             {account.opening_balance < 0 && " Cr"}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right font-medium">
-                          <span className={account.current_balance >= 0 ? "text-emerald-600" : "text-red-600"}>
+                        <TableCell className="text-right font-bold">
+                          <span className={`font-mono ${account.current_balance >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                             {formatCurrency(Math.abs(account.current_balance))}
                             {account.current_balance < 0 && " Cr"}
                           </span>
@@ -178,9 +180,10 @@ export function LedgerAccountsList() {
           ))}
 
           {(!groupedAccounts || Object.keys(groupedAccounts).length === 0) && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Building className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              No accounts found
+            <div className="text-center py-16 text-muted-foreground glass rounded-xl border-0">
+              <Building className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p className="text-lg font-medium">No accounts found</p>
+              <p className="text-sm opacity-70">Add a new account to get started.</p>
             </div>
           )}
         </div>

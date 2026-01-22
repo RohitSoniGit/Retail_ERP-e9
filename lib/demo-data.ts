@@ -1,17 +1,18 @@
 import type { Item, Customer, Sale, DashboardStats, Supplier, PurchaseOrder, AdvancePayment, Category, JobCard, JobCardItem } from './types'
+import { DEMO_ORG_ID } from './constants'
 
 // Data storage (Mutable for demo persistence)
 export const demoCategories: Category[] = [
   {
     id: 'cat-1',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     name: 'Gold Jewelry',
     description: '22k and 24k Gold Items',
     created_at: new Date().toISOString()
   },
   {
     id: 'cat-2',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     name: 'Silver Utensils',
     description: 'Pure silver plates and bowls',
     created_at: new Date().toISOString()
@@ -21,7 +22,7 @@ export const demoCategories: Category[] = [
 export const demoJobCards: JobCard[] = [
   {
     id: 'demo-id',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     job_number: 'JOB-000001',
     customer_id: 'customer-1',
     customer_name: 'Rajesh Kumar',
@@ -58,7 +59,7 @@ export const demoJobCardItems: JobCardItem[] = [
 export const demoSuppliers: Supplier[] = [
   {
     id: 'supplier-1',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     supplier_code: 'SUP001',
     name: 'ABC Distributors Pvt Ltd',
     contact_person: 'Rajesh Kumar',
@@ -83,7 +84,7 @@ export const demoSuppliers: Supplier[] = [
   },
   {
     id: 'supplier-2',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     supplier_code: 'SUP002',
     name: 'XYZ Manufacturing Co',
     contact_person: 'Suresh Patel',
@@ -106,7 +107,7 @@ export const demoSuppliers: Supplier[] = [
 export const demoPurchaseOrders: PurchaseOrder[] = [
   {
     id: 'po-1',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     po_number: 'PO2501-0001',
     supplier_id: 'supplier-1',
     po_date: new Date().toISOString().split('T')[0],
@@ -133,7 +134,7 @@ export const demoPurchaseOrders: PurchaseOrder[] = [
 export const demoAdvancePayments: AdvancePayment[] = [
   {
     id: 'advance-1',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     payment_number: 'SA2501-001',
     payment_type: 'supplier_advance',
     party_id: 'supplier-1',
@@ -153,7 +154,7 @@ export const demoAdvancePayments: AdvancePayment[] = [
   },
   {
     id: 'advance-2',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     payment_number: 'CA2501-001',
     payment_type: 'customer_advance',
     party_id: 'customer-1',
@@ -174,7 +175,7 @@ export const demoAdvancePayments: AdvancePayment[] = [
 export const demoItems: Item[] = [
   {
     id: 'item-1',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     sku: 'ITM001',
     name: 'Premium Tea Packets',
     category: 'Beverages',
@@ -195,7 +196,7 @@ export const demoItems: Item[] = [
   },
   {
     id: 'item-2',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     sku: 'ITM002',
     name: 'Rice Bags (5kg)',
     category: 'Groceries',
@@ -216,7 +217,7 @@ export const demoItems: Item[] = [
   },
   {
     id: 'item-3',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     sku: 'ITM003',
     name: 'Cooking Oil (1L)',
     category: 'Cooking',
@@ -237,7 +238,7 @@ export const demoItems: Item[] = [
   },
   {
     id: 'item-4',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     sku: 'ITM004',
     name: 'Soap Bars (Pack of 4)',
     category: 'Personal Care',
@@ -261,7 +262,7 @@ export const demoItems: Item[] = [
 export const demoCustomers: Customer[] = [
   {
     id: 'customer-1',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     name: 'Rajesh Kumar',
     phone: '9876543210',
     email: 'rajesh@example.com',
@@ -275,7 +276,7 @@ export const demoCustomers: Customer[] = [
   },
   {
     id: 'customer-2',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     name: 'Sharma General Store',
     phone: '9988776655',
     address: '789 Commercial Complex, Andheri',
@@ -287,7 +288,7 @@ export const demoCustomers: Customer[] = [
   },
   {
     id: 'customer-3',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     name: 'Priya Traders',
     phone: '9123456789',
     address: '321 Business Park, Bandra',
@@ -302,7 +303,7 @@ export const demoCustomers: Customer[] = [
 export const demoSales: Sale[] = [
   {
     id: 'sale-1',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     invoice_number: 'INV2501-0001',
     customer_id: 'customer-1',
     customer_name: 'Rajesh Kumar',
@@ -326,7 +327,7 @@ export const demoSales: Sale[] = [
   },
   {
     id: 'sale-2',
-    organization_id: 'demo-org-id',
+    organization_id: DEMO_ORG_ID,
     invoice_number: 'INV2501-0002',
     customer_name: 'Walk-in Customer',
     customer_state_code: '27',
@@ -349,7 +350,7 @@ export const demoSales: Sale[] = [
 ]
 
 const demoOrganizations = [{
-  id: 'demo-org-id',
+  id: DEMO_ORG_ID,
   name: 'Demo Retail Store',
   gst_number: '27ABCDE1234F1Z5',
   address: '123 Demo Street, Mumbai, Maharashtra 400001',

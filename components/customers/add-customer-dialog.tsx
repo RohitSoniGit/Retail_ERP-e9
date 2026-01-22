@@ -106,45 +106,47 @@ export function AddCustomerDialog({ open, onOpenChange, onSuccess }: AddCustomer
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto glass border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle>Add New Customer</DialogTitle>
+          <DialogTitle className="text-2xl gradient-text">Add New Customer</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name" className="text-sm font-semibold">Name *</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Customer name"
               required
+              className="glass border-0 shadow-inner h-11 text-lg font-medium"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone" className="text-sm font-semibold">Phone</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="Mobile number"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="customer_type">Type</Label>
+              <Label htmlFor="customer_type" className="text-sm font-semibold">Type</Label>
               <Select
                 value={formData.customer_type}
                 onValueChange={(value: "retail" | "wholesale" | "distributor") =>
                   setFormData({ ...formData, customer_type: value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass border-0">
                   {CUSTOMER_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
@@ -156,26 +158,27 @@ export function AddCustomerDialog({ open, onOpenChange, onSuccess }: AddCustomer
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address" className="text-sm font-semibold">Address</Label>
             <Input
               id="address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="Full address"
+              className="glass border-0 shadow-inner h-11"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="state">State</Label>
+              <Label htmlFor="state" className="text-sm font-semibold">State</Label>
               <Select
                 value={formData.state_code}
                 onValueChange={(value) => setFormData({ ...formData, state_code: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="glass border-0 h-11 shadow-sm">
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass border-0 max-h-[200px]">
                   {INDIAN_STATES.map((state) => (
                     <SelectItem key={state.code} value={state.code}>
                       {state.name}
@@ -185,50 +188,53 @@ export function AddCustomerDialog({ open, onOpenChange, onSuccess }: AddCustomer
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="gst">GSTIN</Label>
+              <Label htmlFor="gst" className="text-sm font-semibold">GSTIN</Label>
               <Input
                 id="gst"
                 value={formData.gst_number}
                 onChange={(e) => setFormData({ ...formData, gst_number: e.target.value.toUpperCase() })}
                 placeholder="15-digit GST"
                 maxLength={15}
+                className="glass border-0 shadow-inner h-11 font-mono"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="credit_limit">Credit Limit</Label>
+              <Label htmlFor="credit_limit" className="text-sm font-semibold">Credit Limit</Label>
               <Input
                 id="credit_limit"
                 type="number"
                 value={formData.credit_limit}
                 onChange={(e) => setFormData({ ...formData, credit_limit: e.target.value })}
                 placeholder="0"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="opening_balance">Opening Balance</Label>
+              <Label htmlFor="opening_balance" className="text-sm font-semibold">Opening Balance</Label>
               <Input
                 id="opening_balance"
                 type="number"
                 value={formData.opening_balance}
                 onChange={(e) => setFormData({ ...formData, opening_balance: e.target.value })}
                 placeholder="0 (positive = due)"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
           </div>
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-4 pt-6">
             <Button
               type="button"
-              variant="outline"
-              className="flex-1 bg-transparent"
+              variant="ghost"
+              className="flex-1 hover:bg-white/10"
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            <Button type="submit" className="flex-1 holographic text-white shadow-lg border-0" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Add Customer
             </Button>

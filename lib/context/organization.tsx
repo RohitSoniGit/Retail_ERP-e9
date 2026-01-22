@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import type { Organization } from "@/lib/types"
+import { DEMO_ORG_ID } from "@/lib/constants"
 
 interface OrganizationContextType {
   organization: Organization | null
@@ -16,8 +17,8 @@ const OrganizationContext = createContext<OrganizationContextType>({
   organization: null,
   organizationId: null,
   loading: true,
-  setOrganization: () => {},
-  updateOrganization: async () => {},
+  setOrganization: () => { },
+  updateOrganization: async () => { },
 })
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
@@ -26,27 +27,47 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   const updateOrganization = async (updates: Partial<Organization>) => {
     if (!organization) return
-    
+
     const updatedOrg = { ...organization, ...updates }
     setOrganization(updatedOrg)
-    
-    // In a real app, you would update the database here
-    // For demo purposes, we'll just update the local state
+
+    // Skip database update for demo organization
+    if (organization.id === DEMO_ORG_ID) {
+      // Demo mode: just update local state, no database call
+      return
+    }
+
+    // For real organizations, update the database
     try {
       const supabase = getSupabaseBrowserClient()
-      await supabase
+
+      // Filter out fields that shouldn't be updated (like id, created_at)
+      const { id, created_at, ...updateData } = updates as any
+
+      console.log('Updating organization with data:', updateData)
+
+      const { error } = await supabase
         .from("organizations")
-        .update(updates)
+        .update(updateData)
         .eq("id", organization.id)
+
+      if (error) {
+        console.error('Failed to update organization:', error)
+        console.error('Update data that failed:', updateData)
+        throw error
+      }
     } catch (error) {
-      console.warn('Demo mode: Organization update simulated locally')
+      console.error('Error updating organization:', error)
+      // Revert local state on error
+      setOrganization(organization)
+      throw error
     }
   }
 
   useEffect(() => {
     async function loadOrganization() {
       const supabase = getSupabaseBrowserClient()
-      
+
       try {
         // For demo, we'll use a mock organization if Supabase is not configured
         const { data, error } = await supabase
@@ -59,8 +80,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           setOrganization(data)
         } else {
           // Create a demo organization for development
+          // Using a valid UUID format to prevent database errors
           const demoOrg = {
-            id: 'demo-org-id',
+            id: DEMO_ORG_ID,
             name: 'Demo Retail Store',
             gst_number: '27ABCDE1234F1Z5',
             address: '123 Demo Street, Mumbai, Maharashtra 400001',
@@ -73,9 +95,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         }
       } catch (error) {
         console.warn('Using demo organization:', error)
-        // Fallback to demo organization
+        // Fallback to demo organization with valid UUID format
         const demoOrg = {
-          id: 'demo-org-id',
+          id: DEMO_ORG_ID,
           name: 'Demo Retail Store',
           gst_number: '27ABCDE1234F1Z5',
           address: '123 Demo Street, Mumbai, Maharashtra 400001',
@@ -86,7 +108,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         }
         setOrganization(demoOrg)
       }
-      
+
       setLoading(false)
     }
 
@@ -94,10 +116,10 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <OrganizationContext.Provider value={{ 
-      organization, 
+    <OrganizationContext.Provider value={{
+      organization,
       organizationId: organization?.id || null,
-      loading, 
+      loading,
       setOrganization,
       updateOrganization
     }}>

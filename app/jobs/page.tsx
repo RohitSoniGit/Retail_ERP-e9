@@ -104,14 +104,21 @@ export default function JobsPage() {
     }
 
     if (orgLoading || loading) {
-        return <div className="p-8">Loading...</div>
+        return (
+            <div className="flex items-center justify-center min-h-[50vh] text-indigo-500">
+                Loading Job Work...
+            </div>
+        )
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-6 min-h-screen">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Job Work</h1>
-                <Button onClick={handleCreateJob}>
+                <div>
+                    <h1 className="text-3xl font-bold gradient-text">Job Work</h1>
+                    <p className="text-sm text-muted-foreground">Manage repairs, services, and custom orders</p>
+                </div>
+                <Button onClick={handleCreateJob} className="holographic text-white shadow-lg border-0">
                     <Plus className="h-4 w-4 mr-2" />
                     New Job Card
                 </Button>
@@ -123,48 +130,53 @@ export default function JobsPage() {
                     placeholder="Search by Job # or Customer..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 glass border-0 shadow-sm h-11"
                 />
             </div>
 
-            <div className="border rounded-md">
+            <div className="rounded-xl border-0 overflow-hidden glass shadow-xl">
                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Job Number</TableHead>
-                            <TableHead>Date In</TableHead>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Cost</TableHead>
-                            <TableHead className="w-[100px]">Actions</TableHead>
+                    <TableHeader className="bg-white/10 backdrop-blur-md">
+                        <TableRow className="border-b border-white/10 hover:bg-transparent">
+                            <TableHead className="font-bold text-foreground">Job Number</TableHead>
+                            <TableHead className="font-bold text-foreground">Date In</TableHead>
+                            <TableHead className="font-bold text-foreground">Customer</TableHead>
+                            <TableHead className="font-bold text-foreground">Status</TableHead>
+                            <TableHead className="font-bold text-foreground">Cost</TableHead>
+                            <TableHead className="w-[100px] text-right pr-6 font-bold text-foreground">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredJobs.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                                    No jobs found. Create one to get started.
+                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="p-4 rounded-full bg-muted/20">
+                                            <Search className="h-8 w-8 opacity-50" />
+                                        </div>
+                                        <p>No jobs found. Create one to get started.</p>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : (
                             filteredJobs.map((job) => (
-                                <TableRow key={job.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`/jobs/${job.id}`)}>
-                                    <TableCell className="font-medium">{job.job_number}</TableCell>
-                                    <TableCell>{format(new Date(job.date_in), 'dd/MM/yyyy')}</TableCell>
+                                <TableRow key={job.id} className="cursor-pointer border-b border-white/5 hover:bg-white/5 transition-colors" onClick={() => router.push(`/jobs/${job.id}`)}>
+                                    <TableCell className="font-mono font-medium text-indigo-400">{job.job_number}</TableCell>
+                                    <TableCell>{format(new Date(job.date_in), 'dd MMM yyyy')}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
                                             <User className="h-3 w-3 text-muted-foreground" />
-                                            {job.customer_name || 'Walk-in'}
+                                            <span className="font-medium">{job.customer_name || 'Walk-in'}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" className={getStatusColor(job.status)}>
+                                        <Badge variant="outline" className={`glass border-0 shadow-sm ${getStatusColor(job.status)}`}>
                                             {job.status.replace('_', ' ')}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>₹{job.final_cost || job.estimated_cost || 0}</TableCell>
-                                    <TableCell>
-                                        <Button variant="ghost" size="sm">View</Button>
+                                    <TableCell className="font-mono">₹{job.final_cost || job.estimated_cost || 0}</TableCell>
+                                    <TableCell className="text-right pr-6">
+                                        <Button variant="ghost" size="sm" className="hover:bg-white/10">View</Button>
                                     </TableCell>
                                 </TableRow>
                             ))

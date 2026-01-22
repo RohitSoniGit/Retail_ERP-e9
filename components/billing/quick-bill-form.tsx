@@ -64,10 +64,10 @@ export function QuickBillForm({ items, onSuccess }: QuickBillFormProps) {
         billItems.map((bi) =>
           bi.item.id === item.id
             ? {
-                ...bi,
-                quantity: bi.quantity + qty,
-                total: (bi.quantity + qty) * bi.unitPrice,
-              }
+              ...bi,
+              quantity: bi.quantity + qty,
+              total: (bi.quantity + qty) * bi.unitPrice,
+            }
             : bi
         )
       )
@@ -93,7 +93,7 @@ export function QuickBillForm({ items, onSuccess }: QuickBillFormProps) {
 
   const calculations = useMemo(() => {
     const subtotal = billItems.reduce((sum, bi) => sum + bi.total, 0)
-    
+
     // Calculate GST based on each item's rate
     let totalCgst = 0
     let totalSgst = 0
@@ -199,29 +199,30 @@ export function QuickBillForm({ items, onSuccess }: QuickBillFormProps) {
     })
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg">Quick Bill</CardTitle>
+    <Card className="glass border-0 shadow-xl overflow-hidden">
+      <CardHeader className="pb-4 bg-white/5 backdrop-blur-md border-b border-white/10">
+        <CardTitle className="gradient-text text-xl">Quick Bill</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6 pt-6">
         {/* Customer Info */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="space-y-2">
-            <Label htmlFor="customer">Customer Name</Label>
+            <Label htmlFor="customer" className="text-muted-foreground font-medium">Customer Name</Label>
             <Input
               id="customer"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Walk-in customer"
+              className="glass border-0 shadow-inner h-11"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="state">Customer State</Label>
+            <Label htmlFor="state" className="text-muted-foreground font-medium">Customer State</Label>
             <Select value={customerState} onValueChange={setCustomerState}>
-              <SelectTrigger>
+              <SelectTrigger className="glass border-0 shadow-sm h-11">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-0 backdrop-blur-xl">
                 {INDIAN_STATES.map((state) => (
                   <SelectItem key={state.code} value={state.code}>
                     {state.name}
@@ -233,12 +234,12 @@ export function QuickBillForm({ items, onSuccess }: QuickBillFormProps) {
         </div>
 
         {/* Add Item */}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Select value={selectedItemId} onValueChange={setSelectedItemId}>
-            <SelectTrigger className="flex-1">
+            <SelectTrigger className="flex-1 glass border-0 shadow-sm h-11">
               <SelectValue placeholder="Select item" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="glass border-0 backdrop-blur-xl">
               {items
                 .filter((item) => item.current_stock > 0)
                 .map((item) => (
@@ -253,41 +254,42 @@ export function QuickBillForm({ items, onSuccess }: QuickBillFormProps) {
             min="1"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
-            className="w-20"
+            className="w-24 glass border-0 shadow-inner h-11 text-center"
             placeholder="Qty"
           />
-          <Button onClick={addItem} disabled={!selectedItemId}>
-            <Plus className="h-4 w-4" />
+          <Button onClick={addItem} disabled={!selectedItemId} className="h-11 w-11 holographic rounded-lg p-0">
+            <Plus className="h-5 w-5 text-white" />
           </Button>
         </div>
 
         {/* Bill Items */}
         {billItems.length > 0 && (
-          <div className="rounded-md border">
+          <div className="rounded-xl border border-white/10 overflow-hidden glass">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead className="text-right">Qty</TableHead>
-                  <TableHead className="text-right">Rate</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+              <TableHeader className="bg-white/5 backdrop-blur-md">
+                <TableRow className="border-b border-white/10 hover:bg-transparent">
+                  <TableHead className="font-bold text-foreground">Item</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Qty</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Rate</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Total</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {billItems.map((bi) => (
-                  <TableRow key={bi.item.id}>
+                  <TableRow key={bi.item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <TableCell className="font-medium">{bi.item.name}</TableCell>
                     <TableCell className="text-right">{bi.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(bi.unitPrice)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(bi.total)}</TableCell>
+                    <TableCell className="text-right font-mono text-muted-foreground">{formatCurrency(bi.unitPrice)}</TableCell>
+                    <TableCell className="text-right font-bold font-mono">{formatCurrency(bi.total)}</TableCell>
                     <TableCell>
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => removeItem(bi.item.id)}
+                        className="h-8 w-8 hover:bg-red-500/10 hover:text-red-500"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -299,39 +301,39 @@ export function QuickBillForm({ items, onSuccess }: QuickBillFormProps) {
 
         {/* Totals */}
         {billItems.length > 0 && (
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatCurrency(calculations.subtotal)}</span>
+          <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/5">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground font-medium">Subtotal</span>
+              <span className="font-mono">{formatCurrency(calculations.subtotal)}</span>
             </div>
             {!isInterstate ? (
               <>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">CGST</span>
-                  <span>{formatCurrency(calculations.cgst)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground font-medium">CGST</span>
+                  <span className="font-mono">{formatCurrency(calculations.cgst)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">SGST</span>
-                  <span>{formatCurrency(calculations.sgst)}</span>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground font-medium">SGST</span>
+                  <span className="font-mono">{formatCurrency(calculations.sgst)}</span>
                 </div>
               </>
             ) : (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">IGST</span>
-                <span>{formatCurrency(calculations.igst)}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground font-medium">IGST</span>
+                <span className="font-mono">{formatCurrency(calculations.igst)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-base border-t pt-2">
-              <span>Total</span>
-              <span>{formatCurrency(calculations.total)}</span>
+            <div className="flex justify-between font-bold text-lg border-t border-white/10 pt-3">
+              <span className="gradient-text">Total Payable</span>
+              <span className="gradient-text font-mono">{formatCurrency(calculations.total)}</span>
             </div>
           </div>
         )}
 
         {/* Credit Toggle */}
-        <div className="flex items-center justify-between pt-2 border-t">
+        <div className="flex items-center justify-between pt-2 border-t border-white/10">
           <div className="space-y-0.5">
-            <Label htmlFor="credit" className="text-sm font-medium">
+            <Label htmlFor="credit" className="text-base font-medium">
               Udhari (Credit)
             </Label>
             <p className="text-xs text-muted-foreground">Mark as unpaid credit sale</p>
@@ -345,14 +347,13 @@ export function QuickBillForm({ items, onSuccess }: QuickBillFormProps) {
 
         {/* Submit */}
         <Button
-          className="w-full"
-          size="lg"
+          className="w-full h-12 text-lg holographic text-white shadow-lg border-0 hover:scale-[1.02] transition-transform"
           onClick={handleSubmit}
           disabled={loading || billItems.length === 0}
         >
           {loading ? "Processing..." : `Create Bill ${billItems.length > 0 ? formatCurrency(calculations.total) : ""}`}
         </Button>
       </CardContent>
-    </Card>
+    </Card >
   )
 }

@@ -153,29 +153,29 @@ export function AddVoucherDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm glass border-0 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-2xl font-bold">
             {isReceipt ? (
-              <ArrowDownLeft className="h-5 w-5 text-emerald-600" />
+              <ArrowDownLeft className="h-6 w-6 text-emerald-500" />
             ) : (
-              <ArrowUpRight className="h-5 w-5 text-red-600" />
+              <ArrowUpRight className="h-6 w-6 text-red-500" />
             )}
-            {isReceipt ? "New Receipt" : "New Payment"}
+            <span className="gradient-text">{isReceipt ? "New Receipt" : "New Payment"}</span>
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Party (Optional)</Label>
+            <Label className="text-sm font-semibold">Party (Optional)</Label>
             <Select
               value={formData.party_id}
               onValueChange={handleCustomerChange}
             >
-              <SelectTrigger>
+              <SelectTrigger className="glass border-0 h-11 shadow-sm">
                 <SelectValue placeholder="Select customer" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-0">
                 <SelectItem value="none">No Party</SelectItem>
                 {customers?.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id}>
@@ -188,7 +188,7 @@ export function AddVoucherDialog({
 
           {!formData.party_id && (
             <div className="space-y-2">
-              <Label htmlFor="party_name">Party Name</Label>
+              <Label htmlFor="party_name" className="text-sm font-semibold">Party Name</Label>
               <Input
                 id="party_name"
                 value={formData.party_name}
@@ -196,12 +196,13 @@ export function AddVoucherDialog({
                   setFormData({ ...formData, party_name: e.target.value })
                 }
                 placeholder="Enter name"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount *</Label>
+            <Label htmlFor="amount" className="text-sm font-semibold">Amount *</Label>
             <Input
               id="amount"
               type="number"
@@ -212,21 +213,22 @@ export function AddVoucherDialog({
               placeholder="Enter amount"
               required
               autoFocus
+              className="glass border-0 shadow-inner h-11 text-lg font-bold"
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Payment Mode</Label>
+            <Label className="text-sm font-semibold">Payment Mode</Label>
             <Select
               value={formData.payment_mode}
               onValueChange={(value) =>
                 setFormData({ ...formData, payment_mode: value })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="glass border-0 h-11 shadow-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-0">
                 <SelectItem value="cash">Cash</SelectItem>
                 <SelectItem value="upi">UPI</SelectItem>
                 <SelectItem value="bank">Bank Transfer</SelectItem>
@@ -237,7 +239,7 @@ export function AddVoucherDialog({
 
           {formData.payment_mode !== "cash" && (
             <div className="space-y-2">
-              <Label htmlFor="reference">Reference / UTR No.</Label>
+              <Label htmlFor="reference" className="text-sm font-semibold">Reference / UTR No.</Label>
               <Input
                 id="reference"
                 value={formData.reference_number}
@@ -245,12 +247,13 @@ export function AddVoucherDialog({
                   setFormData({ ...formData, reference_number: e.target.value })
                 }
                 placeholder="Transaction reference"
+                className="glass border-0 shadow-inner h-11"
               />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="narration">Narration</Label>
+            <Label htmlFor="narration" className="text-sm font-semibold">Narration</Label>
             <Textarea
               id="narration"
               value={formData.narration}
@@ -259,23 +262,24 @@ export function AddVoucherDialog({
               }
               placeholder="Notes about this transaction"
               rows={2}
+              className="glass border-0 shadow-inner min-h-[80px]"
             />
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-4 pt-4">
             <Button
               type="button"
-              variant="outline"
-              className="flex-1 bg-transparent"
+              variant="ghost"
+              className="flex-1 hover:bg-white/10"
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className={`flex-1 ${isReceipt
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-red-600 hover:bg-red-700"
+              className={`flex-1 shadow-lg border-0 ${isReceipt
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-red-600 hover:bg-red-700 text-white"
                 }`}
               disabled={isSubmitting}
             >

@@ -62,60 +62,71 @@ export function CustomersTable() {
   };
 
   if (!organizationId) {
-    return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] text-indigo-500">
+        Loading...
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-10 h-10 glass border-0 shadow-sm"
           />
         </div>
-        <Button onClick={() => setShowAddDialog(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Add
+        <Button onClick={() => setShowAddDialog(true)} className="holographic text-white shadow-lg border-0 px-6">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Customer
         </Button>
       </div>
 
       {/* Table */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="rounded-xl border-0 overflow-hidden glass shadow-xl">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>Customer</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
+            <TableHeader className="bg-white/10 backdrop-blur-md">
+              <TableRow className="border-b border-white/10 hover:bg-transparent">
+                <TableHead className="font-bold text-foreground pl-6">Customer</TableHead>
+                <TableHead className="text-right font-bold text-foreground">Balance</TableHead>
                 <TableHead className="w-[80px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredCustomers?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                    No customers found
+                  <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="p-4 rounded-full bg-muted/20">
+                        <Search className="h-8 w-8 opacity-50" />
+                      </div>
+                      <p>No customers found</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredCustomers?.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell>
+                  <TableRow key={customer.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <TableCell className="pl-6">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{customer.name}</span>
-                          <Badge variant="outline" className={`text-xs ${getTypeColor(customer.customer_type)}`}>
-                            {customer.customer_type}
-                          </Badge>
+                          <span className="font-semibold text-base">{customer.name}</span>
+                          {customer.customer_type !== 'retail' && (
+                            <Badge variant="outline" className={`text-xs glass border-0 shadow-sm ${getTypeColor(customer.customer_type)}`}>
+                              {customer.customer_type}
+                            </Badge>
+                          )}
                         </div>
                         {customer.phone && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -126,19 +137,21 @@ export function CustomersTable() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className={customer.current_balance > 0 ? "text-red-600 font-medium" : "text-emerald-600"}>
-                        {customer.current_balance > 0 ? "Due: " : ""}
-                        {formatCurrency(Math.abs(customer.current_balance))}
-                      </span>
-                      {customer.credit_limit > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          Limit: {formatCurrency(customer.credit_limit)}
-                        </p>
-                      )}
+                      <div className="flex flex-col items-end">
+                        <span className={`${customer.current_balance > 0 ? "text-red-500 font-bold" : "text-emerald-500 font-bold"}`}>
+                          {customer.current_balance > 0 ? "Due: " : ""}
+                          {formatCurrency(Math.abs(customer.current_balance))}
+                        </span>
+                        {customer.credit_limit > 0 && (
+                          <span className="text-xs text-muted-foreground mt-0.5">
+                            Limit: {formatCurrency(customer.credit_limit)}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Link href={`/customers/${customer.id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="icon" className="hover:bg-indigo-500/20 hover:text-indigo-600 rounded-full h-8 w-8">
                           <FileText className="h-4 w-4" />
                         </Button>
                       </Link>

@@ -260,12 +260,12 @@ export function StockAdjustment() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Stock Adjustments</h3>
+          <h3 className="text-2xl font-bold gradient-text">Stock Adjustments</h3>
           <p className="text-sm text-muted-foreground">
             Manage inventory adjustments and corrections
           </p>
         </div>
-        <Button onClick={() => setIsCreating(true)} className="holographic text-white">
+        <Button onClick={() => setIsCreating(true)} className="holographic text-white shadow-lg border-0 hover:scale-105 transition-transform">
           <Plus className="h-4 w-4 mr-2" />
           New Adjustment
         </Button>
@@ -273,48 +273,60 @@ export function StockAdjustment() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="glass border-0 shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Package className="h-8 w-8 text-blue-500" />
+        <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent group-hover:from-blue-500/20 transition-all duration-500" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-500 shadow-inner">
+                <Package className="h-8 w-8" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{adjustments.length}</p>
-                <p className="text-sm text-muted-foreground">Total Adjustments</p>
+                <p className="text-3xl font-bold">{adjustments.length}</p>
+                <p className="text-sm text-muted-foreground font-medium">Total Adjustments</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="glass border-0 shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-8 w-8 text-green-500" />
+        <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent group-hover:from-green-500/20 transition-all duration-500" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-green-500/10 text-green-500 shadow-inner">
+                <CheckCircle className="h-8 w-8" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{adjustments.filter(a => a.status === 'approved').length}</p>
-                <p className="text-sm text-muted-foreground">Approved</p>
+                <p className="text-3xl font-bold">{adjustments.filter(a => a.status === 'approved').length}</p>
+                <p className="text-sm text-muted-foreground font-medium">Approved</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="glass border-0 shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-8 w-8 text-orange-500" />
+        <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent group-hover:from-orange-500/20 transition-all duration-500" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-orange-500/10 text-orange-500 shadow-inner">
+                <AlertTriangle className="h-8 w-8" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">{adjustments.filter(a => a.status === 'draft').length}</p>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-3xl font-bold">{adjustments.filter(a => a.status === 'draft').length}</p>
+                <p className="text-sm text-muted-foreground font-medium">Pending</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="glass border-0 shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <TrendingDown className="h-8 w-8 text-red-500" />
+        <Card className="glass border-0 shadow-lg relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 to-transparent group-hover:from-red-500/20 transition-all duration-500" />
+          <CardContent className="p-6 relative">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-red-500/10 text-red-500 shadow-inner">
+                <TrendingDown className="h-8 w-8" />
+              </div>
               <div>
-                <p className="text-2xl font-bold">
+                <p className="text-3xl font-bold font-mono">
                   ₹{Math.abs(adjustments.reduce((sum, a) => sum + a.total_value_impact, 0)).toLocaleString()}
                 </p>
-                <p className="text-sm text-muted-foreground">Value Impact</p>
+                <p className="text-sm text-muted-foreground font-medium">Value Impact</p>
               </div>
             </div>
           </CardContent>
@@ -322,24 +334,24 @@ export function StockAdjustment() {
       </div>
 
       {/* Adjustments List */}
-      <Card className="glass border-0 shadow-lg">
-        <CardHeader>
-          <CardTitle>Stock Adjustments</CardTitle>
+      <Card className="glass border-0 shadow-xl overflow-hidden">
+        <CardHeader className="bg-white/5 backdrop-blur-md border-b border-white/10">
+          <CardTitle className="gradient-text text-xl">Stock Adjustments</CardTitle>
           <CardDescription>
             View and manage all stock adjustments
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Adjustment #</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Value Impact</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+            <TableHeader className="bg-white/5 backdrop-blur-md">
+              <TableRow className="border-b border-white/10 hover:bg-transparent">
+                <TableHead className="font-bold text-foreground pl-6">Adjustment #</TableHead>
+                <TableHead className="font-bold text-foreground">Date</TableHead>
+                <TableHead className="font-bold text-foreground">Type</TableHead>
+                <TableHead className="font-bold text-foreground">Reason</TableHead>
+                <TableHead className="font-bold text-foreground">Value Impact</TableHead>
+                <TableHead className="font-bold text-foreground">Status</TableHead>
+                <TableHead className="text-right font-bold text-foreground pr-6">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -348,33 +360,41 @@ export function StockAdjustment() {
                 const Icon = adjustmentType?.icon || Package;
 
                 return (
-                  <TableRow key={adjustment.id}>
-                    <TableCell className="font-mono">{adjustment.adjustment_number}</TableCell>
-                    <TableCell>{new Date(adjustment.adjustment_date).toLocaleDateString()}</TableCell>
+                  <TableRow key={adjustment.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                    <TableCell className="font-mono pl-6">{adjustment.adjustment_number}</TableCell>
+                    <TableCell className="text-muted-foreground">{new Date(adjustment.adjustment_date).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Icon className={`h-4 w-4 ${adjustmentType?.color}`} />
-                        <span>{adjustmentType?.label}</span>
+                        <div className={`p-1.5 rounded-lg ${adjustment.adjustment_type === 'increase' ? 'bg-green-500/10 text-green-500' :
+                            adjustment.adjustment_type === 'decrease' ? 'bg-red-500/10 text-red-500' :
+                              adjustment.adjustment_type === 'damage' ? 'bg-red-500/10 text-red-500' :
+                                adjustment.adjustment_type === 'expired' ? 'bg-orange-500/10 text-orange-500' :
+                                  'bg-blue-500/10 text-blue-500'
+                          }`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <span className="font-medium">{adjustmentType?.label}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{adjustment.reason}</TableCell>
+                    <TableCell className="text-muted-foreground">{adjustment.reason}</TableCell>
                     <TableCell>
-                      <span className={adjustment.total_value_impact >= 0 ? "text-green-600" : "text-red-600"}>
+                      <span className={`font-mono font-medium ${adjustment.total_value_impact >= 0 ? "text-green-500" : "text-red-500"}`}>
                         {adjustment.total_value_impact >= 0 ? "+" : ""}₹{adjustment.total_value_impact.toLocaleString()}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={adjustment.status === "approved" ? "default" : "secondary"}>
+                      <Badge variant="outline" className={`border-0 shadow-sm ${adjustment.status === "approved" ? "bg-green-500/10 text-green-500" : "bg-secondary/50 text-secondary-foreground"
+                        }`}>
                         {adjustment.status === "approved" ? "Approved" : "Draft"}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
+                    <TableCell className="pr-6">
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="ghost" className="h-8 px-2 hover:bg-white/10">
                           View
                         </Button>
                         {adjustment.status === "draft" && (
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="ghost" className="h-8 px-2 hover:bg-white/10 text-indigo-400">
                             Edit
                           </Button>
                         )}
@@ -390,17 +410,17 @@ export function StockAdjustment() {
 
       {/* Create/Edit Adjustment Dialog */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent className="max-w-[98vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create Stock Adjustment</DialogTitle>
+        <DialogContent className="max-w-[98vw] max-h-[90vh] overflow-y-auto glass border-0 shadow-2xl p-0 gap-0">
+          <DialogHeader className="p-6 border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-10">
+            <DialogTitle className="text-xl gradient-text">Create Stock Adjustment</DialogTitle>
             <DialogDescription>
               Create a new stock adjustment to correct inventory levels
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-6 p-6">
             {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="adjustment_number">Adjustment Number</Label>
                 <Input
@@ -408,6 +428,7 @@ export function StockAdjustment() {
                   value={formData.adjustment_number}
                   onChange={(e) => setFormData({ ...formData, adjustment_number: e.target.value })}
                   placeholder="ADJ202401001"
+                  className="glass border-0 shadow-inner h-11 font-mono"
                 />
               </div>
               <div className="space-y-2">
@@ -417,6 +438,7 @@ export function StockAdjustment() {
                   type="date"
                   value={formData.adjustment_date}
                   onChange={(e) => setFormData({ ...formData, adjustment_date: e.target.value })}
+                  className="glass border-0 shadow-inner h-11"
                 />
               </div>
               <div className="space-y-2">
@@ -425,10 +447,10 @@ export function StockAdjustment() {
                   value={formData.adjustment_type}
                   onValueChange={(value: any) => setFormData({ ...formData, adjustment_type: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="glass border-0 shadow-sm h-11">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="glass border-0 backdrop-blur-xl">
                     {ADJUSTMENT_TYPES.map((type) => {
                       const Icon = type.icon;
                       return (
@@ -451,10 +473,10 @@ export function StockAdjustment() {
                 value={formData.reason}
                 onValueChange={(value) => setFormData({ ...formData, reason: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="glass border-0 shadow-sm h-11">
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="glass border-0 backdrop-blur-xl">
                   {ADJUSTMENT_REASONS.map((reason) => (
                     <SelectItem key={reason} value={reason}>
                       {reason}
@@ -464,15 +486,15 @@ export function StockAdjustment() {
               </Select>
             </div>
 
-            <Separator />
+            <Separator className="bg-white/10" />
 
             {/* Items Section */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Adjustment Items</h3>
+                <h3 className="text-lg font-semibold gradient-text">Adjustment Items</h3>
                 <Button
                   onClick={() => setShowItemDialog(true)}
-                  className="holographic text-white"
+                  className="holographic text-white shadow-md border-0"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Item
@@ -480,99 +502,102 @@ export function StockAdjustment() {
               </div>
 
               {adjustmentItems.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Current Stock</TableHead>
-                      <TableHead>Adjustment Qty</TableHead>
-                      <TableHead>New Stock</TableHead>
-                      <TableHead>Unit Cost</TableHead>
-                      <TableHead>Value Impact</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {adjustmentItems.map((item, index) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{item.item_name}</p>
-                            <p className="text-sm text-muted-foreground">{item.item?.sku}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{item.current_stock} {item.item?.unit_name}</TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.adjusted_quantity}
-                            onChange={(e) => updateAdjustmentItem(index, 'adjusted_quantity', Number(e.target.value))}
-                            className="w-24"
-                            placeholder="0"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={item.new_stock < 0 ? "destructive" : "secondary"}>
-                            {item.new_stock} {item.item?.unit_name}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.unit_cost}
-                            onChange={(e) => updateAdjustmentItem(index, 'unit_cost', Number(e.target.value))}
-                            className="w-24"
-                            min="0"
-                            step="0.01"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <span className={item.value_impact >= 0 ? "text-green-600" : "text-red-600"}>
-                            {item.value_impact >= 0 ? "+" : ""}₹{item.value_impact.toLocaleString()}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => removeAdjustmentItem(index)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
+                <div className="rounded-xl border border-white/10 overflow-hidden glass shadow-sm">
+                  <Table>
+                    <TableHeader className="bg-white/5">
+                      <TableRow className="border-b border-white/10 hover:bg-transparent">
+                        <TableHead className="font-bold text-foreground pl-4">Item</TableHead>
+                        <TableHead className="font-bold text-foreground">Current Stock</TableHead>
+                        <TableHead className="font-bold text-foreground">Adjustment Qty</TableHead>
+                        <TableHead className="font-bold text-foreground">New Stock</TableHead>
+                        <TableHead className="font-bold text-foreground">Unit Cost</TableHead>
+                        <TableHead className="font-bold text-foreground">Value Impact</TableHead>
+                        <TableHead className="text-right font-bold text-foreground pr-4">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {adjustmentItems.map((item, index) => (
+                        <TableRow key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                          <TableCell className="pl-4">
+                            <div>
+                              <p className="font-medium text-foreground">{item.item_name}</p>
+                              <p className="text-xs text-muted-foreground font-mono">{item.item?.sku}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{item.current_stock} {item.item?.unit_name}</TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.adjusted_quantity}
+                              onChange={(e) => updateAdjustmentItem(index, 'adjusted_quantity', Number(e.target.value))}
+                              className="w-24 glass border-0 shadow-inner h-9"
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={`border-0 shadow-sm ${item.new_stock < 0 ? "bg-red-500/10 text-red-500" : "bg-secondary/50 text-secondary-foreground"}`}>
+                              {item.new_stock} {item.item?.unit_name}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              value={item.unit_cost}
+                              onChange={(e) => updateAdjustmentItem(index, 'unit_cost', Number(e.target.value))}
+                              className="w-24 glass border-0 shadow-inner h-9"
+                              min="0"
+                              step="0.01"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <span className={`font-medium ${item.value_impact >= 0 ? "text-green-500" : "text-red-500"}`}>
+                              {item.value_impact >= 0 ? "+" : ""}₹{item.value_impact.toLocaleString()}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right pr-4">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeAdjustmentItem(index)}
+                              className="h-8 w-8 rounded-full text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No items added yet. Click "Add Item" to get started.
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground glass rounded-xl border border-dashed border-white/10">
+                  <Package className="h-10 w-10 mb-2 opacity-50" />
+                  <p>No items added yet. Click "Add Item" to get started.</p>
                 </div>
               )}
             </div>
 
             {adjustmentItems.length > 0 && (
               <>
-                <Separator />
+                <Separator className="bg-white/10" />
 
                 {/* Summary */}
-                <Card className="bg-muted/50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Adjustment Summary</CardTitle>
+                <Card className="bg-white/5 border border-white/10 shadow-inner">
+                  <CardHeader className="pb-3 border-b border-white/5">
+                    <CardTitle className="text-base font-semibold">Adjustment Summary</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Total Items:</span>
-                      <span>{adjustmentItems.length}</span>
+                  <CardContent className="space-y-2 pt-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Total Items:</span>
+                      <span className="font-medium">{adjustmentItems.length}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Total Quantity Change:</span>
-                      <span>{adjustmentItems.reduce((sum, item) => sum + item.adjusted_quantity, 0)}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Total Quantity Change:</span>
+                      <span className="font-medium">{adjustmentItems.reduce((sum, item) => sum + item.adjusted_quantity, 0)}</span>
                     </div>
-                    <div className="flex justify-between font-medium">
+                    <div className="flex justify-between text-base font-bold pt-2 border-t border-white/5">
                       <span>Total Value Impact:</span>
-                      <span className={totalValueImpact >= 0 ? "text-green-600" : "text-red-600"}>
+                      <span className={totalValueImpact >= 0 ? "text-green-500" : "text-red-500"}>
                         {totalValueImpact >= 0 ? "+" : ""}₹{totalValueImpact.toLocaleString()}
                       </span>
                     </div>
@@ -587,19 +612,20 @@ export function StockAdjustment() {
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Additional notes about this adjustment..."
                     rows={3}
+                    className="glass border-0 shadow-inner resize-none"
                   />
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsCreating(false)}>
+                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                  <Button variant="ghost" onClick={() => setIsCreating(false)} className="hover:bg-white/10">
                     Cancel
                   </Button>
-                  <Button variant="outline" onClick={() => handleSave("draft")}>
+                  <Button variant="outline" onClick={() => handleSave("draft")} className="glass border-0 shadow-sm hover:bg-white/10">
                     <Save className="h-4 w-4 mr-2" />
                     Save as Draft
                   </Button>
-                  <Button onClick={() => handleSave("approved")} className="holographic text-white">
+                  <Button onClick={() => handleSave("approved")} className="holographic text-white shadow-lg border-0 px-6">
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Approve & Apply
                   </Button>
@@ -612,66 +638,68 @@ export function StockAdjustment() {
 
       {/* Add Item Dialog */}
       <Dialog open={showItemDialog} onOpenChange={setShowItemDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Add Items to Adjustment</DialogTitle>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto glass border-0 shadow-2xl p-0 gap-0">
+          <DialogHeader className="p-6 border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-10">
+            <DialogTitle className="text-xl gradient-text">Add Items to Adjustment</DialogTitle>
             <DialogDescription>
               Select items to include in this stock adjustment
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-6 p-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search items..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 glass border-0 shadow-inner h-11"
               />
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>Current Stock</TableHead>
-                  <TableHead>Min Level</TableHead>
-                  <TableHead>Unit Cost</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-muted-foreground">{item.sku}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={item.current_stock <= item.min_stock_level ? "destructive" : "secondary"}>
-                        {item.current_stock} {item.unit_name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{item.min_stock_level} {item.unit_name}</TableCell>
-                    <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        onClick={() => addItemToAdjustment(item)}
-                        disabled={adjustmentItems.some(adjItem => adjItem.item_id === item.id)}
-                        className="holographic text-white"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        Add
-                      </Button>
-                    </TableCell>
+            <div className="rounded-xl border border-white/10 overflow-hidden glass shadow-md">
+              <Table>
+                <TableHeader className="bg-white/10">
+                  <TableRow className="border-b border-white/10 hover:bg-transparent">
+                    <TableHead className="font-bold text-foreground pl-4">Item</TableHead>
+                    <TableHead className="font-bold text-foreground">Current Stock</TableHead>
+                    <TableHead className="font-bold text-foreground">Min Level</TableHead>
+                    <TableHead className="font-bold text-foreground">Unit Cost</TableHead>
+                    <TableHead className="text-right font-bold text-foreground pr-4">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredItems.map((item) => (
+                    <TableRow key={item.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <TableCell className="pl-4">
+                        <div>
+                          <p className="font-medium text-foreground">{item.name}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{item.sku}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`border-0 shadow-sm ${item.current_stock <= item.min_stock_level ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"}`}>
+                          {item.current_stock} {item.unit_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{item.min_stock_level} {item.unit_name}</TableCell>
+                      <TableCell className="font-mono">₹{item.purchase_cost.toLocaleString()}</TableCell>
+                      <TableCell className="text-right pr-4">
+                        <Button
+                          size="sm"
+                          onClick={() => addItemToAdjustment(item)}
+                          disabled={adjustmentItems.some(adjItem => adjItem.item_id === item.id)}
+                          className="holographic text-white shadow-md border-0 h-8 px-4 disabled:opacity-50"
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Add
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

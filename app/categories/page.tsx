@@ -46,14 +46,31 @@ export default function CategoriesPage() {
             .order("name", { ascending: true })
 
         if (error) {
+            // First check if error is just an empty object
+            if (Object.keys(error).length === 0) {
+                // Silently ignore empty error objects
+                return
+            }
+
             // Check if it's likely a missing table error
             if (error.code === '42P01') { // undefined_table
                 toast.error("Setup Required", {
                     description: "Categories table missing. Please look for migration scripts."
                 })
-            } else if (Object.keys(error).length > 0 && (error.message || error.code || error.plugin || 'details' in error)) {
-                // Log only if it seems to be a real error object
+                return
+            }
+
+            // Only log if error has meaningful content
+            const hasMessage = error.message && String(error.message).trim() !== '';
+            const hasCode = error.code && String(error.code).trim() !== '' && error.code !== '42P01';
+            const hasPlugin = error.plugin && String(error.plugin).trim() !== '';
+            const hasDetails = error.details && String(error.details).trim() !== '';
+
+            if (hasMessage || hasCode || hasPlugin || hasDetails) {
                 console.error("Error loading categories:", error)
+                toast.error("Failed to load categories", {
+                    description: error.message || "An unexpected error occurred"
+                })
             }
             return
         }
@@ -116,14 +133,22 @@ export default function CategoriesPage() {
     }
 
     if (orgLoading || loading) {
-        return <div className="p-8">Loading...</div>
+        return (
+            <div className="flex items-center justify-center min-h-screen text-indigo-500">
+                Loading...
+            </div>
+        )
     }
 
     return (
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-6 min-h-screen">
+            {/* Background - matching other pages if global isn't covering it, but assuming app shell does.  */}
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Category Management</h1>
-                <Button onClick={() => setAddDialogOpen(true)}>
+                <div>
+                    <h1 className="text-3xl font-bold gradient-text">Category Management</h1>
+                    <p className="text-muted-foreground mt-1">Organize your inventory with categories</p>
+                </div>
+                <Button onClick={() => setAddDialogOpen(true)} className="holographic text-white shadow-lg border-0">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Category
                 </Button>
@@ -135,34 +160,44 @@ export default function CategoriesPage() {
                     placeholder="Search categories..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-10 glass border-0 shadow-sm"
                 />
             </div>
 
-            <div className="border rounded-md">
+            <div className="rounded-xl border-0 overflow-hidden glass shadow-xl">
                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead className="w-[100px]">Actions</TableHead>
+                    <TableHeader className="bg-white/10 backdrop-blur-md">
+                        <TableRow className="border-b border-white/10 hover:bg-transparent">
+                            <TableHead className="font-bold text-foreground pl-6">Name</TableHead>
+                            <TableHead className="font-bold text-foreground">Description</TableHead>
+                            <TableHead className="w-[100px] text-right font-bold text-foreground pr-6">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredCategories.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                                    No categories found. Add one to get started.
+                                <TableCell colSpan={3} className="text-center py-12 text-muted-foreground">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="p-4 rounded-full bg-muted/20">
+                                            <Search className="h-8 w-8 opacity-50" />
+                                        </div>
+                                        <p>No categories found.</p>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : (
                             filteredCategories.map((category) => (
-                                <TableRow key={category.id}>
-                                    <TableCell className="font-medium">{category.name}</TableCell>
-                                    <TableCell>{category.description}</TableCell>
-                                    <TableCell>
-                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
-                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                <TableRow key={category.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                                    <TableCell className="font-medium pl-6 text-base">{category.name}</TableCell>
+                                    <TableCell className="text-muted-foreground">{category.description || "-"}</TableCell>
+                                    <TableCell className="text-right pr-6">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleDelete(category.id)}
+                                            className="hover:bg-red-500/10 hover:text-red-600 rounded-full h-8 w-8"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -173,33 +208,37 @@ export default function CategoriesPage() {
             </div>
 
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-                <DialogContent>
+                <DialogContent className="glass border-0 shadow-2xl">
                     <DialogHeader>
-                        <DialogTitle>Add New Category</DialogTitle>
+                        <DialogTitle className="text-2xl gradient-text">Add New Category</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleAddCategory} className="space-y-4">
+                    <form onSubmit={handleAddCategory} className="space-y-6 pt-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Category Name</Label>
+                            <Label htmlFor="name" className="text-sm font-semibold">Category Name</Label>
                             <Input
                                 id="name"
                                 value={newCategory.name}
                                 onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
                                 required
+                                placeholder="e.g., Electronics"
+                                className="glass border-0 shadow-inner h-11"
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="desc">Description</Label>
+                            <Label htmlFor="desc" className="text-sm font-semibold">Description</Label>
                             <Input
                                 id="desc"
                                 value={newCategory.description}
                                 onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                                placeholder="Optional details"
+                                className="glass border-0 shadow-inner h-11"
                             />
                         </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setAddDialogOpen(false)}>
+                        <DialogFooter className="gap-2">
+                            <Button type="button" variant="ghost" onClick={() => setAddDialogOpen(false)} className="hover:bg-white/10">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isSubmitting}>
+                            <Button type="submit" disabled={isSubmitting} className="holographic text-white shadow-lg border-0">
                                 {isSubmitting ? "Adding..." : "Add Category"}
                             </Button>
                         </DialogFooter>

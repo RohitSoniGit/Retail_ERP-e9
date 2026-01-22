@@ -11,6 +11,7 @@ export interface Organization {
   settings?: OrganizationSettings;
   website?: string;
   email?: string;
+  owner_id?: string;
   created_at: string;
 }
 
@@ -296,8 +297,10 @@ export interface Item {
   wholesale_price: number;
   retail_price: number;
   purchase_cost: number;
+  purchase_price?: number; // Alias for purchase_cost
   current_stock: number;
   min_stock_level: number;
+  low_stock_threshold?: number; // Alias for min_stock_level
   gst_rate: number;
   unit_type: string;
   unit_name?: string;

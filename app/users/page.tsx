@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, Mail, Shield, UserPlus, MoreVertical, Search, Lock } from "lucide-react";
+import { Users, Plus, Mail, Shield, UserPlus, MoreVertical, Search, Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
     DropdownMenu,
@@ -32,15 +33,17 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Mock Data
-const MOCK_USERS = [
-    { id: "1", name: "Admin User", email: "admin@example.com", role: "admin", status: "active", lastActive: "2 mins ago" },
-    { id: "2", name: "Staff Member", email: "staff@example.com", role: "staff", status: "active", lastActive: "1 hour ago" },
-    { id: "3", name: "Accountant", email: "accounts@example.com", role: "accountant", status: "inactive", lastActive: "2 days ago" },
-];
+interface UserProfile {
+    id: string;
+    email: string;
+    full_name?: string;
+    role?: string;
+    created_at: string;
+}
 
 export default function UsersPage() {
-    const [users, setUsers] = useState(MOCK_USERS);
+    const [users, setUsers] = useState<UserProfile[]>([]);
+    const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [formData, setFormData] = useState({
@@ -50,66 +53,90 @@ export default function UsersPage() {
         role: "staff",
     });
 
-    const handleCreateUser = (e: React.FormEvent) => {
+    const supabase = getSupabaseBrowserClient();
+
+    // Fetch users (profiles + roles)
+    const fetchUsers = async () => {
+        try {
+            setLoading(true);
+
+            // Fetch profiles
+            const { data: profiles, error: profileError } = await supabase
+                .from('profiles')
+                .select('*');
+
+            if (profileError) throw profileError;
+
+            // Fetch roles
+            const { data: roles, error: roleError } = await supabase
+                .from('user_roles')
+                .select('*');
+
+            if (roleError) console.warn('Could not fetch roles:', roleError);
+
+            // Merge data
+            const combinedUsers = (profiles as any[])?.map((profile: any) => {
+                const userRole = (roles as any[])?.find((r: any) => r.user_id === profile.id);
+                return {
+                    ...profile,
+                    role: userRole?.role || 'user'
+                };
+            }) || [];
+
+            setUsers(combinedUsers);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            // Fallback for demo if table doesn't exist yet
+            // toast.error("Failed to load users"); 
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+
+    const handleCreateUser = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
 
-        // Basic validation
-        if (!formData.email || !formData.password || !formData.name) {
-            toast.error("Please fill in all fields");
-            return;
+        try {
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    fullName: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                    role: formData.role,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create user');
+            }
+
+            toast.success("User created successfully!");
+            setIsCreating(false);
+            setFormData({ name: "", email: "", password: "", role: "staff" });
+            fetchUsers(); // Refresh list
+        } catch (error: any) {
+            console.error('Error creating user:', error);
+            toast.error(error.message || "Failed to create user");
+        } finally {
+            setLoading(false);
         }
-
-        if (formData.password.length < 6) {
-            toast.error("Password must be at least 6 characters");
-            return;
-        }
-
-        // In a real app, this would call an API
-        const newUser = {
-            id: Date.now().toString(),
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            status: "active",
-            lastActive: "Just now",
-        };
-
-        setUsers([...users, newUser]);
-        setIsCreating(false);
-        setFormData({ name: "", email: "", password: "", role: "staff" });
-        toast.success("User created successfully");
     };
 
     const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.full_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (user.email?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     );
-
-    // Basic RBAC Simulation
-    const [isAdmin, setIsAdmin] = useState(true); // Default true for demo, in real app set false and check
-
-    // Check role effect (commented out for demo, but structure is here)
-    /* useEffect(() => {
-        const checkRole = async () => {
-             const supabase = getSupabaseBrowserClient();
-             const { data: { user } } = await supabase.auth.getUser();
-             // Check metadata or user_roles table
-             // setIsAdmin(user?.user_metadata?.role === 'admin');
-        }
-        checkRole();
-    }, []); */
-
-    if (!isAdmin) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-[#f8f9fa] dark:bg-slate-950">
-                <div className="text-center space-y-4">
-                    <Shield className="h-12 w-12 text-red-500 mx-auto" />
-                    <h1 className="text-2xl font-bold">Access Denied</h1>
-                    <p className="text-muted-foreground">You need administrator privileges to view this page.</p>
-                </div>
-            </div>
-        )
-    }
 
     return (
         <div className="min-h-screen relative overflow-hidden">
@@ -132,16 +159,19 @@ export default function UsersPage() {
                         <DialogContent className="max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Create New User</DialogTitle>
-                                <DialogDescription>Add a new user to the organization</DialogDescription>
+                                <DialogDescription>
+                                    Add a new user to the system. They will receive an email confirmation.
+                                </DialogDescription>
                             </DialogHeader>
-                            <form onSubmit={handleCreateUser} className="space-y-4">
+
+                            <form onSubmit={handleCreateUser} className="space-y-4 pt-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Full Name</Label>
                                     <Input
                                         id="name"
+                                        placeholder="John Doe"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        placeholder="John Doe"
                                         required
                                     />
                                 </div>
@@ -150,10 +180,22 @@ export default function UsersPage() {
                                     <Input
                                         id="email"
                                         type="email"
+                                        placeholder="john@example.com"
                                         value={formData.email}
                                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        placeholder="john@example.com"
                                         required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">Password</Label>
+                                    <Input
+                                        id="password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        required
+                                        minLength={6}
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -163,32 +205,24 @@ export default function UsersPage() {
                                         onValueChange={(value) => setFormData({ ...formData, role: value })}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue />
+                                            <SelectValue placeholder="Select role" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="admin">Administrator</SelectItem>
-                                            <SelectItem value="manager">Manager</SelectItem>
                                             <SelectItem value="staff">Staff</SelectItem>
-                                            <SelectItem value="accountant">Accountant</SelectItem>
+                                            <SelectItem value="manager">Manager</SelectItem>
+                                            <SelectItem value="admin">Admin</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">Initial Password</Label>
-                                    <Input
-                                        id="password"
-                                        type="password"
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                        placeholder="••••••••"
-                                        required
-                                    />
-                                </div>
-                                <div className="flex justify-end gap-2 pt-4">
+
+                                <div className="flex justify-end gap-3 pt-4">
                                     <Button type="button" variant="outline" onClick={() => setIsCreating(false)}>
                                         Cancel
                                     </Button>
-                                    <Button type="submit">Create Account</Button>
+                                    <Button type="submit" disabled={loading}>
+                                        {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                        Create User
+                                    </Button>
                                 </div>
                             </form>
                         </DialogContent>
@@ -238,68 +272,66 @@ export default function UsersPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>User</TableHead>
-                                    <TableHead>Role</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Last Active</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredUsers.map((user) => (
-                                    <TableRow key={user.id}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                                                    {user.name.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium">{user.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className="capitalize">
-                                                {user.role}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className={`flex items-center gap-2 ${user.status === 'active' ? 'text-green-600' : 'text-gray-500'}`}>
-                                                <div className={`h-2 w-2 rounded-full ${user.status === 'active' ? 'bg-green-500' : 'bg-gray-400'}`} />
-                                                <span className="capitalize text-sm">{user.status}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-muted-foreground text-sm">{user.lastActive}</TableCell>
-                                        <TableCell className="text-right">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem>
-                                                        <Mail className="h-4 w-4 mr-2" />
-                                                        Reset Password
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem>
-                                                        <Shield className="h-4 w-4 mr-2" />
-                                                        Change Role
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem className="text-red-600">
-                                                        Block Access
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </TableCell>
+                        {loading ? (
+                            <div className="flex justify-center p-8">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : users.length === 0 ? (
+                            <div className="text-center p-8 text-muted-foreground">
+                                No users found. Run the setup scripts to sync users.
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>User</TableHead>
+                                        <TableHead>Role</TableHead>
+                                        <TableHead>Joined</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredUsers.map((user) => (
+                                        <TableRow key={user.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+                                                        {(user.full_name || user.email || "?").charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium">{user.full_name || "User"}</p>
+                                                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="capitalize">
+                                                    {user.role}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground text-sm">
+                                                {new Date(user.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon">
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem>
+                                                            <Mail className="h-4 w-4 mr-2" />
+                                                            Contact
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
                     </CardContent>
                 </Card>
             </div>

@@ -425,26 +425,26 @@ export function EnhancedBillForm() {
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)]">
       {/* Customer Selection */}
-      <div className="p-4 border-b bg-background">
+      <div className="p-4 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <div className="flex flex-col md:flex-row items-center gap-4">
           <div className="flex-1 w-full flex items-center gap-2">
             {selectedCustomer ? (
-              <div className="flex-1 flex items-center gap-2 p-2 bg-muted rounded-lg">
-                <User className="h-4 w-4 text-muted-foreground" />
+              <div className="flex-1 flex items-center gap-2 p-2 bg-white/5 border border-white/10 rounded-lg glass shadow-sm">
+                <User className="h-4 w-4 text-indigo-400" />
                 <div className="flex-1">
-                  <p className="font-medium text-sm">{selectedCustomer.name}</p>
+                  <p className="font-medium text-sm text-foreground">{selectedCustomer.name}</p>
                   <p className="text-xs text-muted-foreground">
                     {selectedCustomer.customer_type} | {selectedCustomer.phone || "No phone"}
                   </p>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(null)}>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedCustomer(null)} className="hover:bg-white/10">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <Button
                 variant="outline"
-                className="flex-1 justify-start text-muted-foreground bg-transparent"
+                className="flex-1 justify-start text-muted-foreground glass border-0 shadow-sm hover:bg-white/10"
                 onClick={() => setShowCustomerDialog(true)}
               >
                 <User className="h-4 w-4 mr-2" />
@@ -453,10 +453,10 @@ export function EnhancedBillForm() {
             )}
 
             <Select value={customerStateCode} onValueChange={setCustomerStateCode}>
-              <SelectTrigger className="w-[120px]">
+              <SelectTrigger className="w-[120px] glass border-0 shadow-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="glass border-0 backdrop-blur-xl">
                 {INDIAN_STATES.map((state) => (
                   <SelectItem key={state.code} value={state.code}>
                     {state.code} - {state.name.slice(0, 10)}
@@ -466,7 +466,7 @@ export function EnhancedBillForm() {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2 border p-2 rounded-lg bg-card">
+          <div className="flex items-center gap-2 border border-white/10 p-2 rounded-lg glass shadow-sm">
             <Label htmlFor="gst-mode" className="text-sm font-medium cursor-pointer">
               {isGstBill ? "GST Invoice" : "Bill of Supply"}
             </Label>
@@ -476,37 +476,37 @@ export function EnhancedBillForm() {
       </div>
 
       {/* Item Search */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b border-white/10 bg-white/5 backdrop-blur-md z-20">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search items by name or SKU..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-10 glass border-0 shadow-inner h-11"
           />
         </div>
 
         {/* Search Results */}
         {searchTerm && filteredItems && filteredItems.length > 0 && (
-          <div className="absolute z-10 mt-1 w-[calc(100%-2rem)] bg-background border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-            {filteredItems.slice(0, 5).map((item) => (
+          <div className="absolute left-4 right-4 z-50 mt-1 bg-background/90 backdrop-blur-2xl border border-white/10 rounded-xl shadow-2xl max-h-64 overflow-y-auto custom-scrollbar">
+            {filteredItems.slice(0, 10).map((item) => (
               <button
                 key={item.id}
-                className="w-full p-3 text-left hover:bg-muted flex items-center justify-between"
+                className="w-full p-3 text-left hover:bg-indigo-500/10 transition-colors flex items-center justify-between border-b border-white/5 last:border-0"
                 onClick={() => addItem(item)}
               >
                 <div>
-                  <p className="font-medium text-sm">{item.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.sku} | Stock: {item.current_stock} {item.unit_type}
+                  <p className="font-medium text-sm text-foreground">{item.name}</p>
+                  <p className="text-xs text-muted-foreground font-mono">
+                    {item.sku} | <span className={item.current_stock > 0 ? "text-emerald-500" : "text-red-500"}>Stock: {item.current_stock}</span> {item.unit_type}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-medium text-sm">
+                  <p className="font-bold text-sm font-mono text-foreground">
                     {formatCurrency(selectedCustomer?.customer_type === "wholesale" ? item.wholesale_price : item.retail_price)}
                   </p>
-                  <Badge variant="outline" className="text-xs">{item.gst_rate}% GST</Badge>
+                  <Badge variant="outline" className="text-xs border-0 bg-white/5">{item.gst_rate}% GST</Badge>
                 </div>
               </button>
             ))}
@@ -515,38 +515,41 @@ export function EnhancedBillForm() {
       </div>
 
       {/* Bill Items */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         {billItems.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No items added</p>
+          <div className="h-full flex flex-col items-center justify-center text-muted-foreground glass rounded-xl border-dashed border-2 border-white/10 mx-4 my-8">
+            <div className="p-6 rounded-full bg-white/5 mb-4">
+              <Search className="h-8 w-8 opacity-50" />
+            </div>
+            <p className="text-lg font-medium">No items added</p>
             <p className="text-sm">Search and add items to create a bill</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {billItems.map((bi) => (
-              <Card key={bi.item_id} className="overflow-hidden">
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between gap-2">
+              <Card key={bi.item_id} className="overflow-hidden glass border-0 shadow-md group hover:bg-white/5 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{bi.item.name}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-medium text-base truncate text-foreground">{bi.item.name}</p>
+                      <p className="text-xs text-muted-foreground font-mono mt-1">
                         {formatCurrency(bi.unit_price)} x {bi.quantity} {bi.item.unit_type}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-sm">{formatCurrency(bi.total)}</p>
+                      <p className="font-bold text-base font-mono text-foreground">{formatCurrency(bi.total)}</p>
                       <p className="text-xs text-muted-foreground">
                         {isGstBill ? "incl. GST" : "No Tax"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
+                    <div className="flex items-center gap-1 bg-black/20 rounded-lg p-1">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        className="h-8 w-8 bg-transparent"
+                        className="h-7 w-7 rounded-md hover:bg-white/10 hover:text-red-400"
                         onClick={() => updateQuantity(bi.item_id, bi.quantity - 1)}
                       >
                         <Minus className="h-3 w-3" />
@@ -555,12 +558,12 @@ export function EnhancedBillForm() {
                         type="number"
                         value={bi.quantity}
                         onChange={(e) => updateQuantity(bi.item_id, parseInt(e.target.value) || 0)}
-                        className="w-16 h-8 text-center"
+                        className="w-14 h-7 text-center bg-transparent border-0 focus-visible:ring-0 p-0 font-mono text-sm"
                       />
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
-                        className="h-8 w-8 bg-transparent"
+                        className="h-7 w-7 rounded-md hover:bg-white/10 hover:text-emerald-400"
                         onClick={() => updateQuantity(bi.item_id, bi.quantity + 1)}
                         disabled={bi.quantity >= bi.item.current_stock}
                       >
@@ -570,10 +573,11 @@ export function EnhancedBillForm() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-red-600"
+                      className="text-red-500 hover:text-red-400 hover:bg-red-500/10 h-8 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => removeItem(bi.item_id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
                     </Button>
                   </div>
                 </CardContent>
@@ -585,145 +589,152 @@ export function EnhancedBillForm() {
 
       {/* Totals & Payment */}
       {billItems.length > 0 && (
-        <div className="border-t bg-muted/30 p-4 space-y-3">
+        <div className="border-t border-white/10 bg-black/40 backdrop-blur-xl p-4 space-y-4 shadow-2xl z-30">
           {/* Discount */}
-          <div className="flex items-center gap-2">
-            <Label className="text-sm w-20">Discount %</Label>
+          <div className="flex items-center gap-3">
+            <Label className="text-sm w-20 text-muted-foreground font-medium">Discount %</Label>
             <Input
               type="number"
               value={discount}
               onChange={(e) => setDiscount(e.target.value)}
               placeholder="0"
-              className="w-20 h-8"
+              className="w-24 h-9 glass border-0 shadow-inner"
             />
             {totals.discountAmount > 0 && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm font-medium text-emerald-400">
                 -{formatCurrency(totals.discountAmount)}
               </span>
             )}
           </div>
 
           {/* Totals Summary */}
-          <div className="text-sm space-y-1">
+          <div className="text-sm space-y-2 bg-white/5 p-4 rounded-xl border border-white/5 shadow-inner">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatCurrency(totals.subtotal)}</span>
+              <span className="text-muted-foreground font-medium">Subtotal</span>
+              <span className="font-mono">{formatCurrency(totals.subtotal)}</span>
             </div>
             {totals.discountAmount > 0 && (
-              <div className="flex justify-between text-emerald-600">
+              <div className="flex justify-between text-emerald-400">
                 <span>Discount ({totals.discountPercent}%)</span>
-                <span>-{formatCurrency(totals.discountAmount)}</span>
+                <span className="font-mono">-{formatCurrency(totals.discountAmount)}</span>
               </div>
             )}
             {isGstBill && (
               totals.isIGST ? (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">IGST</span>
-                  <span>{formatCurrency(totals.igst)}</span>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>IGST</span>
+                  <span className="font-mono">{formatCurrency(totals.igst)}</span>
                 </div>
               ) : (
                 <>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">CGST</span>
-                    <span>{formatCurrency(totals.cgst)}</span>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>CGST</span>
+                    <span className="font-mono">{formatCurrency(totals.cgst)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">SGST</span>
-                    <span>{formatCurrency(totals.sgst)}</span>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>SGST</span>
+                    <span className="font-mono">{formatCurrency(totals.sgst)}</span>
                   </div>
                 </>
               )
             )}
             {totals.roundOff !== 0 && (
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Round Off</span>
-                <span>{totals.roundOff > 0 ? "+" : ""}{totals.roundOff.toFixed(2)}</span>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Round Off</span>
+                <span className="font-mono">{totals.roundOff > 0 ? "+" : ""}{totals.roundOff.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold text-lg pt-2 border-t">
-              <span>Total</span>
-              <span>{formatCurrency(totals.roundedTotal)}</span>
+            <div className="flex justify-between font-bold text-xl pt-3 border-t border-white/10">
+              <span className="gradient-text">Total Payable</span>
+              <span className="gradient-text font-mono">{formatCurrency(totals.roundedTotal)}</span>
             </div>
           </div>
 
-          {/* Payment Mode */}
-          <div className="flex items-center gap-2">
-            <Select value={paymentMode} onValueChange={setPaymentMode}>
-              <SelectTrigger className="flex-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_MODES.map((mode) => (
-                  <SelectItem key={mode.value} value={mode.value}>
-                    {mode.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Print Format Selection */}
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground font-medium">Print Format</Label>
+              <Select value={printFormat} onValueChange={(v: "thermal" | "a4") => setPrintFormat(v)}>
+                <SelectTrigger className="h-10 glass border-0 shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="glass border-0 backdrop-blur-xl">
+                  <SelectItem value="thermal">Thermal (80mm)</SelectItem>
+                  <SelectItem value="a4">A4 Invoice</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            {paymentMode === "mixed" && (
+            {/* Payment Mode */}
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground font-medium">Payment Mode</Label>
+              <div className="flex items-center gap-2">
+                <Select value={paymentMode} onValueChange={setPaymentMode}>
+                  <SelectTrigger className="flex-1 h-10 glass border-0 shadow-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="glass border-0 backdrop-blur-xl">
+                    {PAYMENT_MODES.map((mode) => (
+                      <SelectItem key={mode.value} value={mode.value}>
+                        {mode.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {paymentMode === "mixed" && (
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-xs text-muted-foreground font-medium">Paid Amount</Label>
               <Input
                 type="number"
                 value={amountPaid}
                 onChange={(e) => setAmountPaid(e.target.value)}
                 placeholder="Paid amount"
-                className="w-32"
+                className="h-10 glass border-0 shadow-inner font-mono"
               />
-            )}
-          </div>
-
-          {/* Print Format Selection */}
-          <div className="flex items-center gap-2 pb-2">
-            <Printer className="h-4 w-4 text-muted-foreground" />
-            <Label className="text-sm whitespace-nowrap">Print Format:</Label>
-            <Select value={printFormat} onValueChange={(v: "thermal" | "a4") => setPrintFormat(v)}>
-              <SelectTrigger className="flex-1 h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="thermal">Thermal (80mm)</SelectItem>
-                <SelectItem value="a4">A4 Invoice</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            </div>
+          )}
 
           {/* Save Button */}
           <Button
-            className="w-full h-12 text-lg"
+            className="w-full h-12 text-lg font-bold holographic text-white shadow-lg border-0 hover:scale-[1.02] transition-transform"
             onClick={saveBill}
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
             ) : (
-              <Check className="h-5 w-5 mr-2" />
+              <Check className="h-6 w-6 mr-2" />
             )}
-            Save Bill ({formatCurrency(totals.roundedTotal)})
+            Save Bill
           </Button>
         </div>
       )}
 
       {/* Customer Selection Dialog */}
       <Dialog open={showCustomerDialog} onOpenChange={setShowCustomerDialog}>
-        <DialogContent className="max-w-sm max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Select Customer</DialogTitle>
+        <DialogContent className="max-w-sm max-h-[80vh] glass border-0 shadow-2xl p-0 gap-0">
+          <DialogHeader className="p-6 border-b border-white/10 bg-white/5 backdrop-blur-md">
+            <DialogTitle className="gradient-text text-xl">Select Customer</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search by name or phone..."
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
-                className="pl-9"
+                className="pl-10 glass border-0 shadow-inner h-11"
               />
             </div>
-            <div className="max-h-[300px] overflow-y-auto space-y-1">
+            <div className="max-h-[300px] overflow-y-auto space-y-2 custom-scrollbar pr-1">
               {filteredCustomers?.map((customer) => (
                 <button
                   key={customer.id}
-                  className="w-full p-3 text-left hover:bg-muted rounded-lg flex items-center justify-between"
+                  className="w-full p-4 text-left hover:bg-white/5 rounded-xl border border-transparent hover:border-white/10 transition-all flex items-center justify-between group"
                   onClick={() => {
                     setSelectedCustomer(customer);
                     setShowCustomerDialog(false);
@@ -731,20 +742,20 @@ export function EnhancedBillForm() {
                   }}
                 >
                   <div>
-                    <p className="font-medium text-sm">{customer.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-bold text-sm text-foreground group-hover:text-indigo-400 transition-colors">{customer.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
                       {customer.phone || "No phone"} | {customer.customer_type}
                     </p>
                   </div>
                   {customer.current_balance > 0 && (
-                    <Badge variant="outline" className="text-red-600">
+                    <Badge variant="outline" className="text-red-500 border-red-500/20 bg-red-500/10">
                       Due: {formatCurrency(customer.current_balance)}
                     </Badge>
                   )}
                 </button>
               ))}
               {filteredCustomers?.length === 0 && (
-                <p className="text-center py-4 text-muted-foreground text-sm">
+                <p className="text-center py-8 text-muted-foreground text-sm glass rounded-xl border-dashed border border-white/10">
                   No customers found
                 </p>
               )}
