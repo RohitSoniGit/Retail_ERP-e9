@@ -3,12 +3,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import type { Organization } from "@/lib/types"
-import { DEMO_ORG_ID } from "@/lib/constants"
 
 interface OrganizationContextType {
   organization: Organization | null
   organizationId: string | null
   loading: boolean
+  error: string | null
   setOrganization: (org: Organization) => void
   updateOrganization: (updates: Partial<Organization>) => Promise<void>
 }
@@ -17,6 +17,7 @@ const OrganizationContext = createContext<OrganizationContextType>({
   organization: null,
   organizationId: null,
   loading: true,
+  error: null,
   setOrganization: () => { },
   updateOrganization: async () => { },
 })
@@ -24,6 +25,7 @@ const OrganizationContext = createContext<OrganizationContextType>({
 export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [organization, setOrganization] = useState<Organization | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const updateOrganization = async (updates: Partial<Organization>) => {
     if (!organization) return
@@ -37,8 +39,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       // Filter out fields that shouldn't be updated (like id, created_at)
       const { id, created_at, ...updateData } = updates as any
 
-      console.log('Updating organization with data:', updateData)
-
       const { error } = await supabase
         .from("organizations")
         .update(updateData)
@@ -46,7 +46,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Failed to update organization:', error)
-        console.error('Update data that failed:', updateData)
         // Revert local state on error
         setOrganization(organization)
         throw error
@@ -61,9 +60,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function loadOrganization() {
-      const supabase = getSupabaseBrowserClient()
-
       try {
+        const supabase = getSupabaseBrowserClient()
+
         // Fetch organizations from database
         const { data, error } = await supabase
           .from("organizations")
@@ -72,22 +71,23 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
         if (error) {
           console.error('Error loading organization:', error)
-          throw error
+          setError(`Database error: ${error.message}`)
+          return
         }
 
         if (data && data.length > 0) {
           setOrganization(data[0])
+          setError(null)
         } else {
-          console.error('No organizations found in database. Please create an organization first.')
-          throw new Error('No organizations found in database')
+          console.warn('No organizations found in database')
+          setError('No organizations found. Please set up your organization first.')
         }
       } catch (error) {
         console.error('Failed to load organization:', error)
-        // Don't set any fallback - let the app handle the error state
-        setOrganization(null)
+        setError('Failed to connect to database. Please check your configuration.')
+      } finally {
+        setLoading(false)
       }
-
-      setLoading(false)
     }
 
     loadOrganization()
@@ -98,6 +98,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       organization,
       organizationId: organization?.id || null,
       loading,
+      error,
       setOrganization,
       updateOrganization
     }}>

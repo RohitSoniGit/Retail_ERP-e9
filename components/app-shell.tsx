@@ -87,7 +87,7 @@ function FloatingParticles() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { organization, loading } = useOrganization();
+  const { organization, loading, error } = useOrganization();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [isPublicRoute, setIsPublicRoute] = useState(false);
 
   useEffect(() => {
-    const publicRoutes = ["/login", "/signup", "/forgot-password"];
+    const publicRoutes = ["/login", "/signup", "/forgot-password", "/setup"];
     const isPublic = publicRoutes.includes(pathname);
     setIsPublicRoute(isPublic);
 
@@ -128,6 +128,33 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className="w-full h-full">
           {children}
         </main>
+      </div>
+    );
+  }
+
+  // Show error state if organization loading failed
+  if (error && !loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h1 className="text-2xl font-bold mb-4">Setup Required</h1>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <div className="space-y-4">
+            <p className="text-sm">Please follow these steps:</p>
+            <ol className="text-sm text-left space-y-2">
+              <li>1. Run the database schema in Supabase</li>
+              <li>2. Create an organization record</li>
+              <li>3. Refresh this page</li>
+            </ol>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
