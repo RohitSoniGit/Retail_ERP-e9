@@ -6,9 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/lib/context/organization";
 import { FABMenu } from "./fab-menu";
-import { DemoBanner } from "./demo-banner";
 import { ThemeToggle } from "./theme-toggle";
-import { isDemoMode } from "@/lib/demo-data";
 import {
   LayoutDashboard,
   LayoutList,
@@ -90,7 +88,6 @@ function FloatingParticles() {
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { organization, loading } = useOrganization();
-  const showDemoBanner = isDemoMode();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -101,8 +98,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);
   };
-
-  const sidebarTop = showDemoBanner ? "top-[104px]" : "top-20";
 
   const router = useRouter();
   const [isPublicRoute, setIsPublicRoute] = useState(false);
@@ -141,11 +136,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background relative overflow-x-hidden">
       {/* Floating Particles Background */}
       <FloatingParticles />
-
-      {/* Demo Banner */}
-      <div className="relative z-10">
-        <DemoBanner />
-      </div>
 
       {/* Clean Header - Glassmorphism */}
       <header className="sticky top-0 z-50 bg-background/60 backdrop-blur-xl border-b border-border/40">

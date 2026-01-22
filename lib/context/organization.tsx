@@ -31,13 +31,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     const updatedOrg = { ...organization, ...updates }
     setOrganization(updatedOrg)
 
-    // Skip database update for demo organization
-    if (organization.id === DEMO_ORG_ID) {
-      // Demo mode: just update local state, no database call
-      return
-    }
-
-    // For real organizations, update the database
     try {
       const supabase = getSupabaseBrowserClient()
 
@@ -54,6 +47,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       if (error) {
         console.error('Failed to update organization:', error)
         console.error('Update data that failed:', updateData)
+        // Revert local state on error
+        setOrganization(organization)
         throw error
       }
     } catch (error) {
@@ -69,44 +64,27 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       const supabase = getSupabaseBrowserClient()
 
       try {
-        // For demo, we'll use a mock organization if Supabase is not configured
+        // Fetch organizations from database
         const { data, error } = await supabase
           .from("organizations")
           .select("*")
           .limit(1)
-          .single()
 
-        if (data && !error) {
-          setOrganization(data)
+        if (error) {
+          console.error('Error loading organization:', error)
+          throw error
+        }
+
+        if (data && data.length > 0) {
+          setOrganization(data[0])
         } else {
-          // Create a demo organization for development
-          // Using a valid UUID format to prevent database errors
-          const demoOrg = {
-            id: DEMO_ORG_ID,
-            name: 'Demo Retail Store',
-            gst_number: '27ABCDE1234F1Z5',
-            address: '123 Demo Street, Mumbai, Maharashtra 400001',
-            phone: '+91 9876543210',
-            state_code: '27',
-            gstin: '27ABCDE1234F1Z5',
-            created_at: new Date().toISOString(),
-          }
-          setOrganization(demoOrg)
+          console.error('No organizations found in database. Please create an organization first.')
+          throw new Error('No organizations found in database')
         }
       } catch (error) {
-        console.warn('Using demo organization:', error)
-        // Fallback to demo organization with valid UUID format
-        const demoOrg = {
-          id: DEMO_ORG_ID,
-          name: 'Demo Retail Store',
-          gst_number: '27ABCDE1234F1Z5',
-          address: '123 Demo Street, Mumbai, Maharashtra 400001',
-          phone: '+91 9876543210',
-          state_code: '27',
-          gstin: '27ABCDE1234F1Z5',
-          created_at: new Date().toISOString(),
-        }
-        setOrganization(demoOrg)
+        console.error('Failed to load organization:', error)
+        // Don't set any fallback - let the app handle the error state
+        setOrganization(null)
       }
 
       setLoading(false)
