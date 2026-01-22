@@ -62,6 +62,10 @@ export default function LoginPage() {
                     <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
                     <CardDescription>
                         Enter your credentials to access your store
+                        <br />
+                        <span className="text-xs text-muted-foreground mt-2 block">
+                            Default: admin@ronakjewellers.com / ronak@123
+                        </span>
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
@@ -77,7 +81,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="Enter your email"
+                                placeholder="admin@ronakjewellers.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
