@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [isPublicRoute, setIsPublicRoute] = useState(false);
 
   useEffect(() => {
-    const publicRoutes = ["/login", "/signup", "/forgot-password", "/setup"];
+    const publicRoutes = ["/login", "/signup", "/forgot-password"];
     const isPublic = publicRoutes.includes(pathname);
     setIsPublicRoute(isPublic);
 

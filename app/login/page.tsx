@@ -27,36 +27,12 @@ export default function LoginPage() {
 
         try {
             const supabase = getSupabaseBrowserClient();
-            console.log("Attempting login...");
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
 
             if (error) {
-                // Auto-create demo admin account if it doesn't exist
-                if (email === "admin@example.com" && password === "admin@123" && error.message.includes("Invalid login credentials")) {
-                    console.log("Demo account not found, creating it...");
-                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                        email,
-                        password,
-                    });
-
-                    if (signUpError) {
-                        throw signUpError;
-                    }
-
-                    if (signUpData.session) {
-                        toast.success("Demo Admin created & logged in!");
-                        router.push("/");
-                        router.refresh();
-                        return;
-                    } else if (signUpData.user) {
-                        // If email confirmation is on
-                        toast.success("Demo Admin account created! Please verify your email.");
-                        return;
-                    }
-                }
                 throw error;
             }
 
@@ -64,15 +40,7 @@ export default function LoginPage() {
             router.push("/");
             router.refresh();
         } catch (err: any) {
-            // Only log unexpected errors, not expected auth failures
-            const isExpectedAuthError = err.message?.includes("Invalid login credentials") ||
-                err.message?.includes("Email not confirmed") ||
-                err.message?.includes("User not found");
-
-            if (!isExpectedAuthError) {
-                console.error("Login error:", err);
-            }
-
+            console.error("Login error:", err);
             setError(err.message || "Invalid email or password");
         } finally {
             setLoading(false);
@@ -109,7 +77,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="admin@example.com"
+                                placeholder="Enter your email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required

@@ -18,7 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatCurrency, type DashboardStats, type Item, type Sale } from "@/lib/types";
-import { DEMO_ORG_ID } from "@/lib/constants";
 import {
   Loader2,
   AlertTriangle,
