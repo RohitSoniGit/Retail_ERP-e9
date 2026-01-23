@@ -19,7 +19,12 @@ import { formatCurrency, type PurchaseOrder } from "@/lib/types";
 import { Search, Plus, FileText, Loader2 } from "lucide-react";
 import { CreatePurchaseOrderDialog } from "./create-purchase-order-dialog";
 
-export function PurchaseOrdersList() {
+interface PurchaseOrdersListProps {
+
+  onEdit?: (po: PurchaseOrder) => void;
+}
+
+export function PurchaseOrdersList({ onEdit }: PurchaseOrdersListProps) {
   const { organizationId } = useOrganization();
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -173,7 +178,7 @@ export function PurchaseOrdersList() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => onEdit?.(order)}>
                         <FileText className="h-4 w-4" />
                       </Button>
                     </TableCell>

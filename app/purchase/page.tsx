@@ -10,8 +10,11 @@ import { PurchaseOrdersList } from "@/components/purchase/purchase-orders-list";
 import { PurchaseReceiptsList } from "@/components/purchase/purchase-receipts-list";
 import { AdvancePaymentForm } from "@/components/purchase/advance-payment-form";
 
+import { PurchaseOrder } from "@/lib/types";
+
 export default function PurchasePage() {
   const [activeTab, setActiveTab] = useState("suppliers");
+  const [selectedPO, setSelectedPO] = useState<PurchaseOrder | undefined>(undefined);
 
   return (
     <div className="p-4 pb-24 md:pb-4">
@@ -35,8 +38,16 @@ export default function PurchasePage() {
 
         <TabsContent value="orders" className="mt-0">
           <div className="space-y-6">
-            <PurchaseOrderForm />
-            <PurchaseOrdersList />
+            <PurchaseOrderForm
+              existingPO={selectedPO}
+              onSave={() => setSelectedPO(undefined)}
+            />
+            <PurchaseOrdersList
+              onEdit={(po) => {
+                setSelectedPO(po);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           </div>
         </TabsContent>
 
