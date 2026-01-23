@@ -34,6 +34,7 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
   const [loading, setLoading] = useState(false)
   const { organization } = useOrganization()
   const [categories, setCategories] = useState<Category[]>([])
+  const [skuReadonly, setSkuReadonly] = useState(false)
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
@@ -49,17 +50,71 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
 
   useEffect(() => {
     if (open && organization) {
-      const fetchCategories = async () => {
+      const fetchCategoriesAndGenerateSKU = async () => {
         const supabase = getSupabaseBrowserClient()
-        const { data } = await supabase
+        
+        // Fetch categories
+        const { data: categoriesData } = await supabase
           .from("categories")
           .select("*")
           .eq("organization_id", organization.id)
-        setCategories(data || [])
+        setCategories(categoriesData || [])
+
+        // Generate next SKU
+        await generateNextSKU()
       }
-      fetchCategories()
+      fetchCategoriesAndGenerateSKU()
     }
   }, [open, organization])
+
+  const generateNextSKU = async () => {
+    if (!organization) return
+
+    const supabase = getSupabaseBrowserClient()
+    
+    try {
+      // Get all existing SKUs to find the pattern
+      const { data: items } = await supabase
+        .from("items")
+        .select("sku")
+        .eq("organization_id", organization.id)
+        .order("sku", { ascending: false })
+
+      if (!items || items.length === 0) {
+        // No items exist, make SKU writable and suggest first SKU
+        setFormData(prev => ({ ...prev, sku: "SKU001" }))
+        setSkuReadonly(false)
+        return
+      }
+
+      // Find SKUs that match pattern SKU### or similar
+      const skuPattern = /^SKU(\d+)$/i
+      const numericSKUs = items
+        .map(item => {
+          const match = item.sku.match(skuPattern)
+          return match ? parseInt(match[1], 10) : null
+        })
+        .filter(num => num !== null)
+        .sort((a, b) => b - a) // Sort descending
+
+      if (numericSKUs.length > 0) {
+        // Found pattern, generate next SKU and make readonly
+        const nextNumber = numericSKUs[0] + 1
+        const nextSKU = `SKU${nextNumber.toString().padStart(3, '0')}`
+        setFormData(prev => ({ ...prev, sku: nextSKU }))
+        setSkuReadonly(true)
+      } else {
+        // No pattern found, make SKU writable
+        setFormData(prev => ({ ...prev, sku: "SKU001" }))
+        setSkuReadonly(false)
+      }
+    } catch (error) {
+      console.error('Error generating SKU:', error)
+      // Fallback to writable SKU
+      setFormData(prev => ({ ...prev, sku: "SKU001" }))
+      setSkuReadonly(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,6 +141,7 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
     })
 
     if (!error) {
+      // Reset form and regenerate SKU for next item
       setFormData({
         sku: "",
         name: "",
@@ -98,6 +154,12 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
         pieces_per_unit: "1",
         gst_rate: "18",
       })
+      
+      // Generate next SKU for the next item
+      setTimeout(() => {
+        generateNextSKU()
+      }, 100)
+      
       onSuccess()
     } else {
       console.error(error);
@@ -118,15 +180,40 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
               <div className="space-y-2">
                 <Label htmlFor="sku" className="text-sm font-semibold flex items-center gap-2">
                   SKU
+                  {skuReadonly && (
+                    <span className="text-xs text-muted-foreground">(Auto-generated)</span>
+                  )}
                 </Label>
-                <Input
-                  id="sku"
-                  value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  placeholder="ITM001"
-                  required
-                  className="glass border-0 shadow-inner h-11"
-                />
+                <div className="relative">
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    placeholder="SKU001"
+                    required
+                    readOnly={skuReadonly}
+                    className={`glass border-0 shadow-inner h-11 ${skuReadonly ? 'bg-muted/50 cursor-not-allowed' : ''}`}
+                  />
+                  {skuReadonly && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1 h-9 px-2 text-xs"
+                      onClick={() => {
+                        setSkuReadonly(false)
+                        setFormData(prev => ({ ...prev, sku: "" }))
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </div>
+                {skuReadonly && (
+                  <p className="text-xs text-muted-foreground">
+                    Auto-generated based on existing SKUs. Click "Edit" to customize.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-semibold flex items-center gap-2">
