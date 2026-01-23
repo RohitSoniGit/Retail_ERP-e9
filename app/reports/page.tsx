@@ -390,19 +390,60 @@ export default function ReportsPage() {
                   <CardDescription>Current stock levels and valuation</CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  {/* ... */}
+                  <Button variant="outline" onClick={() => exportToCSV(inventory, 'inventory-report')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button variant="outline" onClick={() => exportToPDF('Inventory Report')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <Table>
-                {/* ... */}
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Current Stock</TableHead>
+                    <TableHead>Min Level</TableHead>
+                    <TableHead>Purchase Cost</TableHead>
+                    <TableHead>Retail Price</TableHead>
+                    <TableHead>Total Value</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
-                  {mockInventoryData.map((item) => (
-                    <TableRow key={item.id}>
-                      {/* ... */}
+                  {inventory.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    inventory.map((item: any) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-mono">{item.sku}</TableCell>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.current_stock}</TableCell>
+                        <TableCell>{item.min_stock_level}</TableCell>
+                        <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
+                        <TableCell>₹{item.retail_price.toLocaleString()}</TableCell>
+                        <TableCell>₹{item.total_value.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            item.current_stock === 0 ? "destructive" :
+                              item.current_stock <= item.min_stock_level ? "secondary" : "default"
+                          }>
+                            {item.current_stock === 0 ? "Out of Stock" :
+                              item.current_stock <= item.min_stock_level ? "Low Stock" : "In Stock"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
