@@ -338,6 +338,7 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
       const itemsToInsert = poItems.map(item => ({
         po_id: poId,
         item_id: item.item_id,
+        item_name: item.item_name,
         hsn_code: item.hsn_code,
         quantity: item.quantity,
         unit_price: item.unit_price,

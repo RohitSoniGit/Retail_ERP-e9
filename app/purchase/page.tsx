@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SupplierManagement } from "@/components/purchase/supplier-management";
 import { PurchaseOrderForm } from "@/components/purchase/purchase-order-form";
 import { GoodsReceipt } from "@/components/purchase/goods-receipt";
 import { PaymentTracking } from "@/components/purchase/payment-tracking";
@@ -31,7 +30,7 @@ export default function PurchasePage() {
         </TabsList>
 
         <TabsContent value="suppliers" className="mt-0">
-          <SupplierManagement />
+          <SuppliersTable />
         </TabsContent>
 
         <TabsContent value="orders" className="mt-0">
