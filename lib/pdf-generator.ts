@@ -30,12 +30,31 @@ export class PDFGenerator {
         height: undefined,
         windowWidth: options.format === 'thermal' ? 302 : 1200,
         onclone: (clonedDoc: Document) => {
-          // Remove any CSS that might contain LAB colors which html2canvas fails to parse
+          // Remove any CSS that might contain modern color functions which html2canvas fails to parse
           const styleTags = clonedDoc.querySelectorAll('style');
           styleTags.forEach(tag => {
-            if (tag.innerHTML.includes('lab(')) {
-              // Replace lab colors with a fallback safe color (transparent)
-              tag.innerHTML = tag.innerHTML.replace(/lab\([^)]+\)/g, 'rgba(0,0,0,0)');
+            let css = tag.innerHTML;
+            // Replace modern color functions with a fallback safe color (white)
+            // html2canvas 1.4.1 throws generic "Attempting to parse an unsupported color function" for these
+            css = css.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#ffffff');
+            tag.innerHTML = css;
+          });
+
+          // Checking for inline styles on all elements
+          const allElements = clonedDoc.querySelectorAll('*');
+          allElements.forEach((el: any) => {
+            const style = el.style;
+            if (style) {
+              // If inline style has problematic color, clear it
+              if (style.backgroundColor && (style.backgroundColor.includes('lab') || style.backgroundColor.includes('oklch'))) {
+                style.backgroundColor = '#ffffff';
+              }
+              if (style.color && (style.color.includes('lab') || style.color.includes('oklch'))) {
+                style.color = '#000000';
+              }
+              if (style.borderColor && (style.borderColor.includes('lab') || style.borderColor.includes('oklch'))) {
+                style.borderColor = '#e2e8f0';
+              }
             }
           });
         }
