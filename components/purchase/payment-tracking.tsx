@@ -39,6 +39,9 @@ import {
 } from "lucide-react";
 import { SupplierPayment, PaymentAllocation, Supplier, PurchaseOrder } from "@/lib/types";
 import { toast } from "sonner";
+import { useOrganization } from "@/lib/context/organization";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import useSWR from "swr";
 
 const PAYMENT_MODES = [
   { value: "cash", label: "Cash" },
@@ -56,15 +59,15 @@ const PAYMENT_STATUS = [
 ];
 
 export function PaymentTracking() {
-  const [payments, setPayments] = useState<SupplierPayment[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const { organizationId } = useOrganization();
+  const supabase = getSupabaseBrowserClient();
+
   const [selectedPayment, setSelectedPayment] = useState<SupplierPayment | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "cleared" | "bounced">("all");
   const [allocations, setAllocations] = useState<PaymentAllocation[]>([]);
-  
+
   const [formData, setFormData] = useState({
     payment_number: "",
     supplier_id: "",
@@ -76,147 +79,57 @@ export function PaymentTracking() {
     notes: "",
   });
 
-  // Mock data
+  // Fetch Suppliers
+  const { data: suppliersData } = useSWR(
+    organizationId ? `suppliers-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase.from('suppliers').select('*').eq('organization_id', organizationId);
+      return (data as Supplier[]) || [];
+    }
+  );
+
+  // Fetch POs
+  const { data: posData } = useSWR(
+    organizationId ? `pos-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase.from('purchase_orders').select('*').eq('organization_id', organizationId);
+      return (data as PurchaseOrder[]) || [];
+    }
+  );
+
+  // Fetch Payments
+  const { data: paymentsData, mutate: mutatePayments } = useSWR(
+    organizationId ? `payments-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase
+        .from('supplier_payments')
+        .select(`
+          *,
+          supplier:suppliers(*),
+          payment_allocations(*)
+        `)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+      return (data as SupplierPayment[]) || [];
+    }
+  );
+
+  const suppliers = suppliersData || [];
+  const purchaseOrders = posData || [];
+  const payments = paymentsData || [];
+
+  // Generate payment number
   useEffect(() => {
-    const mockSuppliers: Supplier[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        supplier_code: "SUP001",
-        name: "ABC Electronics Pvt Ltd",
-        contact_person: "Rajesh Kumar",
-        phone: "+91 98765 43210",
-        email: "rajesh@abcelectronics.com",
-        state_code: "27",
-        gstin: "27ABCDE1234F1Z5",
-        payment_terms: 30,
-        credit_limit: 500000,
-        current_balance: 125000,
-        supplier_type: "manufacturer",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        organization_id: "org1",
-        supplier_code: "SUP002",
-        name: "XYZ Trading Company",
-        contact_person: "Priya Sharma",
-        phone: "+91 87654 32109",
-        email: "priya@xyztrading.com",
-        state_code: "07",
-        gstin: "07XYZAB5678G2H9",
-        payment_terms: 15,
-        credit_limit: 200000,
-        current_balance: 45000,
-        supplier_type: "distributor",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
-
-    const mockPOs: PurchaseOrder[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        po_number: "PO202401001",
-        supplier_id: "1",
-        po_date: "2024-01-15",
-        status: "completed",
-        subtotal: 100000,
-        discount_percent: 0,
-        discount_amount: 0,
-        cgst_amount: 9000,
-        sgst_amount: 9000,
-        igst_amount: 0,
-        other_charges: 0,
-        round_off: 0,
-        total_amount: 118000,
-        advance_paid: 0,
-        balance_amount: 118000,
-        payment_terms: 30,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        supplier: mockSuppliers[0],
-      },
-    ];
-
-    const mockPayments: SupplierPayment[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        payment_number: "PAY202401001",
-        supplier_id: "1",
-        payment_date: "2024-01-25",
-        payment_mode: "bank_transfer",
-        reference_number: "TXN123456789",
-        amount: 118000,
-        tds_amount: 2000,
-        net_amount: 116000,
-        status: "cleared",
-        notes: "Payment for PO202401001",
-        created_by: "user1",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        supplier: mockSuppliers[0],
-        payment_allocations: [
-          {
-            id: "1",
-            payment_id: "1",
-            reference_type: "purchase_order",
-            reference_id: "1",
-            reference_number: "PO202401001",
-            allocated_amount: 118000,
-            created_at: new Date().toISOString(),
-          },
-        ],
-      },
-      {
-        id: "2",
-        organization_id: "org1",
-        payment_number: "PAY202401002",
-        supplier_id: "2",
-        payment_date: "2024-01-20",
-        payment_mode: "cheque",
-        reference_number: "CHQ001234",
-        amount: 45000,
-        tds_amount: 900,
-        net_amount: 44100,
-        status: "pending",
-        notes: "Advance payment",
-        created_by: "user1",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        supplier: mockSuppliers[1],
-        payment_allocations: [
-          {
-            id: "2",
-            payment_id: "2",
-            reference_type: "advance",
-            reference_id: "2",
-            reference_number: "ADV-002",
-            allocated_amount: 45000,
-            created_at: new Date().toISOString(),
-          },
-        ],
-      },
-    ];
-
-    setSuppliers(mockSuppliers);
-    setPurchaseOrders(mockPOs);
-    setPayments(mockPayments);
-
-    // Generate payment number
-    const paymentNumber = `PAY${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Date.now().toString().slice(-3)}`;
-    setFormData(prev => ({ ...prev, payment_number: paymentNumber }));
-  }, []);
+    if (!selectedPayment && organizationId && isCreating) {
+      const paymentNumber = `PAY${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Date.now().toString().slice(-3)}`;
+      setFormData(prev => ({ ...prev, payment_number: paymentNumber }));
+    }
+  }, [selectedPayment, organizationId, isCreating]);
 
   const filteredPayments = payments.filter(payment => {
     const matchesSearch = payment.payment_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.supplier?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.reference_number?.toLowerCase().includes(searchTerm.toLowerCase());
+      payment.supplier?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      payment.reference_number?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || payment.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -244,7 +157,7 @@ export function PaymentTracking() {
     setAllocations(allocations.filter((_, i) => i !== index));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.supplier_id) {
       toast.error("Please select a supplier");
       return;
@@ -256,38 +169,84 @@ export function PaymentTracking() {
     }
 
     const netAmount = formData.amount - formData.tds_amount;
-    
-    const supplierPayment: SupplierPayment = {
-      id: selectedPayment?.id || Date.now().toString(),
-      organization_id: "org1",
-      payment_number: formData.payment_number,
-      supplier_id: formData.supplier_id,
-      payment_date: formData.payment_date,
-      payment_mode: formData.payment_mode,
-      reference_number: formData.reference_number,
-      amount: formData.amount,
-      tds_amount: formData.tds_amount,
-      net_amount: netAmount,
-      status: "pending",
-      notes: formData.notes,
-      created_by: "current_user",
-      created_at: selectedPayment?.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      supplier: suppliers.find(s => s.id === formData.supplier_id),
-      payment_allocations: allocations,
-    };
 
-    if (selectedPayment) {
-      setPayments(payments.map(p => p.id === selectedPayment.id ? supplierPayment : p));
-      toast.success("Payment updated successfully!");
-    } else {
-      setPayments([...payments, supplierPayment]);
-      toast.success("Payment recorded successfully!");
+    // Validate allocations
+    const totalAllocated = allocations.reduce((sum, a) => sum + a.allocated_amount, 0);
+    if (totalAllocated > formData.amount) {
+      toast.error("Allocated amount cannot exceed total payment amount");
+      return;
     }
 
-    setIsCreating(false);
-    setSelectedPayment(null);
-    resetForm();
+    try {
+      const paymentData = {
+        organization_id: organizationId,
+        payment_number: formData.payment_number,
+        supplier_id: formData.supplier_id,
+        payment_date: formData.payment_date,
+        payment_mode: formData.payment_mode,
+        reference_number: formData.reference_number,
+        amount: formData.amount,
+        tds_amount: formData.tds_amount,
+        net_amount: netAmount,
+        status: "pending", // Default to pending
+        notes: formData.notes,
+        updated_at: new Date().toISOString(),
+      };
+
+      let paymentId = selectedPayment?.id;
+
+      if (selectedPayment) {
+        // Update
+        const { error: pError } = await supabase
+          .from("supplier_payments")
+          .update(paymentData)
+          .eq("id", paymentId);
+        if (pError) throw pError;
+
+        // Delete existing allocations
+        const { error: dError } = await supabase
+          .from("payment_allocations")
+          .delete()
+          .eq("payment_id", paymentId);
+        if (dError) throw dError;
+      } else {
+        // Create
+        const { data: newPayment, error: pError } = await supabase
+          .from("supplier_payments")
+          .insert([{ ...paymentData, created_at: new Date().toISOString(), created_by: "current_user" }])
+          .select()
+          .single();
+        if (pError) throw pError;
+        paymentId = newPayment.id;
+      }
+
+      // Insert Allocations
+      if (allocations.length > 0) {
+        const allocationsToInsert = allocations.map(a => ({
+          payment_id: paymentId,
+          reference_type: a.reference_type,
+          reference_id: a.reference_id,
+          reference_number: a.reference_number,
+          allocated_amount: a.allocated_amount,
+          created_at: new Date().toISOString()
+        }));
+
+        const { error: aError } = await supabase
+          .from("payment_allocations")
+          .insert(allocationsToInsert);
+        if (aError) throw aError;
+      }
+
+      toast.success(selectedPayment ? "Payment updated successfully!" : "Payment recorded successfully!");
+      mutatePayments();
+      setIsCreating(false);
+      setSelectedPayment(null);
+      resetForm();
+
+    } catch (error: any) {
+      console.error("Error saving payment:", error);
+      toast.error(error.message || "Failed to save payment");
+    }
   };
 
   const resetForm = () => {
@@ -305,8 +264,8 @@ export function PaymentTracking() {
   };
 
   const handleStatusUpdate = (paymentId: string, newStatus: "pending" | "cleared" | "bounced" | "cancelled") => {
-    setPayments(payments.map(p => 
-      p.id === paymentId 
+    setPayments(payments.map(p =>
+      p.id === paymentId
         ? { ...p, status: newStatus, updated_at: new Date().toISOString() }
         : p
     ));
@@ -433,7 +392,7 @@ export function PaymentTracking() {
               {filteredPayments.map((payment) => {
                 const statusConfig = PAYMENT_STATUS.find(s => s.value === payment.status);
                 const modeConfig = PAYMENT_MODES.find(m => m.value === payment.payment_mode);
-                
+
                 return (
                   <TableRow key={payment.id}>
                     <TableCell className="font-mono">{payment.payment_number}</TableCell>
@@ -456,9 +415,23 @@ export function PaymentTracking() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setSelectedPayment(payment);
+                          setFormData({
+                            payment_number: payment.payment_number,
+                            supplier_id: payment.supplier_id,
+                            payment_date: payment.payment_date.split('T')[0],
+                            payment_mode: payment.payment_mode as any,
+                            reference_number: payment.reference_number || "",
+                            amount: payment.amount,
+                            tds_amount: payment.tds_amount || 0,
+                            notes: payment.notes || "",
+                          });
+                          setAllocations(payment.payment_allocations || []);
+                          setIsCreating(true);
+                        }}>
                           <Receipt className="h-3 w-3 mr-1" />
-                          View
+                          Edit
                         </Button>
                         {payment.status === "pending" && (
                           <Select onValueChange={(value: any) => handleStatusUpdate(payment.id, value)}>

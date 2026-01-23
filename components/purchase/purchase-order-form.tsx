@@ -261,7 +261,12 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
     };
   };
 
-  const handleSave = (status: "draft" | "sent" = "draft") => {
+  const handleSave = async (status: "draft" | "sent" = "draft") => {
+    if (!organizationId) {
+      toast.error("Organization ID missing");
+      return;
+    }
+
     if (!selectedSupplier) {
       toast.error("Please select a supplier");
       return;
@@ -272,37 +277,113 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
       return;
     }
 
-    const totals = calculateTotals();
+    try {
+      const totals = calculateTotals();
 
-    const purchaseOrder: PurchaseOrder = {
-      id: existingPO?.id || Date.now().toString(),
-      organization_id: "org1",
-      po_number: formData.po_number,
-      supplier_id: formData.supplier_id,
-      po_date: formData.po_date,
-      expected_delivery_date: formData.expected_delivery_date || undefined,
-      status,
-      subtotal: totals.subtotal,
-      discount_percent: formData.discount_percent,
-      discount_amount: totals.discountAmount,
-      cgst_amount: totals.cgstAmount,
-      sgst_amount: totals.sgstAmount,
-      igst_amount: totals.igstAmount,
-      other_charges: formData.other_charges,
-      round_off: 0,
-      total_amount: totals.totalAmount,
-      advance_paid: formData.advance_paid,
-      balance_amount: totals.balanceAmount,
-      payment_terms: formData.payment_terms,
-      notes: formData.notes,
-      terms_conditions: formData.terms_conditions,
-      created_at: existingPO?.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      supplier: selectedSupplier,
-      po_items: poItems,
-    };
-    onSave?.(purchaseOrder);
-    toast.success(`Purchase order ${status === 'draft' ? 'saved as draft' : 'sent to supplier'}`);
+      const poData = {
+        organization_id: organizationId,
+        po_number: formData.po_number,
+        supplier_id: formData.supplier_id,
+        po_date: formData.po_date,
+        expected_delivery_date: formData.expected_delivery_date || null,
+        status,
+        subtotal: totals.subtotal,
+        discount_percent: formData.discount_percent,
+        discount_amount: totals.discountAmount,
+        cgst_amount: totals.cgstAmount,
+        sgst_amount: totals.sgstAmount,
+        igst_amount: totals.igstAmount,
+        other_charges: formData.other_charges,
+        round_off: 0,
+        total_amount: totals.totalAmount,
+        advance_paid: formData.advance_paid,
+        balance_amount: totals.balanceAmount,
+        payment_terms: formData.payment_terms,
+        notes: formData.notes,
+        terms_conditions: formData.terms_conditions,
+        updated_at: new Date().toISOString(),
+      };
+
+      let poId = existingPO?.id;
+
+      if (existingPO) {
+        // Update PO
+        const { error: poError } = await supabase
+          .from("purchase_orders")
+          .update(poData)
+          .eq("id", poId);
+
+        if (poError) throw poError;
+
+        // Delete existing items
+        const { error: deleteError } = await supabase
+          .from("purchase_order_items")
+          .delete()
+          .eq("po_id", poId);
+
+        if (deleteError) throw deleteError;
+      } else {
+        // Create new PO
+        const { data: newPO, error: poError } = await supabase
+          .from("purchase_orders")
+          .insert([{ ...poData, created_at: new Date().toISOString() }])
+          .select()
+          .single();
+
+        if (poError) throw poError;
+        poId = newPO.id;
+      }
+
+      // Insert Items
+      const itemsToInsert = poItems.map(item => ({
+        po_id: poId,
+        item_id: item.item_id,
+        hsn_code: item.hsn_code,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        discount_percent: item.discount_percent,
+        gst_rate: item.gst_rate,
+        cgst_amount: item.cgst_amount,
+        sgst_amount: item.sgst_amount,
+        igst_amount: item.igst_amount,
+        total_price: item.total_price,
+        created_at: new Date().toISOString()
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("purchase_order_items")
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+
+      toast.success(`Purchase order ${status === 'draft' ? 'saved as draft' : 'sent to supplier'}`);
+
+      if (onSave) {
+        onSave({ ...poData, id: poId } as any);
+      } else if (!existingPO) {
+        // Reset form if creating new
+        setFormData({
+          po_number: "",
+          supplier_id: "",
+          po_date: new Date().toISOString().split('T')[0],
+          expected_delivery_date: "",
+          discount_percent: 0,
+          other_charges: 0,
+          advance_paid: 0,
+          payment_terms: 30,
+          notes: "",
+          terms_conditions: "",
+        });
+        setPOItems([]);
+        setSelectedSupplier(null);
+        // New PO Number
+        const poNumber = `PO${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Date.now().toString().slice(-4)}`;
+        setFormData(prev => ({ ...prev, po_number: poNumber }));
+      }
+    } catch (error: any) {
+      console.error("Error saving PO:", error);
+      toast.error(error.message || "Failed to save purchase order");
+    }
   };
 
   const filteredItems = (items || []).filter(item =>

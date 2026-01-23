@@ -37,6 +37,9 @@ import {
 } from "lucide-react";
 import { AdvancePayment, Supplier, PurchaseOrder } from "@/lib/types";
 import { toast } from "sonner";
+import { useOrganization } from "@/lib/context/organization";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import useSWR from "swr";
 
 const PAYMENT_MODES = [
   { value: "cash", label: "Cash" },
@@ -52,9 +55,9 @@ interface AdvancePaymentFormProps {
 }
 
 export function AdvancePaymentForm({ purchaseOrder, onSave }: AdvancePaymentFormProps) {
-  const [advances, setAdvances] = useState<AdvancePayment[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const { organizationId } = useOrganization();
+  const supabase = getSupabaseBrowserClient();
+
   const [isCreating, setIsCreating] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -69,91 +72,54 @@ export function AdvancePaymentForm({ purchaseOrder, onSave }: AdvancePaymentForm
     notes: "",
   });
 
-  // Mock data
+  // Fetch Suppliers
+  const { data: suppliersData } = useSWR(
+    organizationId ? `suppliers-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase.from('suppliers').select('*').eq('organization_id', organizationId);
+      return (data as Supplier[]) || [];
+    }
+  );
+
+  // Fetch POs
+  const { data: posData } = useSWR(
+    organizationId ? `pos-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase.from('purchase_orders').select('*').eq('organization_id', organizationId);
+      return (data as PurchaseOrder[]) || [];
+    }
+  );
+
+  // Fetch Advances
+  const { data: advancesData, mutate: mutateAdvances } = useSWR(
+    organizationId ? `advances-${organizationId}` : null,
+    async () => {
+      const { data } = await supabase
+        .from('advance_payments')
+        .select(`
+          *,
+          supplier:suppliers(*),
+          purchase_order:purchase_orders(*)
+        `)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+      return (data as AdvancePayment[]) || [];
+    }
+  );
+
+  const suppliers = suppliersData || [];
+  const purchaseOrders = posData || [];
+  const advances = advancesData || [];
+
+  // Generate payment number
   useEffect(() => {
-    const mockSuppliers: Supplier[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        supplier_code: "SUP001",
-        name: "ABC Electronics Pvt Ltd",
-        contact_person: "Rajesh Kumar",
-        phone: "+91 98765 43210",
-        email: "rajesh@abcelectronics.com",
-        state_code: "27",
-        gstin: "27ABCDE1234F1Z5",
-        payment_terms: 30,
-        credit_limit: 500000,
-        current_balance: 125000,
-        supplier_type: "manufacturer",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
+    if (organizationId && isCreating) {
+      const paymentNumber = `ADV${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Date.now().toString().slice(-3)}`;
+      setFormData(prev => ({ ...prev, payment_number: paymentNumber }));
+    }
+  }, [organizationId, isCreating]);
 
-    const mockPOs: PurchaseOrder[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        po_number: "PO202401001",
-        supplier_id: "1",
-        po_date: "2024-01-15",
-        status: "confirmed",
-        subtotal: 100000,
-        discount_percent: 0,
-        discount_amount: 0,
-        cgst_amount: 9000,
-        sgst_amount: 9000,
-        igst_amount: 0,
-        other_charges: 0,
-        round_off: 0,
-        total_amount: 118000,
-        advance_paid: 25000,
-        balance_amount: 93000,
-        payment_terms: 30,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        supplier: mockSuppliers[0],
-      },
-    ];
-
-    const mockAdvances: AdvancePayment[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        payment_number: "ADV202401001",
-        payment_type: "supplier_advance",
-        party_id: "1",
-        party_name: "ABC Electronics Pvt Ltd",
-        party_type: "supplier",
-        po_id: "1",
-        advance_amount: 25000,
-        utilized_amount: 0,
-        balance_amount: 25000,
-        payment_mode: "bank_transfer",
-        reference_number: "TXN123456",
-        payment_date: "2024-01-16",
-        purpose: "Advance for PO202401001",
-        notes: "Advance payment for purchase order",
-        status: "active",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        supplier: mockSuppliers[0],
-        purchase_order: mockPOs[0],
-      },
-    ];
-
-    setSuppliers(mockSuppliers);
-    setPurchaseOrders(mockPOs);
-    setAdvances(mockAdvances);
-
-    // Generate payment number
-    const paymentNumber = `ADV${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Date.now().toString().slice(-3)}`;
-    setFormData(prev => ({ ...prev, payment_number: paymentNumber }));
-  }, []);
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.supplier_id) {
       toast.error("Please select a supplier");
       return;
@@ -164,38 +130,46 @@ export function AdvancePaymentForm({ purchaseOrder, onSave }: AdvancePaymentForm
       return;
     }
 
-    const supplier = suppliers.find(s => s.id === formData.supplier_id);
-    const po = purchaseOrders.find(p => p.id === formData.po_id);
+    try {
+      const supplier = suppliers.find(s => s.id === formData.supplier_id);
 
-    const advancePayment: AdvancePayment = {
-      id: Date.now().toString(),
-      organization_id: "org1",
-      payment_number: formData.payment_number,
-      payment_type: "supplier_advance",
-      party_id: formData.supplier_id,
-      party_name: supplier?.name || "",
-      party_type: "supplier",
-      po_id: formData.po_id || undefined,
-      advance_amount: formData.advance_amount,
-      utilized_amount: 0,
-      balance_amount: formData.advance_amount,
-      payment_mode: formData.payment_mode,
-      reference_number: formData.reference_number,
-      payment_date: formData.payment_date,
-      purpose: formData.purpose,
-      notes: formData.notes,
-      status: "active",
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      supplier,
-      purchase_order: po,
-    };
+      const advanceData = {
+        organization_id: organizationId,
+        payment_number: formData.payment_number,
+        payment_type: "supplier_advance",
+        party_id: formData.supplier_id,
+        party_name: supplier?.name || "",
+        party_type: "supplier",
+        po_id: formData.po_id || null, // null if empty
+        advance_amount: formData.advance_amount,
+        utilized_amount: 0,
+        balance_amount: formData.advance_amount,
+        payment_mode: formData.payment_mode,
+        reference_number: formData.reference_number,
+        payment_date: formData.payment_date,
+        purpose: formData.purpose,
+        notes: formData.notes,
+        status: "active",
+        updated_at: new Date().toISOString(),
+      };
 
-    setAdvances([...advances, advancePayment]);
-    onSave?.(advancePayment);
-    toast.success("Advance payment recorded successfully!");
-    setIsCreating(false);
-    resetForm();
+      const { data: newAdvance, error } = await supabase
+        .from("advance_payments")
+        .insert([{ ...advanceData, created_at: new Date().toISOString() }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      mutateAdvances();
+      onSave?.(newAdvance);
+      toast.success("Advance payment recorded successfully!");
+      setIsCreating(false);
+      resetForm();
+    } catch (error: any) {
+      console.error("Error saving advance:", error);
+      toast.error(error.message || "Failed to save advance payment");
+    }
   };
 
   const resetForm = () => {
