@@ -63,9 +63,7 @@ export default function LoginPage() {
                     <CardDescription>
                         Enter your credentials to access your store
                         <br />
-                        <span className="text-xs text-muted-foreground mt-2 block">
-                            Default: admin@ronakjewellers.com / ronak@123
-                        </span>
+                        
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleLogin}>
