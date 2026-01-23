@@ -33,34 +33,6 @@ import {
 
 // Mock data for reports
 // Mock data removed - fetching real data from Supabase
-const mockInventoryData = [
-  {
-    id: "1",
-    sku: "ITEM001",
-    name: "Smartphone XYZ",
-    category: "Electronics",
-    current_stock: 8,
-    min_stock_level: 10,
-    purchase_cost: 12000,
-    retail_price: 18000,
-    total_value: 96000,
-    last_movement: "2024-01-20",
-  },
-];
-// Keeping Inventory mock for now as we only fixed Sales tab
-const mockPurchaseData = [
-  {
-    id: "1",
-    po_number: "PO202401001",
-    supplier_name: "ABC Electronics",
-    date: "2024-01-15",
-    total_amount: 118000,
-    status: "completed",
-    advance_paid: 25000,
-    balance_amount: 93000,
-  },
-];
-
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/lib/context/organization";
 import useSWR from "swr";
@@ -102,9 +74,54 @@ export default function ReportsPage() {
     }
   );
 
+  // Fetch Inventory Data (Items)
+  const { data: inventoryData } = useSWR(
+    organizationId ? `inventory-report-${organizationId}` : null,
+    async () => {
+      const { data, error } = await supabase
+        .from("items")
+        .select("*, category:categories(name)")
+        .eq("organization_id", organizationId);
+
+      if (error) throw error;
+      return data || [];
+    }
+  );
+
+  // Fetch Purchase Data
+  const { data: purchaseData } = useSWR(
+    organizationId ? `purchase-report-${organizationId}-${dateFrom}-${dateTo}` : null,
+    async () => {
+      const { data, error } = await supabase
+        .from("purchase_orders")
+        .select("*, supplier:suppliers(name)")
+        .eq("organization_id", organizationId)
+        .gte("po_date", dateFrom)
+        .lte("po_date", dateTo)
+        .order("po_date", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    }
+  );
+
   const sales: Sale[] = salesData || [];
   const gstBills = sales.filter((s: Sale) => s.is_gst_bill);
   const nonGstBills = sales.filter((s: Sale) => !s.is_gst_bill);
+
+  const inventory = (inventoryData || []).map((item: any) => ({
+    ...item,
+    total_value: (item.purchase_cost || 0) * (item.current_stock || 0),
+    category: item.category?.name || 'Uncategorized'
+  }));
+
+  const purchases = (purchaseData || []).map((po: any) => ({
+    ...po,
+    date: po.po_date,
+    supplier_name: po.supplier?.name || 'Unknown',
+    status: po.status
+  }));
+
   const totalSales = sales.reduce((sum: number, s: Sale) => sum + s.total_amount, 0);
   const totalTaxCollected = sales.reduce((sum: number, s: Sale) => sum + s.cgst_amount + s.sgst_amount + s.igst_amount, 0);
 
@@ -528,7 +545,7 @@ export default function ReportsPage() {
                 <div className="flex items-center gap-3">
                   <Package className="h-8 w-8 text-blue-500" />
                   <div>
-                    <p className="text-2xl font-bold">{mockInventoryData.length}</p>
+                    <p className="text-2xl font-bold">{inventory.length}</p>
                     <p className="text-sm text-muted-foreground">Total Items</p>
                   </div>
                 </div>
@@ -540,7 +557,7 @@ export default function ReportsPage() {
                   <TrendingUp className="h-8 w-8 text-green-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      ₹{mockInventoryData.reduce((sum, item) => sum + item.total_value, 0).toLocaleString()}
+                      ₹{inventory.reduce((sum: number, item: any) => sum + item.total_value, 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Inventory Value</p>
                   </div>
@@ -553,7 +570,7 @@ export default function ReportsPage() {
                   <Package className="h-8 w-8 text-orange-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {mockInventoryData.filter(item => item.current_stock <= item.min_stock_level).length}
+                      {inventory.filter((item: any) => item.current_stock <= item.min_stock_level).length}
                     </p>
                     <p className="text-sm text-muted-foreground">Low Stock Items</p>
                   </div>
@@ -566,7 +583,7 @@ export default function ReportsPage() {
                   <Package className="h-8 w-8 text-red-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {mockInventoryData.filter(item => item.current_stock === 0).length}
+                      {inventory.filter((item: any) => item.current_stock === 0).length}
                     </p>
                     <p className="text-sm text-muted-foreground">Out of Stock</p>
                   </div>
@@ -584,7 +601,7 @@ export default function ReportsPage() {
                   <CardDescription>Current stock levels and valuation</CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => exportToCSV(mockInventoryData, 'inventory-report')}>
+                  <Button variant="outline" onClick={() => exportToCSV(inventory, 'inventory-report')}>
                     <Download className="h-4 w-4 mr-2" />
                     Export CSV
                   </Button>
@@ -611,27 +628,33 @@ export default function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockInventoryData.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-mono">{item.sku}</TableCell>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>{item.current_stock}</TableCell>
-                      <TableCell>{item.min_stock_level}</TableCell>
-                      <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
-                      <TableCell>₹{item.retail_price.toLocaleString()}</TableCell>
-                      <TableCell>₹{item.total_value.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          item.current_stock === 0 ? "destructive" :
-                            item.current_stock <= item.min_stock_level ? "secondary" : "default"
-                        }>
-                          {item.current_stock === 0 ? "Out of Stock" :
-                            item.current_stock <= item.min_stock_level ? "Low Stock" : "In Stock"}
-                        </Badge>
-                      </TableCell>
+                  {inventory.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    inventory.map((item: any) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-mono">{item.sku}</TableCell>
+                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>{item.current_stock}</TableCell>
+                        <TableCell>{item.min_stock_level}</TableCell>
+                        <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
+                        <TableCell>₹{item.retail_price.toLocaleString()}</TableCell>
+                        <TableCell>₹{item.total_value.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            item.current_stock === 0 ? "destructive" :
+                              item.current_stock <= item.min_stock_level ? "secondary" : "default"
+                          }>
+                            {item.current_stock === 0 ? "Out of Stock" :
+                              item.current_stock <= item.min_stock_level ? "Low Stock" : "In Stock"}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -647,7 +670,7 @@ export default function ReportsPage() {
                   <Receipt className="h-8 w-8 text-blue-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      ₹{mockPurchaseData.reduce((sum, po) => sum + po.total_amount, 0).toLocaleString()}
+                      ₹{purchases.reduce((sum: number, po: any) => sum + po.total_amount, 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Total Purchases</p>
                   </div>
@@ -659,7 +682,7 @@ export default function ReportsPage() {
                 <div className="flex items-center gap-3">
                   <FileText className="h-8 w-8 text-green-500" />
                   <div>
-                    <p className="text-2xl font-bold">{mockPurchaseData.length}</p>
+                    <p className="text-2xl font-bold">{purchases.length}</p>
                     <p className="text-sm text-muted-foreground">Purchase Orders</p>
                   </div>
                 </div>
@@ -671,7 +694,7 @@ export default function ReportsPage() {
                   <DollarSign className="h-8 w-8 text-orange-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      ₹{mockPurchaseData.reduce((sum, po) => sum + po.advance_paid, 0).toLocaleString()}
+                      ₹{purchases.reduce((sum: number, po: any) => sum + po.advance_paid, 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Advances Paid</p>
                   </div>
@@ -684,7 +707,7 @@ export default function ReportsPage() {
                   <DollarSign className="h-8 w-8 text-red-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      ₹{mockPurchaseData.reduce((sum, po) => sum + po.balance_amount, 0).toLocaleString()}
+                      ₹{purchases.reduce((sum: number, po: any) => sum + po.balance_amount, 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Pending Payments</p>
                   </div>
@@ -702,7 +725,7 @@ export default function ReportsPage() {
                   <CardDescription>Purchase orders and payment status</CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => exportToCSV(mockPurchaseData, 'purchase-report')}>
+                  <Button variant="outline" onClick={() => exportToCSV(purchases, 'purchase-report')}>
                     <Download className="h-4 w-4 mr-2" />
                     Export CSV
                   </Button>
@@ -727,21 +750,27 @@ export default function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockPurchaseData.map((po) => (
-                    <TableRow key={po.id}>
-                      <TableCell className="font-mono">{po.po_number}</TableCell>
-                      <TableCell>{new Date(po.date).toLocaleDateString()}</TableCell>
-                      <TableCell>{po.supplier_name}</TableCell>
-                      <TableCell>₹{po.total_amount.toLocaleString()}</TableCell>
-                      <TableCell>₹{po.advance_paid.toLocaleString()}</TableCell>
-                      <TableCell>₹{po.balance_amount.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Badge variant={po.status === "completed" ? "default" : "secondary"}>
-                          {po.status}
-                        </Badge>
-                      </TableCell>
+                  {purchases.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No purchase orders found</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    purchases.map((po: any) => (
+                      <TableRow key={po.id}>
+                        <TableCell className="font-mono">{po.po_number}</TableCell>
+                        <TableCell>{new Date(po.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{po.supplier_name}</TableCell>
+                        <TableCell>₹{po.total_amount.toLocaleString()}</TableCell>
+                        <TableCell>₹{po.advance_paid.toLocaleString()}</TableCell>
+                        <TableCell>₹{po.balance_amount.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant={po.status === "completed" ? "default" : "secondary"}>
+                            {po.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </CardContent>

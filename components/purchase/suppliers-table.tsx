@@ -235,147 +235,17 @@ export function SuppliersTable() {
               <p className="text-sm text-muted-foreground">Manage your vendor relationships</p>
             </div>
 
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) {
-                setEditingSupplier(null);
+            <Button
+              onClick={() => {
                 resetForm();
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button className="holographic text-white shadow-lg border-0">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Supplier
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl glass border-0 shadow-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-2xl gradient-text">
-                    {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
-                  </DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 pt-4 h-[60vh] overflow-y-auto scrollbar-none">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name" className="text-sm font-semibold">Supplier Name *</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="contact_person" className="text-sm font-semibold">Contact Person</Label>
-                      <Input
-                        id="contact_person"
-                        value={formData.contact_person}
-                        onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone" className="text-sm font-semibold">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Label htmlFor="address" className="text-sm font-semibold">Address</Label>
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="city" className="text-sm font-semibold">City</Label>
-                      <Input
-                        id="city"
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="pincode" className="text-sm font-semibold">Pincode</Label>
-                      <Input
-                        id="pincode"
-                        value={formData.pincode}
-                        onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="gstin" className="text-sm font-semibold">GSTIN</Label>
-                      <Input
-                        id="gstin"
-                        value={formData.gstin}
-                        onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="supplier_type" className="text-sm font-semibold">Supplier Type</Label>
-                      <Select value={formData.supplier_type} onValueChange={(value: any) => setFormData({ ...formData, supplier_type: value })}>
-                        <SelectTrigger className="glass border-0 shadow-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="glass border-0">
-                          <SelectItem value="regular">Regular</SelectItem>
-                          <SelectItem value="manufacturer">Manufacturer</SelectItem>
-                          <SelectItem value="distributor">Distributor</SelectItem>
-                          <SelectItem value="importer">Importer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="payment_terms" className="text-sm font-semibold">Payment Terms (Days)</Label>
-                      <Input
-                        id="payment_terms"
-                        type="number"
-                        value={formData.payment_terms}
-                        onChange={(e) => setFormData({ ...formData, payment_terms: Number(e.target.value) })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="credit_limit" className="text-sm font-semibold">Credit Limit (₹)</Label>
-                      <Input
-                        id="credit_limit"
-                        type="number"
-                        value={formData.credit_limit}
-                        onChange={(e) => setFormData({ ...formData, credit_limit: Number(e.target.value) })}
-                        className="glass border-0 shadow-inner"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-4">
-                    <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="hover:bg-white/10">
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="holographic text-white shadow-lg border-0">
-                      {editingSupplier ? "Update" : "Create"} Supplier
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                setEditingSupplier(null);
+                setIsDialogOpen(true);
+              }}
+              className="holographic text-white shadow-lg border-0"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Supplier
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="relative z-10">
@@ -511,6 +381,142 @@ export function SuppliersTable() {
               Delete
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) {
+          setEditingSupplier(null);
+          resetForm();
+        }
+      }}>
+        <DialogContent className="max-w-2xl glass border-0 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl gradient-text">
+              {editingSupplier ? "Edit Supplier" : "Add New Supplier"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 pt-4 h-[60vh] overflow-y-auto scrollbar-none">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="name" className="text-sm font-semibold">Supplier Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="contact_person" className="text-sm font-semibold">Contact Person</Label>
+                <Input
+                  id="contact_person"
+                  value={formData.contact_person}
+                  onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="phone" className="text-sm font-semibold">Phone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="email" className="text-sm font-semibold">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="address" className="text-sm font-semibold">Address</Label>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="city" className="text-sm font-semibold">City</Label>
+                <Input
+                  id="city"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="pincode" className="text-sm font-semibold">Pincode</Label>
+                <Input
+                  id="pincode"
+                  value={formData.pincode}
+                  onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="gstin" className="text-sm font-semibold">GSTIN</Label>
+                <Input
+                  id="gstin"
+                  value={formData.gstin}
+                  onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="supplier_type" className="text-sm font-semibold">Supplier Type</Label>
+                <Select value={formData.supplier_type} onValueChange={(value: any) => setFormData({ ...formData, supplier_type: value })}>
+                  <SelectTrigger className="glass border-0 shadow-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="glass border-0">
+                    <SelectItem value="regular">Regular</SelectItem>
+                    <SelectItem value="manufacturer">Manufacturer</SelectItem>
+                    <SelectItem value="distributor">Distributor</SelectItem>
+                    <SelectItem value="importer">Importer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="payment_terms" className="text-sm font-semibold">Payment Terms (Days)</Label>
+                <Input
+                  id="payment_terms"
+                  type="number"
+                  value={formData.payment_terms}
+                  onChange={(e) => setFormData({ ...formData, payment_terms: Number(e.target.value) })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+              <div>
+                <Label htmlFor="credit_limit" className="text-sm font-semibold">Credit Limit (₹)</Label>
+                <Input
+                  id="credit_limit"
+                  type="number"
+                  value={formData.credit_limit}
+                  onChange={(e) => setFormData({ ...formData, credit_limit: Number(e.target.value) })}
+                  className="glass border-0 shadow-inner"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)} className="hover:bg-white/10">
+                Cancel
+              </Button>
+              <Button type="submit" className="holographic text-white shadow-lg border-0">
+                {editingSupplier ? "Update" : "Create"} Supplier
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
