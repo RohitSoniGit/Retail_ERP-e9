@@ -77,12 +77,13 @@ function FloatingIcons() {
 }
 
 export default function SettingsPage() {
-  const { organization, updateOrganization } = useOrganization();
+  const { organization, organizationId, updateOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingRole, setCheckingRole] = useState(true);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [factoryResetConfirmOpen, setFactoryResetConfirmOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -276,6 +277,41 @@ export default function SettingsPage() {
       }
     } catch (e) {
       toast.error("An error occurred during reset.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCompleteFactoryReset = async () => {
+    if (!organizationId) {
+      toast.error("Organization not found");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/settings/factory-reset", { 
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ organizationId })
+      });
+      
+      const data = await res.json();
+      
+      if (data.success) {
+        toast.success(`Complete factory reset successful! Cleared ${data.clearedTables} tables.`);
+        setFactoryResetConfirmOpen(false);
+        // Refresh the page to reflect changes
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error("Failed to perform factory reset: " + data.error);
+      }
+    } catch (e) {
+      toast.error("An error occurred during factory reset.");
     } finally {
       setLoading(false);
     }
@@ -797,7 +833,7 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="relative z-10">
+              <CardContent className="relative z-10 space-y-6">
                 <div className="flex items-center justify-between p-6 rounded-2xl bg-red-500/5 border border-red-500/10">
                   <div className="space-y-1">
                     <p className="font-bold text-lg text-red-600 dark:text-red-400">Factory Reset</p>
@@ -811,6 +847,22 @@ export default function SettingsPage() {
                     onClick={() => setResetConfirmOpen(true)}
                   >
                     Reset All Data
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-between p-6 rounded-2xl bg-red-600/10 border border-red-600/20">
+                  <div className="space-y-1">
+                    <p className="font-bold text-lg text-red-700 dark:text-red-300">Complete Factory Reset</p>
+                    <p className="text-sm text-muted-foreground max-w-xl">
+                      ⚠️ EXTREME CAUTION: This will delete ALL DATA including items, customers, suppliers, categories, sales, purchases, inventory, accounts, and ALL transaction history. Only admin user and organization settings will remain. This action is IRREVERSIBLE.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    className="bg-red-700 hover:bg-red-800 shadow-lg"
+                    onClick={() => setFactoryResetConfirmOpen(true)}
+                  >
+                    Complete Reset
                   </Button>
                 </div>
               </CardContent>
@@ -841,6 +893,53 @@ export default function SettingsPage() {
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Yes, Wipe Everything
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={factoryResetConfirmOpen} onOpenChange={setFactoryResetConfirmOpen}>
+          <DialogContent className="glass border-0 shadow-2xl max-w-lg">
+            <DialogHeader>
+              <div className="flex items-center gap-2 text-red-600 mb-2">
+                <AlertTriangle className="h-8 w-8" />
+                <DialogTitle className="text-xl">⚠️ COMPLETE FACTORY RESET</DialogTitle>
+              </div>
+              <DialogDescription className="text-base text-foreground/80 space-y-3">
+                <p className="font-bold text-red-600">
+                  This is the MOST DESTRUCTIVE action possible!
+                </p>
+                <p>
+                  This will permanently delete <span className="font-bold">ALL DATA</span> including:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>All items and inventory</li>
+                  <li>All customers and suppliers</li>
+                  <li>All sales and purchase history</li>
+                  <li>All categories and accounts</li>
+                  <li>All transaction records</li>
+                  <li>All reports and analytics data</li>
+                </ul>
+                <p className="font-bold text-red-600">
+                  Only admin user and organization settings will remain.
+                </p>
+                <p className="font-bold">
+                  This action is <span className="text-red-600">IRREVERSIBLE</span> and cannot be undone!
+                </p>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 mt-6">
+              <Button variant="outline" onClick={() => setFactoryResetConfirmOpen(false)} disabled={loading}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleCompleteFactoryReset}
+                disabled={loading}
+                className="bg-red-700 hover:bg-red-800"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                I Understand - DELETE EVERYTHING
               </Button>
             </DialogFooter>
           </DialogContent>

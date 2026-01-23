@@ -334,7 +334,7 @@ export default function ReportsPage() {
                 <div className="flex items-center gap-3">
                   <Package className="h-8 w-8 text-blue-500" />
                   <div>
-                    <p className="text-2xl font-bold">{mockInventoryData.length}</p>
+                    <p className="text-2xl font-bold">{inventory.length}</p>
                     <p className="text-sm text-muted-foreground">Total Items</p>
                   </div>
                 </div>
@@ -346,7 +346,7 @@ export default function ReportsPage() {
                   <TrendingUp className="h-8 w-8 text-green-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      ₹{mockInventoryData.reduce((sum, item) => sum + item.total_value, 0).toLocaleString()}
+                      ₹{inventory.reduce((sum: number, item: any) => sum + item.total_value, 0).toLocaleString()}
                     </p>
                     <p className="text-sm text-muted-foreground">Inventory Value</p>
                   </div>
@@ -359,7 +359,7 @@ export default function ReportsPage() {
                   <Package className="h-8 w-8 text-orange-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {mockInventoryData.filter(item => item.current_stock <= item.min_stock_level).length}
+                      {inventory.filter((item: any) => item.current_stock <= item.min_stock_level).length}
                     </p>
                     <p className="text-sm text-muted-foreground">Low Stock Items</p>
                   </div>
@@ -372,7 +372,7 @@ export default function ReportsPage() {
                   <Package className="h-8 w-8 text-red-500" />
                   <div>
                     <p className="text-2xl font-bold">
-                      {mockInventoryData.filter(item => item.current_stock === 0).length}
+                      {inventory.filter((item: any) => item.current_stock === 0).length}
                     </p>
                     <p className="text-sm text-muted-foreground">Out of Stock</p>
                   </div>
@@ -945,24 +945,24 @@ export default function ReportsPage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span>Total Items:</span>
-                    <span className="text-2xl font-bold text-blue-600">{mockInventoryData.length}</span>
+                    <span className="text-2xl font-bold text-blue-600">{inventory.length}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Inventory Value:</span>
                     <span className="text-xl font-semibold">
-                      ₹{mockInventoryData.reduce((sum, item) => sum + item.total_value, 0).toLocaleString()}
+                      ₹{inventory.reduce((sum: number, item: any) => sum + item.total_value, 0).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Low Stock Items:</span>
                     <span className="text-xl font-semibold text-orange-600">
-                      {mockInventoryData.filter(item => item.current_stock <= item.min_stock_level).length}
+                      {inventory.filter((item: any) => item.current_stock <= item.min_stock_level).length}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Stock Health:</span>
                     <span className="text-xl font-semibold text-green-600">
-                      {Math.round((mockInventoryData.filter(item => item.current_stock > item.min_stock_level).length / mockInventoryData.length) * 100)}%
+                      {inventory.length > 0 ? Math.round((inventory.filter((item: any) => item.current_stock > item.min_stock_level).length / inventory.length) * 100) : 0}%
                     </span>
                   </div>
                 </div>
