@@ -85,13 +85,23 @@
   /* #3B82F6 */
 }
 
-/* Clean, professional base styles */
+/* Hide ALL scrollbars globally while maintaining functionality */
 * {
   border-color: var(--color-border);
+  /* Hide scrollbars for webkit browsers */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 html {
   scroll-behavior: smooth;
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 body {
@@ -99,6 +109,9 @@ body {
   color: var(--color-foreground);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
+  /* Hide scrollbar but keep functionality */
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* Simple, clean animations */
@@ -148,8 +161,7 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Clean scrollbar */
-/* Clean scrollbar */
+/* Clean scrollbar - HIDDEN but functional */
 ::-webkit-scrollbar {
   display: none;
 }
@@ -157,9 +169,7 @@ body {
 /* Hide scrollbar for IE, Edge and Firefox */
 html {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }
 
 /* Focus styles */
@@ -169,11 +179,17 @@ html {
 }
 
 /* Responsive Utilities */
-/* Mobile-first responsive table wrapper */
+/* Mobile-first responsive table wrapper - INVISIBLE scrollbars */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.table-responsive::-webkit-scrollbar {
+  display: none;
 }
 
 @media (max-width: 768px) {
@@ -240,10 +256,30 @@ html {
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Better table scrolling */
+  /* Better table scrolling - INVISIBLE scrollbars */
   .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* Better touch scrolling for all scrollable elements */
+  .overflow-y-auto,
+  .overflow-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .overflow-y-auto::-webkit-scrollbar,
+  .overflow-auto::-webkit-scrollbar {
+    display: none;
   }
 
   /* Prevent text selection on buttons */
@@ -274,6 +310,30 @@ html {
   .dragging {
     pointer-events: none;
     z-index: 9999;
+  }
+
+  /* Ensure tables are scrollable on mobile */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  /* Force minimum table width on mobile */
+  .overflow-x-auto table {
+    min-width: 800px;
+  }
+
+  /* Better touch scrolling for tables - INVISIBLE scrollbars */
+  .overflow-x-auto {
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -349,4 +409,70 @@ html {
 
 .float {
   animation: float 8s ease-in-out infinite;
+}
+
+/* Global invisible scrollbars for ALL scrollable elements */
+div[class*="overflow"],
+.overflow-x-auto,
+.overflow-y-auto,
+.overflow-auto,
+.overflow-scroll,
+.overflow-x-scroll,
+.overflow-y-scroll {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+div[class*="overflow"]::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.overflow-scroll::-webkit-scrollbar,
+.overflow-x-scroll::-webkit-scrollbar,
+.overflow-y-scroll::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+}
+
+/* Ensure dialog content scrolling is also invisible */
+[role="dialog"] *,
+.dialog-content *,
+.modal-content * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+[role="dialog"] *::-webkit-scrollbar,
+.dialog-content *::-webkit-scrollbar,
+.modal-content *::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Fix for tabs to prevent overlap and ensure proper scrolling */
+[data-slot="tabs-list"] {
+  display: flex !important;
+  width: max-content !important;
+  min-width: 100% !important;
+  gap: 0.25rem !important;
+}
+
+[data-slot="tabs-trigger"] {
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+  white-space: nowrap !important;
+  min-width: fit-content !important;
+}
+
+/* Mobile tab scrolling improvements */
+@media (max-width: 768px) {
+  [data-slot="tabs-list"] {
+    padding: 0.25rem !important;
+  }
+  
+  [data-slot="tabs-trigger"] {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
 }

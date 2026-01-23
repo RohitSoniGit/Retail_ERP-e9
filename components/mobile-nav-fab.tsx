@@ -27,11 +27,14 @@ const navItems = [
 
 export function MobileNavFAB() {
     const [isOpen, setIsOpen] = useState(false);
-    const [position, setPosition] = useState({ x: 32, y: 32 }); // Default bottom-left position (8 * 4 = 32px)
+    const [position, setPosition] = useState({ x: 32, y: 32 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+    const [hasMoved, setHasMoved] = useState(false);
     const pathname = usePathname();
     const fabRef = useRef<HTMLDivElement>(null);
+    const dragThreshold = 5; // Minimum pixels to move before considering it a drag
 
     // Load saved position on mount
     useEffect(() => {
@@ -56,15 +59,6 @@ export function MobileNavFAB() {
         return pathname.startsWith(href);
     };
 
-    // Handle drag start
-    const handleDragStart = (clientX: number, clientY: number) => {
-        setIsDragging(true);
-        setDragStart({
-            x: clientX - position.x,
-            y: clientY - position.y
-        });
-    };
-
     // Handle drag move
     const handleDragMove = (clientX: number, clientY: number) => {
         if (!isDragging) return;
@@ -72,10 +66,18 @@ export function MobileNavFAB() {
         const newX = clientX - dragStart.x;
         const newY = clientY - dragStart.y;
 
+        // Check if we've moved enough to consider this a drag
+        const deltaX = Math.abs(clientX - startPosition.x);
+        const deltaY = Math.abs(clientY - startPosition.y);
+        
+        if (!hasMoved && (deltaX > dragThreshold || deltaY > dragThreshold)) {
+            setHasMoved(true);
+        }
+
         // Get viewport dimensions
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        const fabSize = 56; // 14 * 4 = 56px (h-14 w-14)
+        const fabSize = 56;
 
         // Constrain to viewport bounds
         const constrainedX = Math.max(16, Math.min(viewportWidth - fabSize - 16, newX));
@@ -86,66 +88,82 @@ export function MobileNavFAB() {
 
     // Handle drag end
     const handleDragEnd = () => {
-        setIsDragging(false);
-        
-        // Snap to edges for better UX
-        const viewportWidth = window.innerWidth;
-        const fabSize = 56;
-        const threshold = viewportWidth / 3;
+        if (isDragging) {
+            setIsDragging(false);
+            
+            // Only snap to edges if we actually dragged
+            if (hasMoved) {
+                const viewportWidth = window.innerWidth;
+                const fabSize = 56;
+                const threshold = viewportWidth / 3;
 
-        let finalPosition = { ...position };
+                let finalPosition = { ...position };
 
-        if (position.x < threshold) {
-            // Snap to left edge
-            finalPosition.x = 16;
-        } else if (position.x > viewportWidth - threshold) {
-            // Snap to right edge
-            finalPosition.x = viewportWidth - fabSize - 16;
+                if (position.x < threshold) {
+                    finalPosition.x = 16;
+                } else if (position.x > viewportWidth - threshold) {
+                    finalPosition.x = viewportWidth - fabSize - 16;
+                }
+
+                setPosition(finalPosition);
+                savePosition(finalPosition);
+            }
+            
+            setHasMoved(false);
         }
-
-        setPosition(finalPosition);
-        savePosition(finalPosition);
     };
 
     // Mouse events
     const handleMouseDown = (e: React.MouseEvent) => {
         e.preventDefault();
-        handleDragStart(e.clientX, e.clientY);
+        setIsDragging(true);
+        setHasMoved(false);
+        setStartPosition({ x: e.clientX, y: e.clientY });
+        setDragStart({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y
+        });
     };
 
-    const handleMouseMove = (e: MouseEvent) => {
-        handleDragMove(e.clientX, e.clientY);
-    };
-
-    const handleMouseUp = () => {
-        handleDragEnd();
-    };
-
-    // Touch events
+    // Touch events - using a different approach
     const handleTouchStart = (e: React.TouchEvent) => {
-        e.preventDefault();
         const touch = e.touches[0];
-        handleDragStart(touch.clientX, touch.clientY);
+        setIsDragging(true);
+        setHasMoved(false);
+        setStartPosition({ x: touch.clientX, y: touch.clientY });
+        setDragStart({
+            x: touch.clientX - position.x,
+            y: touch.clientY - position.y
+        });
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-        e.preventDefault();
-        const touch = e.touches[0];
-        handleDragMove(touch.clientX, touch.clientY);
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-        e.preventDefault();
-        handleDragEnd();
-    };
-
-    // Add global event listeners for drag
+    // Global event handlers
     useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            handleDragMove(e.clientX, e.clientY);
+        };
+
+        const handleMouseUp = () => {
+            handleDragEnd();
+        };
+
+        const handleTouchMove = (e: TouchEvent) => {
+            if (isDragging) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                handleDragMove(touch.clientX, touch.clientY);
+            }
+        };
+
+        const handleTouchEnd = () => {
+            handleDragEnd();
+        };
+
         if (isDragging) {
             document.addEventListener('mousemove', handleMouseMove);
             document.addEventListener('mouseup', handleMouseUp);
             document.addEventListener('touchmove', handleTouchMove, { passive: false });
-            document.addEventListener('touchend', handleTouchEnd, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
 
             return () => {
                 document.removeEventListener('mousemove', handleMouseMove);
@@ -154,11 +172,12 @@ export function MobileNavFAB() {
                 document.removeEventListener('touchend', handleTouchEnd);
             };
         }
-    }, [isDragging, dragStart, position]);
+    }, [isDragging, dragStart, position, startPosition, hasMoved]);
 
     // Handle button click (only if not dragging)
-    const handleButtonClick = () => {
-        if (!isDragging) {
+    const handleButtonClick = (e: React.MouseEvent) => {
+        // Only toggle menu if we didn't drag
+        if (!hasMoved) {
             setIsOpen(!isOpen);
         }
     };
@@ -205,10 +224,9 @@ export function MobileNavFAB() {
                 </div>
 
                 {/* Toggle Button - Draggable */}
-                <Button
-                    size="icon"
+                <div
                     className={cn(
-                        "h-14 w-14 rounded-full shadow-xl transition-all duration-300 relative overflow-hidden holographic text-white border-0 select-none drag-hint",
+                        "h-14 w-14 rounded-full shadow-xl transition-all duration-300 relative overflow-hidden holographic text-white border-0 select-none drag-hint flex items-center justify-center cursor-pointer",
                         isOpen ? "rotate-90 scale-110" : "hover:scale-105",
                         isDragging ? "scale-110 shadow-2xl" : ""
                     )}
@@ -216,7 +234,7 @@ export function MobileNavFAB() {
                     onTouchStart={handleTouchStart}
                     onClick={handleButtonClick}
                     style={{
-                        touchAction: 'none', // Prevent default touch behaviors
+                        touchAction: 'none',
                         userSelect: 'none'
                     }}
                 >
@@ -233,7 +251,7 @@ export function MobileNavFAB() {
                             </div>
                         </div>
                     )}
-                </Button>
+                </div>
             </div>
 
             {/* Backdrop */}

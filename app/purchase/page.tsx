@@ -24,13 +24,40 @@ export default function PurchasePage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full mb-4">
-          <TabsTrigger value="suppliers" className="flex-1">Suppliers</TabsTrigger>
-          <TabsTrigger value="orders" className="flex-1">Purchase Orders</TabsTrigger>
-          <TabsTrigger value="receipts" className="flex-1">Goods Receipt</TabsTrigger>
-          <TabsTrigger value="payments" className="flex-1">Payments</TabsTrigger>
-          <TabsTrigger value="advances" className="flex-1">Advances</TabsTrigger>
-        </TabsList>
+        <div className="mb-4 overflow-x-auto">
+          <TabsList className="flex w-max min-w-full gap-1">
+            <TabsTrigger 
+              value="suppliers" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+            >
+              Suppliers
+            </TabsTrigger>
+            <TabsTrigger 
+              value="orders" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+            >
+              Purchase Orders
+            </TabsTrigger>
+            <TabsTrigger 
+              value="receipts" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+            >
+              Goods Receipt
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payments" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+            >
+              Payments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="advances" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+            >
+              Advances
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="suppliers" className="mt-0">
           <SuppliersTable />
