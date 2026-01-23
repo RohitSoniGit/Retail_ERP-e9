@@ -8,9 +8,10 @@ export interface Organization {
   state_code: string;
   gstin: string | null;
   logo_url?: string;
-  settings?: OrganizationSettings;
-  website?: string;
+  favicon_url?: string;
   email?: string;
+  website?: string;
+  settings?: OrganizationSettings;
   owner_id?: string;
   created_at: string;
 }

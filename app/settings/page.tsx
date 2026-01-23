@@ -98,6 +98,7 @@ export default function SettingsPage() {
     thermalPrinterWidth: 80,
     taxInclusive: false,
     logoUrl: "",
+    faviconUrl: "",
   });
 
   useEffect(() => {
@@ -143,6 +144,7 @@ export default function SettingsPage() {
         thermalPrinterWidth: organization.settings?.thermal_printer_width || 80,
         taxInclusive: organization.settings?.tax_inclusive || false,
         logoUrl: organization.logo_url || "",
+        faviconUrl: organization.favicon_url || "",
       });
     }
   }, [organization]);
@@ -158,6 +160,7 @@ export default function SettingsPage() {
         email: formData.email,
         website: formData.website,
         logo_url: formData.logoUrl,
+        favicon_url: formData.faviconUrl,
         settings: {
           ...organization?.settings,
           currency: formData.currency,
@@ -168,6 +171,13 @@ export default function SettingsPage() {
           tax_inclusive: formData.taxInclusive,
         }
       });
+      
+      // Update page title and favicon after save
+      updatePageTitle(formData.name || 'Ronak Jewellers');
+      if (formData.faviconUrl) {
+        updateFavicon(formData.faviconUrl);
+      }
+      
       toast.success("Settings saved successfully!");
     } catch (error) {
       toast.error("Failed to save settings");
@@ -192,6 +202,7 @@ export default function SettingsPage() {
         thermalPrinterWidth: organization.settings?.thermal_printer_width || 80,
         taxInclusive: organization.settings?.tax_inclusive || false,
         logoUrl: organization.logo_url || "",
+        faviconUrl: organization.favicon_url || "",
       });
       toast.info("Settings reset to original values");
     }
@@ -208,6 +219,48 @@ export default function SettingsPage() {
       reader.readAsDataURL(file);
       toast.success("Logo uploaded successfully!");
     }
+  };
+
+  const handleFaviconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const faviconUrl = e.target?.result as string;
+        setFormData({ ...formData, faviconUrl });
+        
+        // Update favicon dynamically
+        updateFavicon(faviconUrl);
+        
+        // Update page title with organization name
+        updatePageTitle(formData.name || 'Ronak Jewellers');
+      };
+      reader.readAsDataURL(file);
+      toast.success("Favicon uploaded and applied successfully!");
+    }
+  };
+
+  const updateFavicon = (faviconUrl: string) => {
+    // Remove existing favicon links
+    const existingFavicons = document.querySelectorAll('link[rel*="icon"]');
+    existingFavicons.forEach(link => link.remove());
+
+    // Add new favicon
+    const link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/x-icon';
+    link.href = faviconUrl;
+    document.head.appendChild(link);
+
+    // Add apple touch icon
+    const appleLink = document.createElement('link');
+    appleLink.rel = 'apple-touch-icon';
+    appleLink.href = faviconUrl;
+    document.head.appendChild(appleLink);
+  };
+
+  const updatePageTitle = (organizationName: string) => {
+    document.title = `${organizationName} | ERP Management System`;
   };
 
   const handleFactoryReset = async () => {
@@ -337,6 +390,36 @@ export default function SettingsPage() {
                           />
                           <p className="text-xs text-muted-foreground mt-1">
                             Upload your company logo (PNG, JPG, SVG)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Favicon Upload Section */}
+                    <div className="space-y-4">
+                      <Label className="text-sm font-bold flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-purple-500" />
+                        Website Favicon
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        {formData.faviconUrl && (
+                          <div className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden bg-white">
+                            <img
+                              src={formData.faviconUrl}
+                              alt="Favicon"
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFaviconUpload}
+                            className="glass border-0 shadow-lg"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Upload favicon for browser tab (PNG, ICO, SVG) - Will show as "{formData.name || 'Ronak Jewellers'}" in browser
                           </p>
                         </div>
                       </div>

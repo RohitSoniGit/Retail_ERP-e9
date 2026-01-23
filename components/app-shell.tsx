@@ -85,10 +85,15 @@ function FloatingParticles() {
   );
 }
 
+import { useDynamicBranding } from "@/hooks/use-dynamic-branding";
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { organization, loading, error } = useOrganization();
   const [mounted, setMounted] = useState(false);
+
+  // Use dynamic branding hook
+  useDynamicBranding();
 
   useEffect(() => {
     setMounted(true);
