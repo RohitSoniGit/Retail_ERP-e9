@@ -35,13 +35,23 @@ export const createClient = async () => {
 
 export const getSupabaseServiceClient = () => {
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables');
+    const missing = [];
+    if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL');
+    if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+    
+    console.error('Missing Supabase environment variables:', missing);
+    throw new Error(`Missing Supabase environment variables: ${missing.join(', ')}`);
   }
   
-  return createSupabaseClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
+  try {
+    return createSupabaseClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create Supabase service client:', error);
+    throw new Error('Failed to initialize Supabase client');
+  }
 };
