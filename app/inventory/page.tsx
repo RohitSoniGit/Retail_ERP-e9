@@ -184,57 +184,59 @@ export default function InventoryPage() {
                   <p>No items in inventory.</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Current Stock</TableHead>
-                      <TableHead>Min Level</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Value</TableHead>
-                      <TableHead>Last Movement</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map((item: any) => {
-                      const getStockStatus = () => {
-                        if (item.current_stock === 0) return { label: "Out of Stock", variant: "destructive" };
-                        if (item.current_stock <= (item.low_stock_threshold || 5)) return { label: "Low Stock", variant: "secondary" };
-                        return { label: "In Stock", variant: "default" };
-                      };
+                <div className="table-responsive">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Current Stock</TableHead>
+                        <TableHead>Min Level</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Value</TableHead>
+                        <TableHead>Last Movement</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.map((item: any) => {
+                        const getStockStatus = () => {
+                          if (item.current_stock === 0) return { label: "Out of Stock", variant: "destructive" };
+                          if (item.current_stock <= (item.low_stock_threshold || 5)) return { label: "Low Stock", variant: "secondary" };
+                          return { label: "In Stock", variant: "default" };
+                        };
 
-                      const status = getStockStatus();
+                        const status = getStockStatus();
 
-                      return (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{item.name}</p>
-                              <p className="text-sm text-muted-foreground">{item.sku || '-'}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>{item.category?.name || '-'}</TableCell>
-                          <TableCell>
-                            <span className={item.current_stock <= (item.low_stock_threshold || 5) ? "text-red-600 font-medium" : ""}>
-                              {item.current_stock} {item.unit_type || 'PCS'}
-                            </span>
-                          </TableCell>
-                          <TableCell>{item.low_stock_threshold || 5} {item.unit_type || 'PCS'}</TableCell>
-                          <TableCell>
-                            <Badge variant={status.variant as any}>
-                              {status.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>₹{(item.current_stock * (item.purchase_price || 0)).toLocaleString()}</TableCell>
-                          <TableCell>
-                            <span className="text-sm">-</span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                        return (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{item.name}</p>
+                                <p className="text-sm text-muted-foreground">{item.sku || '-'}</p>
+                              </div>
+                            </TableCell>
+                            <TableCell>{item.category?.name || '-'}</TableCell>
+                            <TableCell>
+                              <span className={item.current_stock <= (item.low_stock_threshold || 5) ? "text-red-600 font-medium" : ""}>
+                                {item.current_stock} {item.unit_type || 'PCS'}
+                              </span>
+                            </TableCell>
+                            <TableCell>{item.low_stock_threshold || 5} {item.unit_type || 'PCS'}</TableCell>
+                            <TableCell>
+                              <Badge variant={status.variant as any}>
+                                {status.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>₹{(item.current_stock * (item.purchase_price || 0)).toLocaleString()}</TableCell>
+                            <TableCell>
+                              <span className="text-sm">-</span>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>

@@ -157,41 +157,6 @@ export function ReorderAlerts() {
             Monitor low stock items and manage reorder suggestions
           </p>
         </div>
-        <Button
-          onClick={() => {
-            // Generate new alerts based on current stock levels
-            const newAlerts = items
-              .filter(item => item.current_stock <= item.min_stock_level)
-              .filter(item => !alerts.some(alert => alert.item_id === item.id && alert.status === "active"))
-              .map(item => ({
-                id: Date.now().toString() + item.id,
-                organization_id: "org1",
-                item_id: item.id,
-                item_name: item.name,
-                current_stock: item.current_stock,
-                min_stock_level: item.min_stock_level,
-                suggested_order_qty: Math.max(item.min_stock_level * 2, 10),
-                preferred_supplier_id: "1",
-                last_purchase_price: item.purchase_cost,
-                alert_date: new Date().toISOString(),
-                status: "active" as const,
-                created_at: new Date().toISOString(),
-                item,
-                supplier: suppliers[0],
-              }));
-
-            if (newAlerts.length > 0) {
-              setAlerts([...alerts, ...newAlerts]);
-              toast.success(`${newAlerts.length} new alerts generated`);
-            } else {
-              toast.info("No new alerts to generate");
-            }
-          }}
-          className="glass border-0 shadow-sm hover:scale-105 transition-transform"
-        >
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          Refresh Alerts
-        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -289,109 +254,111 @@ export function ReorderAlerts() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-white/5 backdrop-blur-md">
-              <TableRow className="border-b border-white/10 hover:bg-transparent">
-                <TableHead className="font-bold text-foreground pl-6">Item</TableHead>
-                <TableHead className="font-bold text-foreground">Current Stock</TableHead>
-                <TableHead className="font-bold text-foreground">Min Level</TableHead>
-                <TableHead className="font-bold text-foreground">Status</TableHead>
-                <TableHead className="font-bold text-foreground">Suggested Order</TableHead>
-                <TableHead className="font-bold text-foreground">Last Price</TableHead>
-                <TableHead className="font-bold text-foreground">Supplier</TableHead>
-                <TableHead className="text-right font-bold text-foreground pr-6">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredAlerts.map((alert) => {
-                const priority = getAlertPriority(alert);
-                const stockStatus = getStockStatus(alert.current_stock, alert.min_stock_level);
-                const StatusIcon = stockStatus.icon;
+          <div className="table-responsive">
+            <Table>
+              <TableHeader className="bg-white/5 backdrop-blur-md">
+                <TableRow className="border-b border-white/10 hover:bg-transparent">
+                  <TableHead className="font-bold text-foreground pl-6">Item</TableHead>
+                  <TableHead className="font-bold text-foreground">Current Stock</TableHead>
+                  <TableHead className="font-bold text-foreground">Min Level</TableHead>
+                  <TableHead className="font-bold text-foreground">Status</TableHead>
+                  <TableHead className="font-bold text-foreground">Suggested Order</TableHead>
+                  <TableHead className="font-bold text-foreground">Last Price</TableHead>
+                  <TableHead className="font-bold text-foreground">Supplier</TableHead>
+                  <TableHead className="text-right font-bold text-foreground pr-6">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAlerts.map((alert) => {
+                  const priority = getAlertPriority(alert);
+                  const stockStatus = getStockStatus(alert.current_stock, alert.min_stock_level);
+                  const StatusIcon = stockStatus.icon;
 
-                return (
-                  <TableRow key={alert.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                    <TableCell className="pl-6">
-                      <div>
-                        <p className="font-medium text-foreground">{alert.item_name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">{alert.item?.sku}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <StatusIcon className={`h-4 w-4 ${stockStatus.color}`} />
-                        <span className={`font-medium ${stockStatus.color}`}>
-                          {alert.current_stock} {alert.item?.unit_name}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{alert.min_stock_level} {alert.item?.unit_name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`border-0 shadow-sm ${priority.level === "critical" ? "bg-red-500/10 text-red-500" :
-                        priority.level === "high" ? "bg-orange-500/10 text-orange-500" :
-                          "bg-yellow-500/10 text-yellow-500"
-                        }`}>
-                        {priority.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{alert.suggested_order_qty} {alert.item?.unit_name}</p>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          ₹{((alert.last_purchase_price || 0) * alert.suggested_order_qty).toLocaleString()}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono">₹{(alert.last_purchase_price || 0).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-foreground">{alert.supplier?.name}</p>
-                        <p className="text-xs text-muted-foreground">{alert.supplier?.supplier_code}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="pr-6">
-                      <div className="flex justify-end gap-2">
-                        {alert.status === "active" && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => {
-                                setSelectedAlert(alert);
-                                setShowOrderDialog(true);
-                              }}
-                              className="holographic text-white shadow-md border-0 h-8 text-xs"
-                            >
-                              <ShoppingCart className="h-3 w-3 mr-1" />
-                              Order
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleDismissAlert(alert.id)}
-                              className="h-8 w-8 p-0 rounded-full hover:bg-white/10"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </>
-                        )}
-                        {alert.status === "ordered" && (
-                          <Badge variant="outline" className="bg-green-500/10 text-green-500 border-0 shadow-sm">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Ordered
-                          </Badge>
-                        )}
-                        {alert.status === "dismissed" && (
-                          <Badge variant="secondary" className="bg-white/10 text-muted-foreground">
-                            <X className="h-3 w-3 mr-1" />
-                            Dismissed
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                  return (
+                    <TableRow key={alert.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                      <TableCell className="pl-6">
+                        <div>
+                          <p className="font-medium text-foreground">{alert.item_name}</p>
+                          <p className="text-xs text-muted-foreground font-mono">{alert.item?.sku}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <StatusIcon className={`h-4 w-4 ${stockStatus.color}`} />
+                          <span className={`font-medium ${stockStatus.color}`}>
+                            {alert.current_stock} {alert.item?.unit_name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{alert.min_stock_level} {alert.item?.unit_name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`border-0 shadow-sm ${priority.level === "critical" ? "bg-red-500/10 text-red-500" :
+                          priority.level === "high" ? "bg-orange-500/10 text-orange-500" :
+                            "bg-yellow-500/10 text-yellow-500"
+                          }`}>
+                          {priority.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{alert.suggested_order_qty} {alert.item?.unit_name}</p>
+                          <p className="text-xs text-muted-foreground font-mono">
+                            ₹{((alert.last_purchase_price || 0) * alert.suggested_order_qty).toLocaleString()}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono">₹{(alert.last_purchase_price || 0).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-foreground">{alert.supplier?.name}</p>
+                          <p className="text-xs text-muted-foreground">{alert.supplier?.supplier_code}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="pr-6">
+                        <div className="flex justify-end gap-2">
+                          {alert.status === "active" && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedAlert(alert);
+                                  setShowOrderDialog(true);
+                                }}
+                                className="holographic text-white shadow-md border-0 h-8 text-xs"
+                              >
+                                <ShoppingCart className="h-3 w-3 mr-1" />
+                                Order
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDismissAlert(alert.id)}
+                                className="h-8 w-8 p-0 rounded-full hover:bg-white/10"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+                          {alert.status === "ordered" && (
+                            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-0 shadow-sm">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Ordered
+                            </Badge>
+                          )}
+                          {alert.status === "dismissed" && (
+                            <Badge variant="secondary" className="bg-white/10 text-muted-foreground">
+                              <X className="h-3 w-3 mr-1" />
+                              Dismissed
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

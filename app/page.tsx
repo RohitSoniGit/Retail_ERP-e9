@@ -146,13 +146,12 @@ export default function DashboardPage() {
         .order("current_stock", { ascending: true })
         .limit(5);
 
-      // Outstanding credit
+      // Outstanding credit - Calculate from sales with payment_mode=credit or credit_amount > 0
       const { data: creditSales } = await supabase
         .from("sales")
-        .select("total_amount, credit_paid")
+        .select("total_amount, amount_paid")
         .eq("organization_id", organizationId)
-        .eq("is_credit", true)
-        .eq("is_paid", false);
+        .eq("payment_mode", "credit");
 
       // ... inside fetcher
       // 7-day sales trend
@@ -220,7 +219,7 @@ export default function DashboardPage() {
         monthSales: monthSales?.reduce((sum: number, s: any) => sum + (s.total_amount || 0), 0) || 0,
         lowStockItems: (lowStockItems as Item[]) || [],
         lowStockCount: lowStockItems?.length || 0,
-        outstandingCredit: creditSales?.reduce((sum: number, s: any) => sum + ((s.total_amount || 0) - (s.credit_paid || 0)), 0) || 0,
+        outstandingCredit: creditSales?.reduce((sum: number, s: any) => sum + ((s.total_amount || 0) - (s.amount_paid || 0)), 0) || 0,
         cashInHand: cashInHand,
         topSellingItems: topItems || [],
         salesTrend: trendData,
@@ -493,24 +492,26 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="relative z-10">
               {stats.topSellingItems && stats.topSellingItems.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Product</TableHead>
-                      <TableHead>Qty Sold</TableHead>
-                      <TableHead>Revenue</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {stats.topSellingItems.map((item: any, index: number) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{item.item_name}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>₹{item.total_price?.toLocaleString()}</TableCell>
+                <div className="table-responsive">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Qty Sold</TableHead>
+                        <TableHead>Revenue</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {stats.topSellingItems.map((item: any, index: number) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{item.item_name}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>₹{item.total_price?.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
                   <Package className="h-10 w-10 mb-2 opacity-50" />

@@ -5,12 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { 
-  FileText, 
-  Download, 
-  Search, 
-  Calendar, 
-  User, 
+import {
+  FileText,
+  Download,
+  Search,
+  Calendar,
+  User,
   IndianRupee,
   ExternalLink,
   Trash2,
@@ -103,8 +103,8 @@ export function SavedInvoicesDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] glass border-0 shadow-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden glass border-0 shadow-2xl">
+        <DialogHeader className="pb-4">
           <DialogTitle className="text-white flex items-center gap-2">
             <FileText className="h-5 w-5" />
             Saved Invoices
@@ -159,7 +159,7 @@ export function SavedInvoicesDialog({
                         {new Date(invoice.invoice_date).toLocaleDateString('en-IN')}
                       </span>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 text-sm text-gray-400">
                       <div className="flex items-center gap-1">
                         <User className="h-3 w-3" />

@@ -79,7 +79,10 @@ export function FABMenu() {
               )}
               style={{ transitionDelay: `${index * 50}ms` }}
             >
-              <span className="px-4 py-2 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur text-sm font-semibold shadow-xl border border-border/50 translate-x-4 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200">
+              <span className={cn(
+                "px-4 py-2 rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur text-sm font-semibold shadow-xl border border-border/50 whitespace-nowrap transition-all duration-200",
+                isOpen ? "translate-x-0 opacity-100" : "translate-x-4 opacity-0"
+              )}>
                 {item.label}
               </span>
               <div className={cn(

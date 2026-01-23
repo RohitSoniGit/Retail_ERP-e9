@@ -22,13 +22,15 @@ export class PDFGenerator {
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
+        logging: false, // Disable logging to avoid color parse errors
+        foreignObjectRendering: false, // Disable to prevent LAB color issues
         width: options.format === 'thermal' ? 302 : undefined, // 80mm in pixels
         height: undefined,
       };
 
       // Generate canvas from HTML
       const canvas = await html2canvas(element, canvasOptions);
-      
+
       // Configure PDF dimensions
       let pdfWidth: number;
       let pdfHeight: number;
@@ -73,7 +75,7 @@ export class PDFGenerator {
   ): Promise<void> {
     try {
       const pdfBlob = await this.generatePDFFromElement(element, options);
-      
+
       // Create download link
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
