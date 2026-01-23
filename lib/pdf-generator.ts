@@ -16,16 +16,34 @@ export class PDFGenerator {
     options: PDFGenerationOptions = { format: 'a4' }
   ): Promise<Blob> {
     try {
-      // Configure canvas options based on format
-      const canvasOptions = {
+      // Configure canvas options based on format - aggressive settings to avoid LAB color issues
+      const canvasOptions: any = {
         scale: options.quality || 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false, // Disable logging to avoid color parse errors
         foreignObjectRendering: false, // Disable to prevent LAB color issues
+        imageTimeout: 0,
+        removeContainer: true,
         width: options.format === 'thermal' ? 302 : undefined, // 80mm in pixels
         height: undefined,
+        windowWidth: options.format === 'thermal' ? 302 : 1200,
+        onclone: (clonedDoc: Document) => {
+          // Remove any CSS that might contain LAB colors
+          const styleSheets = clonedDoc.styleSheets;
+          for (let i = 0; i < styleSheets.length; i++) {
+            try {
+              const sheet = styleSheets[i] as CSSStyleSheet;
+              // Disable Tailwind v4 that might have LAB colors
+              if (sheet.href && sheet.href.includes('tailwind')) {
+                (sheet as any).disabled = true;
+              }
+            } catch (e) {
+              // Ignore cross-origin errors
+            }
+          }
+        }
       };
 
       // Generate canvas from HTML

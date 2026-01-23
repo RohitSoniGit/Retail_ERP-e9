@@ -48,12 +48,12 @@ export function InvoicePrintDialog({
     const [isUploaded, setIsUploaded] = useState(false);
 
     const handlePrint = useReactToPrint({
-        content: () => componentRef.current,
-    } as any);
+        contentRef: componentRef,
+    });
 
     const handleDownloadPDF = async () => {
         if (!componentRef.current) return;
-        
+
         try {
             const filename = `Invoice_${invoiceNumber}_${new Date(date).toLocaleDateString('en-IN').replace(/\//g, '-')}.pdf`;
             await PDFGenerator.downloadPDF(componentRef.current, filename, { format });
@@ -66,12 +66,12 @@ export function InvoicePrintDialog({
 
     const handleSaveToCloud = async () => {
         if (!componentRef.current) return;
-        
+
         setIsUploading(true);
         try {
             // Generate PDF blob
             const pdfBlob = await PDFGenerator.generatePDFFromElement(componentRef.current, { format });
-            
+
             // Upload to Supabase Storage
             const result = await InvoiceStorageService.uploadInvoicePDF(pdfBlob, {
                 invoiceNumber,
@@ -107,9 +107,9 @@ export function InvoicePrintDialog({
                         <Download className="h-4 w-4 mr-2" />
                         Download PDF
                     </Button>
-                    <Button 
-                        variant="outline" 
-                        size="sm" 
+                    <Button
+                        variant="outline"
+                        size="sm"
                         onClick={handleSaveToCloud}
                         disabled={isUploading || isUploaded}
                         className="holographic text-white border-0 shadow-md"
