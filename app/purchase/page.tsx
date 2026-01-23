@@ -24,35 +24,55 @@ export default function PurchasePage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="mb-4 overflow-x-auto">
-          <TabsList className="flex w-max min-w-full gap-1">
+        <div 
+          className="mb-4 overflow-x-auto" 
+          style={{ 
+            scrollbarWidth: 'none', 
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
+          <TabsList 
+            className="flex w-max min-w-full gap-1 p-1" 
+            style={{ 
+              display: 'flex', 
+              width: 'max-content', 
+              minWidth: '100%',
+              flexWrap: 'nowrap'
+            }}
+          >
             <TabsTrigger 
               value="suppliers" 
               className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
             >
               Suppliers
             </TabsTrigger>
             <TabsTrigger 
               value="orders" 
               className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
             >
               Purchase Orders
             </TabsTrigger>
             <TabsTrigger 
               value="receipts" 
               className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
             >
               Goods Receipt
             </TabsTrigger>
             <TabsTrigger 
               value="payments" 
               className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
             >
               Payments
             </TabsTrigger>
             <TabsTrigger 
               value="advances" 
               className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
             >
               Advances
             </TabsTrigger>
