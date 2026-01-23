@@ -424,7 +424,7 @@ export function EnhancedBillForm() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100dvh-5rem)] md:h-[calc(100vh-4rem)]">
       {/* Customer Selection */}
       <div className="p-4 border-b border-white/10 bg-white/5 backdrop-blur-md">
         <div className="flex flex-col md:flex-row items-center gap-4">

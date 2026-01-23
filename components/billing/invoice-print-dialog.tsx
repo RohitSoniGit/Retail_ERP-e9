@@ -133,11 +133,20 @@ export function InvoicePrintDialog({
                     </Button>
                 </div>
 
-                <div className="p-6 bg-white/95">
-                    <div ref={componentRef} className="bg-white text-black p-4">
+                <div className="p-0 bg-white/95 overflow-hidden flex justify-center">
+                    <div
+                        ref={componentRef}
+                        className="bg-white text-black transition-all origin-top"
+                        style={{
+                            width: format === 'thermal' ? '78mm' : '210mm', // Slightly less than 80mm to ensure safety margins
+                            padding: format === 'thermal' ? '4mm' : '20mm',
+                            minHeight: format === 'thermal' ? 'auto' : '297mm',
+                            margin: '0 auto'
+                        }}
+                    >
                         {format === 'thermal' ? (
                             // Thermal Layout (80mm)
-                            <div className="font-mono text-xs space-y-2 max-w-[80mm] mx-auto">
+                            <div className="font-mono text-xs space-y-2 w-full">
                                 <div className="text-center space-y-1">
                                     <div className="font-bold text-sm">{organization.name}</div>
                                     {organization.address && <div>{organization.address}</div>}
@@ -195,7 +204,7 @@ export function InvoicePrintDialog({
                             </div>
                         ) : (
                             // A4 Layout
-                            <div className="font-sans text-sm space-y-6 p-8 min-h-[1000px] border border-gray-100">
+                            <div className="font-sans text-sm space-y-6 h-full">
                                 {/* Header */}
                                 <div className="flex justify-between items-start">
                                     <div>

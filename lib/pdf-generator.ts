@@ -30,32 +30,36 @@ export class PDFGenerator {
         height: undefined,
         windowWidth: options.format === 'thermal' ? 302 : 1200,
         onclone: (clonedDoc: Document) => {
-          // Remove any CSS that might contain modern color functions which html2canvas fails to parse
+          // Aggressively replace modern color functions in the entire body HTML
+          const body = clonedDoc.body;
+          let bodyHtml = body.innerHTML;
+
+          // Regex to catch lab(), lch(), oklab(), oklch() and replace with a safe color
+          // We replace with white or black depending on context if possible, but here we just safely fallback to a hex code
+          // to prevent the parser from crashing.
+          if (bodyHtml.match(/(lab|lch|oklab|oklch)\(/)) {
+            bodyHtml = bodyHtml.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000');
+            body.innerHTML = bodyHtml;
+          }
+
+          // Also specifically target style tags in head/body
           const styleTags = clonedDoc.querySelectorAll('style');
           styleTags.forEach(tag => {
-            let css = tag.innerHTML;
-            // Replace modern color functions with a fallback safe color (white)
-            // html2canvas 1.4.1 throws generic "Attempting to parse an unsupported color function" for these
-            css = css.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#ffffff');
-            tag.innerHTML = css;
+            if (tag.innerHTML.match(/(lab|lch|oklab|oklch)\(/)) {
+              tag.innerHTML = tag.innerHTML.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000');
+            }
           });
 
-          // Checking for inline styles on all elements
+          // And inline styles on all elements
           const allElements = clonedDoc.querySelectorAll('*');
           allElements.forEach((el: any) => {
-            const style = el.style;
-            if (style) {
-              // If inline style has problematic color, clear it
-              if (style.backgroundColor && (style.backgroundColor.includes('lab') || style.backgroundColor.includes('oklch'))) {
-                style.backgroundColor = '#ffffff';
-              }
-              if (style.color && (style.color.includes('lab') || style.color.includes('oklch'))) {
-                style.color = '#000000';
-              }
-              if (style.borderColor && (style.borderColor.includes('lab') || style.borderColor.includes('oklch'))) {
-                style.borderColor = '#e2e8f0';
-              }
+            const style = el.getAttribute('style');
+            if (style && style.match(/(lab|lch|oklab|oklch)\(/)) {
+              el.setAttribute('style', style.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000'));
             }
+
+            // Also check computed style properties that might cause issues if they were set via classes
+            // This is harder to patch but removing the style attribute helps
           });
         }
       };

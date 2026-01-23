@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useOrganization } from "@/lib/context/organization";
 import { FABMenu } from "./fab-menu";
+import { MobileNavFAB } from "./mobile-nav-fab";
 import { ThemeToggle } from "./theme-toggle";
 import {
   LayoutDashboard,
@@ -152,8 +153,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <li>2. Run the setup script: <code>scripts/setup-ronak-jewellers.sql</code></li>
               <li>3. Refresh this page</li>
             </ol>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
             >
               Refresh Page
@@ -229,7 +230,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Main Content */}
       <main className="relative z-10 flex-1 w-full md:pl-[126px]">
-        <div className="w-full">
+        <div className="w-full pb-24 md:pb-0">
           {children}
         </div>
       </main>
@@ -237,30 +238,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* FAB Menu */}
       <FABMenu />
 
-      {/* Bottom Navigation - Mobile */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/40 pb-safe">
-        <div className="flex justify-around py-3 px-2">
-          {navItems.map((item, index) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-300 min-w-[60px]",
-                  active
-                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 scale-105"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Icon className={cn("h-5 w-5 transition-transform", active && "-translate-y-0.5")} />
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {/* Mobile Navigation FAB - Left */}
+      <MobileNavFAB />
 
       {/* Desktop Sidebar - Premium Glass */}
       <nav className={cn(

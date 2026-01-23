@@ -54,7 +54,7 @@ export default function ReportsPage() {
   const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
 
   // Fetch Sales Data
-  const { data: salesData } = useSWR(
+  const { data: salesData, error: salesError } = useSWR(
     organizationId ? `sales-report-${organizationId}-${dateFrom}-${dateTo}` : null,
     async () => {
       let query = supabase
@@ -75,7 +75,7 @@ export default function ReportsPage() {
   );
 
   // Fetch Inventory Data (Items)
-  const { data: inventoryData } = useSWR(
+  const { data: inventoryData, error: inventoryError } = useSWR(
     organizationId ? `inventory-report-${organizationId}` : null,
     async () => {
       const { data, error } = await supabase
@@ -89,7 +89,7 @@ export default function ReportsPage() {
   );
 
   // Fetch Purchase Data
-  const { data: purchaseData } = useSWR(
+  const { data: purchaseData, error: purchaseError } = useSWR(
     organizationId ? `purchase-report-${organizationId}-${dateFrom}-${dateTo}` : null,
     async () => {
       const { data, error } = await supabase
@@ -162,35 +162,44 @@ export default function ReportsPage() {
         <p className="text-muted-foreground">Comprehensive business analytics and reports</p>
       </div>
 
+      {(salesError || inventoryError || purchaseError) && (
+        <div className="mb-6 p-4 border border-red-500/50 bg-red-500/10 rounded-lg text-red-500 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-wifi-off h-5 w-5"><path d="M22 2 2 22" /><path d="M12 2a10 10 0 0 1 9.76 12.08" /><path d="M16 6a6 6 0 0 1 5.08 7.4" /><path d="M2 17.65A10 10 0 0 1 8.85 2.14" /><path d="M6 10a6 6 0 0 1 2.5 1.45" /><path d="M9 13a2 2 0 0 1 2 2" /></svg>
+          <span className="font-medium">Connection Lost: Unable to load latest data. Please check your internet connection.</span>
+        </div>
+      )}
+
       {/* Date Range Filter */}
       <Card className="glass border-0 shadow-lg mb-6">
         <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full">
+            <div className="flex items-center gap-2 mb-2 md:mb-0">
               <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm font-medium">Date Range:</Label>
+              <Label className="text-sm font-medium whitespace-nowrap">Date Range:</Label>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="dateFrom" className="text-sm">From:</Label>
-              <Input
-                id="dateFrom"
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="w-40"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full md:w-auto">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="dateFrom" className="text-sm w-10 md:w-auto">From:</Label>
+                <Input
+                  id="dateFrom"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="flex-1 w-full md:w-40"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="dateTo" className="text-sm w-10 md:w-auto">To:</Label>
+                <Input
+                  id="dateTo"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="flex-1 w-full md:w-40"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="dateTo" className="text-sm">To:</Label>
-              <Input
-                id="dateTo"
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="w-40"
-              />
-            </div>
-            <Button className="holographic text-white">
+            <Button className="holographic text-white w-full md:w-auto mt-2 md:mt-0">
               <Filter className="h-4 w-4 mr-2" />
               Apply Filter
             </Button>
