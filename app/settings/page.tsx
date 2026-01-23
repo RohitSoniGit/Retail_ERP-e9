@@ -28,6 +28,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
+import { EmailSettings } from "@/components/settings/email-settings";
 import {
   Dialog,
   DialogContent,
@@ -728,94 +729,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-8">
-            <Card className="glass border-0 shadow-2xl hover-lift relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-pink-500/5 to-purple-500/5" />
-              <CardHeader className="pb-6 relative z-10">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-2xl holographic">
-                    <Bell className="h-6 w-6 text-white drop-shadow-lg" />
-                  </div>
-                  <div className="space-y-1">
-                    <CardTitle className="text-2xl gradient-text">Email & Notifications</CardTitle>
-                    <CardDescription className="text-base">
-                      Configure email settings for OTPs, invoices, and alerts
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="senderEmail" className="text-sm font-bold flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-pink-500" />
-                      Sender Email
-                    </Label>
-                    <Input
-                      id="senderEmail"
-                      placeholder="noreply@yourdomain.com"
-                      className="glass border-0 shadow-lg h-12"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Email address to display in sent emails
-                    </p>
-                  </div>
-                  <div className="space-y-3">
-                    <Label htmlFor="smtpHost" className="text-sm font-bold">SMTP Host</Label>
-                    <Input
-                      id="smtpHost"
-                      placeholder="smtp.gmail.com"
-                      className="glass border-0 shadow-lg h-12"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="smtpPort" className="text-sm font-bold">SMTP Port</Label>
-                    <Input
-                      id="smtpPort"
-                      placeholder="587"
-                      className="glass border-0 shadow-lg h-12"
-                    />
-                  </div>
-                  <div className="space-y-3">
-                    <Label htmlFor="smtpUser" className="text-sm font-bold">SMTP Username</Label>
-                    <Input
-                      id="smtpUser"
-                      placeholder="Enter SMTP username"
-                      className="glass border-0 shadow-lg h-12"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-sm font-bold">Features</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-2 p-4 rounded-xl glass">
-                      <div className="h-4 w-4 rounded-full bg-green-500" />
-                      <div className="flex-1">
-                        <p className="font-semibold text-sm">Email OTP for Login</p>
-                        <p className="text-xs text-muted-foreground">Enable OTP verification for users</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2 p-4 rounded-xl glass">
-                      <div className="h-4 w-4 rounded-full bg-green-500" />
-                      <div className="flex-1">
-                        <p className="font-semibold text-sm">Password Reset Emails</p>
-                        <p className="text-xs text-muted-foreground">Allow users to reset password via email</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <Button className="holographic text-white">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Email Settings
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <EmailSettings />
           </TabsContent>
           <TabsContent value="danger-zone" className="space-y-8">
             <Card className="glass border-0 shadow-2xl hover-lift relative overflow-hidden border-l-4 border-l-red-500">
