@@ -130,6 +130,11 @@ export default function ReportsPage() {
     alert(`Exporting ${reportName} to PDF...`);
   };
 
+  const handlePrint = (sale: Sale) => {
+    setSaleToPrint(sale);
+    setShowPrintDialog(true);
+  };
+
   const totalGstSales = gstBills.reduce((sum: number, s: any) => sum + s.total_amount, 0);
   const totalNonGstSales = nonGstBills.reduce((sum: number, s: any) => sum + s.total_amount, 0);
 
@@ -823,7 +828,7 @@ export default function ReportsPage() {
                     {gstBills.map((bill) => (
                       <TableRow key={bill.id}>
                         <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
-                        <TableCell className="text-xs">{new Date(bill.date).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-xs">{bill.customer_name}</TableCell>
                         <TableCell className="text-xs">₹{(bill.cgst_amount + bill.sgst_amount + bill.igst_amount).toLocaleString()}</TableCell>
                         <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
@@ -854,7 +859,7 @@ export default function ReportsPage() {
                     {nonGstBills.map((bill) => (
                       <TableRow key={bill.id}>
                         <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
-                        <TableCell className="text-xs">{new Date(bill.date).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-xs">{bill.customer_name}</TableCell>
                         <TableCell className="text-xs">₹0</TableCell>
                         <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
