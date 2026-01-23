@@ -95,7 +95,7 @@ export default function InventoryPage() {
   const totalItems = items.length;
   const lowStockItems = items.filter((item: any) => item.current_stock <= (item.low_stock_threshold || 5));
   const outOfStockItems = items.filter((item: any) => item.current_stock === 0);
-  const totalValue = items.reduce((sum: number, item: any) => sum + (item.current_stock * (item.purchase_price || 0)), 0);
+  const totalValue = items.reduce((sum: number, item: any) => sum + (item.current_stock * (item.purchase_cost || 0)), 0);
 
   if (isLoading) {
     return (

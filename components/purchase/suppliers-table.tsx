@@ -12,55 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Search, Edit, Phone, Mail, MapPin } from "lucide-react";
 import { Supplier } from "@/lib/types";
 import { toast } from "sonner";
-
-// Demo suppliers data
-const demoSuppliers: Supplier[] = [
-  {
-    id: "1",
-    organization_id: "demo-org",
-    supplier_code: "SUP001",
-    name: "ABC Distributors",
-    contact_person: "Rajesh Kumar",
-    phone: "+91 9876543210",
-    email: "rajesh@abcdist.com",
-    address: "123 Market Street, Mumbai",
-    city: "Mumbai",
-    state_code: "27",
-    pincode: "400001",
-    gstin: "27ABCDE1234F1Z5",
-    payment_terms: 30,
-    credit_limit: 500000,
-    current_balance: 25000,
-    supplier_type: "distributor",
-    is_active: true,
-    created_at: "2024-01-15T10:00:00Z",
-    updated_at: "2024-01-15T10:00:00Z"
-  },
-  {
-    id: "2",
-    organization_id: "demo-org",
-    supplier_code: "SUP002",
-    name: "XYZ Manufacturers",
-    contact_person: "Priya Sharma",
-    phone: "+91 9876543211",
-    email: "priya@xyzmfg.com",
-    address: "456 Industrial Area, Delhi",
-    city: "Delhi",
-    state_code: "07",
-    pincode: "110001",
-    gstin: "07FGHIJ5678K2L9",
-    payment_terms: 15,
-    credit_limit: 1000000,
-    current_balance: 0,
-    supplier_type: "manufacturer",
-    is_active: true,
-    created_at: "2024-01-10T10:00:00Z",
-    updated_at: "2024-01-10T10:00:00Z"
-  }
-];
+import { useOrganization } from "@/lib/context/organization";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import useSWR from "swr";
 
 export function SuppliersTable() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(demoSuppliers);
+  const { organizationId } = useOrganization();
+  const supabase = getSupabaseBrowserClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
@@ -79,55 +37,90 @@ export function SuppliersTable() {
     supplier_type: "regular" as "regular" | "manufacturer" | "distributor" | "importer"
   });
 
-  const filteredSuppliers = suppliers.filter(supplier =>
+  // Fetch suppliers from Supabase
+  const { data: suppliers, mutate } = useSWR(
+    organizationId ? `suppliers-${organizationId}` : null,
+    async () => {
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return (data as Supplier[]) || [];
+    }
+  );
+
+  const filteredSuppliers = (suppliers || []).filter(supplier =>
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.supplier_code.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.contact_person?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingSupplier) {
-      // Update existing supplier
-      setSuppliers(prev => prev.map(s =>
-        s.id === editingSupplier.id
-          ? { ...s, ...formData, updated_at: new Date().toISOString() }
-          : s
-      ));
-      toast.success("Supplier updated successfully");
-    } else {
-      // Create new supplier
-      const newSupplier: Supplier = {
-        id: Date.now().toString(),
-        organization_id: "demo-org",
-        supplier_code: `SUP${String(suppliers.length + 1).padStart(3, '0')}`,
-        ...formData,
-        current_balance: 0,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-      setSuppliers(prev => [...prev, newSupplier]);
-      toast.success("Supplier created successfully");
+    if (!organizationId) {
+      toast.error("Organization ID is required");
+      return;
     }
 
-    setIsDialogOpen(false);
-    setEditingSupplier(null);
-    setFormData({
-      name: "",
-      contact_person: "",
-      phone: "",
-      email: "",
-      address: "",
-      city: "",
-      state_code: "27",
-      pincode: "",
-      gstin: "",
-      payment_terms: 30,
-      credit_limit: 0,
-      supplier_type: "regular"
-    });
+    try {
+      if (editingSupplier) {
+        // Update existing supplier
+        const { error } = await supabase
+          .from("suppliers")
+          .update({
+            ...formData,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", editingSupplier.id);
+
+        if (error) throw error;
+        toast.success("Supplier updated successfully");
+      } else {
+        // Create new supplier - generate supplier code
+        const supplierCount = (suppliers || []).length;
+        const supplierCode = `SUP${String(supplierCount + 1).padStart(3, '0')}`;
+
+        const { error } = await supabase
+          .from("suppliers")
+          .insert({
+            organization_id: organizationId,
+            supplier_code: supplierCode,
+            ...formData,
+            current_balance: 0,
+            is_active: true
+          });
+
+        if (error) throw error;
+        toast.success("Supplier created successfully");
+      }
+
+      // Refresh data
+      mutate();
+
+      setIsDialogOpen(false);
+      setEditingSupplier(null);
+      setFormData({
+        name: "",
+        contact_person: "",
+        phone: "",
+        email: "",
+        address: "",
+        city: "",
+        state_code: "27",
+        pincode: "",
+        gstin: "",
+        payment_terms: 30,
+        credit_limit: 0,
+        supplier_type: "regular"
+      });
+    } catch (error: any) {
+      console.error('Supplier save error:', error);
+      toast.error(error.message || "Failed to save supplier");
+    }
   };
 
   const handleEdit = (supplier: Supplier) => {

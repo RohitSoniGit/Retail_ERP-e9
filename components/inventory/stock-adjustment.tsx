@@ -366,10 +366,10 @@ export function StockAdjustment() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div className={`p-1.5 rounded-lg ${adjustment.adjustment_type === 'increase' ? 'bg-green-500/10 text-green-500' :
-                            adjustment.adjustment_type === 'decrease' ? 'bg-red-500/10 text-red-500' :
-                              adjustment.adjustment_type === 'damage' ? 'bg-red-500/10 text-red-500' :
-                                adjustment.adjustment_type === 'expired' ? 'bg-orange-500/10 text-orange-500' :
-                                  'bg-blue-500/10 text-blue-500'
+                          adjustment.adjustment_type === 'decrease' ? 'bg-red-500/10 text-red-500' :
+                            adjustment.adjustment_type === 'damage' ? 'bg-red-500/10 text-red-500' :
+                              adjustment.adjustment_type === 'expired' ? 'bg-orange-500/10 text-orange-500' :
+                                'bg-blue-500/10 text-blue-500'
                           }`}>
                           <Icon className="h-4 w-4" />
                         </div>
@@ -390,11 +390,36 @@ export function StockAdjustment() {
                     </TableCell>
                     <TableCell className="pr-6">
                       <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="ghost" className="h-8 px-2 hover:bg-white/10">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setSelectedAdjustment(adjustment);
+                            // TODO: Add view dialog
+                            toast.info('View functionality coming soon');
+                          }}
+                          className="h-8 px-2 hover:bg-white/10"
+                        >
                           View
                         </Button>
                         {adjustment.status === "draft" && (
-                          <Button size="sm" variant="ghost" className="h-8 px-2 hover:bg-white/10 text-indigo-400">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSelectedAdjustment(adjustment);
+                              setFormData({
+                                adjustment_number: adjustment.adjustment_number,
+                                adjustment_date: adjustment.adjustment_date.split('T')[0],
+                                adjustment_type: adjustment.adjustment_type,
+                                reason: adjustment.reason,
+                                notes: adjustment.notes || '',
+                              });
+                              setAdjustmentItems(adjustment.adjustment_items || []);
+                              setIsCreating(true);
+                            }}
+                            className="h-8 px-2 hover:bg-white/10 text-indigo-400"
+                          >
                             Edit
                           </Button>
                         )}
@@ -410,7 +435,7 @@ export function StockAdjustment() {
 
       {/* Create/Edit Adjustment Dialog */}
       <Dialog open={isCreating} onOpenChange={setIsCreating}>
-        <DialogContent className="max-w-[98vw] max-h-[90vh] overflow-y-auto glass border-0 shadow-2xl p-0 gap-0">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto glass border-0 shadow-2xl p-0 gap-0">
           <DialogHeader className="p-6 border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-10">
             <DialogTitle className="text-xl gradient-text">Create Stock Adjustment</DialogTitle>
             <DialogDescription>
