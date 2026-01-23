@@ -345,24 +345,50 @@ export function PrintFormatManager({ onSave }: PrintFormatManagerProps) {
 
             {/* Template Configuration */}
             <Tabs defaultValue="layout" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="layout">
-                  <Layout className="h-4 w-4 mr-2" />
-                  Layout
-                </TabsTrigger>
-                <TabsTrigger value="header">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Header
-                </TabsTrigger>
-                <TabsTrigger value="body">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Body
-                </TabsTrigger>
-                <TabsTrigger value="colors">
-                  <Palette className="h-4 w-4 mr-2" />
-                  Colors
-                </TabsTrigger>
-              </TabsList>
+              <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+                <TabsList 
+                  className="flex w-max min-w-full gap-1"
+                  style={{ 
+                    display: 'flex', 
+                    width: 'max-content', 
+                    minWidth: '100%',
+                    flexWrap: 'nowrap'
+                  }}
+                >
+                  <TabsTrigger 
+                    value="layout"
+                    className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+                    style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+                  >
+                    <Layout className="h-4 w-4 mr-2" />
+                    Layout
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="header"
+                    className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+                    style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Header
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="body"
+                    className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+                    style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Body
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="colors"
+                    className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+                    style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+                  >
+                    <Palette className="h-4 w-4 mr-2" />
+                    Colors
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               <TabsContent value="layout" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

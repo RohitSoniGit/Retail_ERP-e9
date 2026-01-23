@@ -113,12 +113,46 @@ export default function InventoryPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full mb-4">
-          <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
-          <TabsTrigger value="adjustments" className="flex-1">Stock Adjustments</TabsTrigger>
-          <TabsTrigger value="alerts" className="flex-1">Reorder Alerts</TabsTrigger>
-          <TabsTrigger value="valuation" className="flex-1">Valuation</TabsTrigger>
-        </TabsList>
+        <div className="mb-4 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <TabsList 
+            className="flex w-max min-w-full gap-1 p-1" 
+            style={{ 
+              display: 'flex', 
+              width: 'max-content', 
+              minWidth: '100%',
+              flexWrap: 'nowrap'
+            }}
+          >
+            <TabsTrigger 
+              value="overview" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger 
+              value="adjustments" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              Stock Adjustments
+            </TabsTrigger>
+            <TabsTrigger 
+              value="alerts" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              Reorder Alerts
+            </TabsTrigger>
+            <TabsTrigger 
+              value="valuation" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              Valuation
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="mt-0 space-y-6">
           {/* Stats Cards */}

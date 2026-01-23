@@ -132,11 +132,39 @@ export function VouchersList() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full glass border-0 p-1 h-12">
-            <TabsTrigger value="all" className="flex-1 data-[state=active]:bg-white/10 data-[state=active]:text-foreground data-[state=active]:shadow-md transition-all text-xs sm:text-sm">All</TabsTrigger>
-            <TabsTrigger value="receipt" className="flex-1 data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-500 data-[state=active]:shadow-md transition-all text-xs sm:text-sm">Receipts</TabsTrigger>
-            <TabsTrigger value="payment" className="flex-1 data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 data-[state=active]:shadow-md transition-all text-xs sm:text-sm">Payments</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+            <TabsList 
+              className="flex w-max min-w-full glass border-0 p-1 h-12 gap-1"
+              style={{ 
+                display: 'flex', 
+                width: 'max-content', 
+                minWidth: '100%',
+                flexWrap: 'nowrap'
+              }}
+            >
+              <TabsTrigger 
+                value="all" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-white/10 data-[state=active]:text-foreground data-[state=active]:shadow-md transition-all text-xs sm:text-sm"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                All
+              </TabsTrigger>
+              <TabsTrigger 
+                value="receipt" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-emerald-500/20 data-[state=active]:text-emerald-500 data-[state=active]:shadow-md transition-all text-xs sm:text-sm"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                Receipts
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payment" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 data-[state=active]:shadow-md transition-all text-xs sm:text-sm"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                Payments
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </Tabs>
       </div>
 

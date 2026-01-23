@@ -18,12 +18,46 @@ export default function LedgerPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full mb-4">
-          <TabsTrigger value="accounts" className="flex-1">Accounts</TabsTrigger>
-          <TabsTrigger value="entries" className="flex-1">Entries</TabsTrigger>
-          <TabsTrigger value="trial" className="flex-1">Trial Balance</TabsTrigger>
-          <TabsTrigger value="pnl" className="flex-1">P&L</TabsTrigger>
-        </TabsList>
+        <div className="mb-4 overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <TabsList 
+            className="flex w-max min-w-full gap-1 p-1" 
+            style={{ 
+              display: 'flex', 
+              width: 'max-content', 
+              minWidth: '100%',
+              flexWrap: 'nowrap'
+            }}
+          >
+            <TabsTrigger 
+              value="accounts" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              Accounts
+            </TabsTrigger>
+            <TabsTrigger 
+              value="entries" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              Entries
+            </TabsTrigger>
+            <TabsTrigger 
+              value="trial" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              Trial Balance
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pnl" 
+              className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap"
+              style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+            >
+              P&L
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="accounts" className="mt-0">
           <LedgerAccountsList />

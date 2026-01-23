@@ -351,36 +351,74 @@ export default function SettingsPage() {
 
       <div className="relative z-10 w-full p-6 space-y-8">
         <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6 glass border-0 shadow-lg h-auto p-1 gap-1">
-            <TabsTrigger value="general" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
-              <Building2 className="h-4 w-4" />
-              General
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
-              <Users className="h-4 w-4" />
-              Users & Roles
-            </TabsTrigger>
-            <TabsTrigger value="print-formats" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
-              <Printer className="h-4 w-4" />
-              Print Formats
-            </TabsTrigger>
-            <TabsTrigger value="preferences" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
-              <Settings className="h-4 w-4" />
-              Preferences
-            </TabsTrigger>
-            <TabsTrigger value="commodities" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
-              <TrendingUp className="h-4 w-4" />
-              Commodities
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2">
-              <Bell className="h-4 w-4" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="danger-zone" className="data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg py-2 hover:bg-red-500/10">
-              <AlertTriangle className="h-4 w-4" />
-              Danger Zone
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto mb-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+            <TabsList 
+              className="flex w-max min-w-full glass border-0 shadow-lg h-auto p-1 gap-1"
+              style={{ 
+                display: 'flex', 
+                width: 'max-content', 
+                minWidth: '100%',
+                flexWrap: 'nowrap'
+              }}
+            >
+              <TabsTrigger 
+                value="general" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                <Building2 className="h-4 w-4" />
+                General
+              </TabsTrigger>
+              <TabsTrigger 
+                value="users" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                <Users className="h-4 w-4" />
+                Users & Roles
+              </TabsTrigger>
+              <TabsTrigger 
+                value="print-formats" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                <Printer className="h-4 w-4" />
+                Print Formats
+              </TabsTrigger>
+              <TabsTrigger 
+                value="preferences" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                <Settings className="h-4 w-4" />
+                Preferences
+              </TabsTrigger>
+              <TabsTrigger 
+                value="commodities" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                <TrendingUp className="h-4 w-4" />
+                Commodities
+              </TabsTrigger>
+              <TabsTrigger 
+                value="notifications" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-white/20 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                <Bell className="h-4 w-4" />
+                Notifications
+              </TabsTrigger>
+              <TabsTrigger 
+                value="danger-zone" 
+                className="flex-shrink-0 flex-grow-0 px-4 py-2 min-w-fit whitespace-nowrap data-[state=active]:bg-red-500/20 data-[state=active]:text-red-500 data-[state=active]:backdrop-blur-lg flex items-center gap-2 rounded-lg hover:bg-red-500/10"
+                style={{ flexShrink: 0, flexGrow: 0, whiteSpace: 'nowrap' }}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                Danger Zone
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="general" className="space-y-8">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
