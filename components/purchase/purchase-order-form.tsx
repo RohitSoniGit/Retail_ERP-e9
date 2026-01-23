@@ -40,6 +40,7 @@ import { PurchaseOrder, PurchaseOrderItem, Supplier, Item, calculateGST } from "
 import { toast } from "sonner";
 import { useOrganization } from "@/lib/context/organization";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import useSWR from "swr";
 
 interface PurchaseOrderFormProps {
   onSave?: (po: PurchaseOrder) => void;
@@ -47,8 +48,9 @@ interface PurchaseOrderFormProps {
 }
 
 export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps) {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
+  const { organizationId } = useOrganization();
+  const supabase = getSupabaseBrowserClient();
+
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [poItems, setPOItems] = useState<PurchaseOrderItem[]>([]);
   const [showItemDialog, setShowItemDialog] = useState(false);
@@ -68,8 +70,37 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
   });
 
   const [dailyRates, setDailyRates] = useState<Map<string, number>>(new Map());
-  const { organizationId } = useOrganization();
-  const supabase = getSupabaseBrowserClient();
+
+  // Fetch suppliers from Supabase
+  const { data: suppliers } = useSWR(
+    organizationId ? `suppliers-po-${organizationId}` : null,
+    async () => {
+      const { data, error } = await supabase
+        .from("suppliers")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      return (data as Supplier[]) || [];
+    }
+  );
+
+  // Fetch items from Supabase
+  const { data: items } = useSWR(
+    organizationId ? `items-po-${organizationId}` : null,
+    async () => {
+      const { data, error } = await supabase
+        .from("items")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .order("name");
+
+      if (error) throw error;
+      return (data as Item[]) || [];
+    }
+  );
 
   // Fetch daily commodity prices
   useEffect(() => {
@@ -94,87 +125,19 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
       };
       fetchRates();
     }
-  }, [organizationId]);
+  }, [organizationId, supabase]);
 
-  // Mock data
+  // Generate PO number on mount
   useEffect(() => {
-    const mockSuppliers: Supplier[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        supplier_code: "SUP001",
-        name: "ABC Electronics Pvt Ltd",
-        contact_person: "Rajesh Kumar",
-        phone: "+91 98765 43210",
-        email: "rajesh@abcelectronics.com",
-        state_code: "27",
-        gstin: "27ABCDE1234F1Z5",
-        payment_terms: 30,
-        credit_limit: 500000,
-        current_balance: 125000,
-        supplier_type: "manufacturer",
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ];
-
-    const mockItems: Item[] = [
-      {
-        id: "1",
-        organization_id: "org1",
-        sku: "ITEM001",
-        name: "Smartphone XYZ",
-        category: "Electronics",
-        hsn_code: "8517",
-        wholesale_price: 15000,
-        retail_price: 18000,
-        purchase_cost: 12000,
-        current_stock: 50,
-        min_stock_level: 10,
-        gst_rate: 18,
-        unit_type: "piece",
-        unit_name: "PCS",
-        pieces_per_unit: 1,
-        conversion_factor: 1,
-        is_rate_variable: false,
-        created_at: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        organization_id: "org1",
-        sku: "ITEM002",
-        name: "Laptop ABC",
-        category: "Electronics",
-        hsn_code: "8471",
-        wholesale_price: 45000,
-        retail_price: 50000,
-        purchase_cost: 40000,
-        current_stock: 25,
-        min_stock_level: 5,
-        gst_rate: 18,
-        unit_type: "piece",
-        unit_name: "PCS",
-        pieces_per_unit: 1,
-        conversion_factor: 1,
-        is_rate_variable: false,
-        created_at: new Date().toISOString(),
-      },
-    ];
-
-    setSuppliers(mockSuppliers);
-    setItems(mockItems);
-
-    // Generate PO number
-    if (!existingPO) {
+    if (!existingPO && organizationId) {
       const poNumber = `PO${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}${Date.now().toString().slice(-4)}`;
       setFormData(prev => ({ ...prev, po_number: poNumber }));
     }
-  }, [existingPO]);
+  }, [existingPO, organizationId]);
 
   // Load existing PO data
   useEffect(() => {
-    if (existingPO) {
+    if (existingPO && suppliers) { // Ensure suppliers are loaded before trying to find one
       setFormData({
         po_number: existingPO.po_number,
         supplier_id: existingPO.supplier_id,
@@ -338,12 +301,11 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
       supplier: selectedSupplier,
       po_items: poItems,
     };
-
     onSave?.(purchaseOrder);
     toast.success(`Purchase order ${status === 'draft' ? 'saved as draft' : 'sent to supplier'}`);
   };
 
-  const filteredItems = items.filter(item =>
+  const filteredItems = (items || []).filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.sku.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -410,7 +372,7 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
               value={formData.supplier_id}
               onValueChange={(value) => {
                 setFormData({ ...formData, supplier_id: value });
-                const supplier = suppliers.find(s => s.id === value);
+                const supplier = (suppliers || []).find(s => s.id === value);
                 setSelectedSupplier(supplier || null);
                 if (supplier) {
                   setFormData(prev => ({ ...prev, payment_terms: supplier.payment_terms }));
@@ -421,7 +383,7 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
                 <SelectValue placeholder="Select supplier" />
               </SelectTrigger>
               <SelectContent className="glass border-0 backdrop-blur-xl">
-                {suppliers.map((supplier) => (
+                {(suppliers || []).map((supplier) => (
                   <SelectItem key={supplier.id} value={supplier.id} className="py-3">
                     <div className="flex flex-col gap-1">
                       <span className="font-medium">{supplier.name}</span>
@@ -785,8 +747,8 @@ export function PurchaseOrderForm({ onSave, existingPO }: PurchaseOrderFormProps
                         <Badge
                           variant="outline"
                           className={`border-0 shadow-sm ${item.current_stock <= item.min_stock_level
-                              ? "bg-red-500/10 text-red-500"
-                              : "bg-emerald-500/10 text-emerald-500"
+                            ? "bg-red-500/10 text-red-500"
+                            : "bg-emerald-500/10 text-emerald-500"
                             }`}
                         >
                           {item.current_stock} {item.unit_name}

@@ -186,15 +186,14 @@ export default function DashboardPage() {
         .limit(5);
 
       // Cash in Hand (Latest Cash Register Closing Balance)
-      const { data: cashRegister } = await supabase
+      const { data: cashRegisterData } = await supabase
         .from("cash_register")
         .select("closing_balance")
         .eq("organization_id", organizationId)
         .order("register_date", { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
 
-      const cashInHand = cashRegister?.closing_balance || 0;
+      const cashInHand = cashRegisterData?.[0]?.closing_balance || 0;
 
       // Pending Purchase Orders
       const { count: pendingPO } = await supabase
