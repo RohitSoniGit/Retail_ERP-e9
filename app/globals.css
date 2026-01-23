@@ -233,6 +233,62 @@ html {
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Improve button spacing and touch targets */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Better table scrolling */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  /* Prevent text selection on buttons */
+  button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Better tab scrolling */
+  [role="tablist"] {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  [role="tablist"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Draggable FAB improvements */
+  .draggable-fab {
+    will-change: transform;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  .dragging {
+    pointer-events: none;
+    z-index: 9999;
+  }
+}
+
+/* Draggable FAB pulse animation */
+@keyframes drag-hint {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.drag-hint {
+  animation: drag-hint 2s ease-in-out infinite;
 }
 
 /* Improved holographic effect for performance */

@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -17,14 +16,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  BarChart3,
   FileText,
   Download,
   Calendar,
   Filter,
   TrendingUp,
   Package,
-  Users,
   Receipt,
   DollarSign,
   Eye,
@@ -37,7 +34,6 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/lib/context/organization";
 import useSWR from "swr";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { PDFGenerator } from "@/lib/pdf-generator";
 import { InvoicePrintDialog } from "@/components/billing/invoice-print-dialog";
 import { Sale } from "@/lib/types";
 
@@ -48,7 +44,6 @@ export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState("sales");
   const [dateFrom, setDateFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
-  const [reportType, setReportType] = useState("all");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
@@ -208,13 +203,15 @@ export default function ReportsPage() {
       </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 mb-6">
-          <TabsTrigger value="sales">Sales Reports</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory Reports</TabsTrigger>
-          <TabsTrigger value="purchase">Purchase Reports</TabsTrigger>
-          <TabsTrigger value="gst">GST Reports</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
+        <div className="mb-6 overflow-x-auto">
+          <TabsList className="flex w-max min-w-full">
+            <TabsTrigger value="sales" className="flex-shrink-0 px-4 py-2">Sales Reports</TabsTrigger>
+            <TabsTrigger value="inventory" className="flex-shrink-0 px-4 py-2">Inventory Reports</TabsTrigger>
+            <TabsTrigger value="purchase" className="flex-shrink-0 px-4 py-2">Purchase Reports</TabsTrigger>
+            <TabsTrigger value="gst" className="flex-shrink-0 px-4 py-2">GST Reports</TabsTrigger>
+            <TabsTrigger value="analytics" className="flex-shrink-0 px-4 py-2">Analytics</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="sales" className="space-y-6">
           {/* Sales Summary Cards */}
@@ -282,55 +279,67 @@ export default function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Payment Mode</TableHead>
-                    <TableHead>Tax Amount</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sales.length === 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No sales records found for this period</TableCell>
+                      <TableHead className="min-w-[120px]">Invoice #</TableHead>
+                      <TableHead className="min-w-[100px]">Date</TableHead>
+                      <TableHead className="min-w-[120px]">Customer</TableHead>
+                      <TableHead className="min-w-[100px]">Type</TableHead>
+                      <TableHead className="min-w-[120px]">Payment Mode</TableHead>
+                      <TableHead className="min-w-[100px]">Tax Amount</TableHead>
+                      <TableHead className="min-w-[120px]">Total Amount</TableHead>
+                      <TableHead className="min-w-[140px]">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    sales.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell className="font-mono">{sale.invoice_number}</TableCell>
-                        <TableCell>{new Date(sale.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell>{sale.customer_name || 'Walk-in'}</TableCell>
-                        <TableCell>
-                          <Badge variant={sale.is_gst_bill ? "default" : "secondary"}>
-                            {sale.is_gst_bill ? "GST Bill" : "Non-GST"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="capitalize">{sale.payment_mode}</TableCell>
-                        <TableCell>₹{(sale.cgst_amount + sale.sgst_amount + sale.igst_amount).toLocaleString()}</TableCell>
-                        <TableCell className="font-medium">₹{sale.total_amount.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => setSelectedSale(sale)}>
-                              <Eye className="h-3 w-3 mr-1" />
-                              View
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handlePrint(sale)}>
-                              <Printer className="h-3 w-3 mr-1" />
-                              Print
-                            </Button>
-                          </div>
-                        </TableCell>
+                  </TableHeader>
+                  <TableBody>
+                    {sales.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No sales records found for this period</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      sales.map((sale) => (
+                        <TableRow key={sale.id}>
+                          <TableCell className="font-mono">{sale.invoice_number}</TableCell>
+                          <TableCell>{new Date(sale.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell>{sale.customer_name || 'Walk-in'}</TableCell>
+                          <TableCell>
+                            <Badge variant={sale.is_gst_bill ? "default" : "secondary"}>
+                              {sale.is_gst_bill ? "GST Bill" : "Non-GST"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="capitalize">{sale.payment_mode}</TableCell>
+                          <TableCell>₹{(sale.cgst_amount + sale.sgst_amount + sale.igst_amount).toLocaleString()}</TableCell>
+                          <TableCell className="font-medium">₹{sale.total_amount.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 min-w-[120px]">
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => setSelectedSale(sale)}
+                                className="touch-manipulation min-h-[36px] px-3"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => handlePrint(sale)}
+                                className="touch-manipulation min-h-[36px] px-3"
+                              >
+                                <Printer className="h-3 w-3 mr-1" />
+                                Print
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -411,302 +420,52 @@ export default function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Item Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Current Stock</TableHead>
-                    <TableHead>Min Level</TableHead>
-                    <TableHead>Purchase Cost</TableHead>
-                    <TableHead>Retail Price</TableHead>
-                    <TableHead>Total Value</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventory.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found</TableCell>
-                    </TableRow>
-                  ) : (
-                    inventory.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-mono">{item.sku}</TableCell>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.current_stock}</TableCell>
-                        <TableCell>{item.min_stock_level}</TableCell>
-                        <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
-                        <TableCell>₹{item.retail_price.toLocaleString()}</TableCell>
-                        <TableCell>₹{item.total_value.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            item.current_stock === 0 ? "destructive" :
-                              item.current_stock <= item.min_stock_level ? "secondary" : "default"
-                          }>
-                            {item.current_stock === 0 ? "Out of Stock" :
-                              item.current_stock <= item.min_stock_level ? "Low Stock" : "In Stock"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="purchase" className="space-y-6">
-          {/* ... */}
-        </TabsContent>
-
-        <TabsContent value="gst" className="space-y-6">
-          {/* GST Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="glass border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>GST Bills Summary</CardTitle>
-                <CardDescription>GST registered transactions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Total GST Bills:</span>
-                    <span className="font-medium">{gstBills.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total GST Sales:</span>
-                    <span className="font-medium">₹{totalGstSales.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Tax Collected:</span>
-                    <span className="font-medium">₹{totalTaxCollected.toLocaleString()}</span>
-                  </div>
-                  <Button className="w-full holographic text-white">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export GST Report
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Non-GST Bills Summary</CardTitle>
-                <CardDescription>Non-GST transactions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Total Non-GST Bills:</span>
-                    <span className="font-medium">{nonGstBills.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Total Non-GST Sales:</span>
-                    <span className="font-medium">₹{totalNonGstSales.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax Applicable:</span>
-                    <span className="font-medium">₹0</span>
-                  </div>
-                  <Button className="w-full holographic text-white">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export Non-GST Report
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Separate GST and Non-GST Tables */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <Card className="glass border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>GST Bills</CardTitle>
-                <CardDescription>All GST registered invoices</CardDescription>
-              </CardHeader>
-              <CardContent>
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Tax</TableHead>
-                      <TableHead>Total</TableHead>
+                      <TableHead className="min-w-[100px]">SKU</TableHead>
+                      <TableHead className="min-w-[150px]">Item Name</TableHead>
+                      <TableHead className="min-w-[120px]">Category</TableHead>
+                      <TableHead className="min-w-[100px]">Current Stock</TableHead>
+                      <TableHead className="min-w-[100px]">Min Level</TableHead>
+                      <TableHead className="min-w-[120px]">Purchase Cost</TableHead>
+                      <TableHead className="min-w-[120px]">Retail Price</TableHead>
+                      <TableHead className="min-w-[120px]">Total Value</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {gstBills.map((bill: any) => (
-                      <TableRow key={bill.id}>
-                        <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
-                        <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-xs">{bill.customer_name}</TableCell>
-                        <TableCell className="text-xs">₹{(bill.cgst_amount + bill.sgst_amount + bill.igst_amount).toLocaleString()}</TableCell>
-                        <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
+                    {inventory.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      inventory.map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono">{item.sku}</TableCell>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell>{item.category}</TableCell>
+                          <TableCell>{item.current_stock}</TableCell>
+                          <TableCell>{item.min_stock_level}</TableCell>
+                          <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
+                          <TableCell>₹{item.retail_price.toLocaleString()}</TableCell>
+                          <TableCell>₹{item.total_value.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              item.current_stock === 0 ? "destructive" :
+                                item.current_stock <= item.min_stock_level ? "secondary" : "default"
+                            }>
+                              {item.current_stock === 0 ? "Out of Stock" :
+                                item.current_stock <= item.min_stock_level ? "Low Stock" : "In Stock"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-
-            <Card className="glass border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Non-GST Bills</CardTitle>
-                <CardDescription>All non-GST transactions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Tax</TableHead>
-                      <TableHead>Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {nonGstBills.map((bill: any) => (
-                      <TableRow key={bill.id}>
-                        <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
-                        <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-xs">{bill.customer_name}</TableCell>
-                        <TableCell className="text-xs">₹0</TableCell>
-                        <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="inventory" className="space-y-6">
-          {/* Inventory Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="glass border-0 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Package className="h-8 w-8 text-blue-500" />
-                  <div>
-                    <p className="text-2xl font-bold">{inventory.length}</p>
-                    <p className="text-sm text-muted-foreground">Total Items</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="glass border-0 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="h-8 w-8 text-green-500" />
-                  <div>
-                    <p className="text-2xl font-bold">
-                      ₹{inventory.reduce((sum: number, item: any) => sum + item.total_value, 0).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Inventory Value</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="glass border-0 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Package className="h-8 w-8 text-orange-500" />
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {inventory.filter((item: any) => item.current_stock <= item.min_stock_level).length}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Low Stock Items</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="glass border-0 shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <Package className="h-8 w-8 text-red-500" />
-                  <div>
-                    <p className="text-2xl font-bold">
-                      {inventory.filter((item: any) => item.current_stock === 0).length}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Out of Stock</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Inventory Report */}
-          <Card className="glass border-0 shadow-lg">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Inventory Report</CardTitle>
-                  <CardDescription>Current stock levels and valuation</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => exportToCSV(inventory, 'inventory-report')}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Export CSV
-                  </Button>
-                  <Button variant="outline" onClick={() => exportToPDF('Inventory Report')}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Export PDF
-                  </Button>
-                </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>SKU</TableHead>
-                    <TableHead>Item Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Current Stock</TableHead>
-                    <TableHead>Min Level</TableHead>
-                    <TableHead>Purchase Cost</TableHead>
-                    <TableHead>Retail Price</TableHead>
-                    <TableHead>Total Value</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventory.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found</TableCell>
-                    </TableRow>
-                  ) : (
-                    inventory.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-mono">{item.sku}</TableCell>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.current_stock}</TableCell>
-                        <TableCell>{item.min_stock_level}</TableCell>
-                        <TableCell>₹{item.purchase_cost.toLocaleString()}</TableCell>
-                        <TableCell>₹{item.retail_price.toLocaleString()}</TableCell>
-                        <TableCell>₹{item.total_value.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            item.current_stock === 0 ? "destructive" :
-                              item.current_stock <= item.min_stock_level ? "secondary" : "default"
-                          }>
-                            {item.current_stock === 0 ? "Out of Stock" :
-                              item.current_stock <= item.min_stock_level ? "Low Stock" : "In Stock"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
             </CardContent>
           </Card>
         </TabsContent>
@@ -787,42 +546,44 @@ export default function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>PO Number</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Advance Paid</TableHead>
-                    <TableHead>Balance Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {purchases.length === 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No purchase orders found</TableCell>
+                      <TableHead className="min-w-[120px]">PO Number</TableHead>
+                      <TableHead className="min-w-[100px]">Date</TableHead>
+                      <TableHead className="min-w-[150px]">Supplier</TableHead>
+                      <TableHead className="min-w-[120px]">Total Amount</TableHead>
+                      <TableHead className="min-w-[120px]">Advance Paid</TableHead>
+                      <TableHead className="min-w-[120px]">Balance Amount</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
                     </TableRow>
-                  ) : (
-                    purchases.map((po: any) => (
-                      <TableRow key={po.id}>
-                        <TableCell className="font-mono">{po.po_number}</TableCell>
-                        <TableCell>{new Date(po.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{po.supplier_name}</TableCell>
-                        <TableCell>₹{po.total_amount.toLocaleString()}</TableCell>
-                        <TableCell>₹{po.advance_paid.toLocaleString()}</TableCell>
-                        <TableCell>₹{po.balance_amount.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant={po.status === "completed" ? "default" : "secondary"}>
-                            {po.status}
-                          </Badge>
-                        </TableCell>
+                  </TableHeader>
+                  <TableBody>
+                    {purchases.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No purchase orders found</TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      purchases.map((po: any) => (
+                        <TableRow key={po.id}>
+                          <TableCell className="font-mono">{po.po_number}</TableCell>
+                          <TableCell>{new Date(po.date).toLocaleDateString()}</TableCell>
+                          <TableCell>{po.supplier_name}</TableCell>
+                          <TableCell>₹{po.total_amount.toLocaleString()}</TableCell>
+                          <TableCell>₹{po.advance_paid.toLocaleString()}</TableCell>
+                          <TableCell>₹{po.balance_amount.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <Badge variant={po.status === "completed" ? "default" : "secondary"}>
+                              {po.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -893,28 +654,30 @@ export default function ReportsPage() {
                 <CardDescription>All GST registered invoices</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Tax</TableHead>
-                      <TableHead>Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {gstBills.map((bill) => (
-                      <TableRow key={bill.id}>
-                        <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
-                        <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-xs">{bill.customer_name}</TableCell>
-                        <TableCell className="text-xs">₹{(bill.cgst_amount + bill.sgst_amount + bill.igst_amount).toLocaleString()}</TableCell>
-                        <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[120px]">Invoice #</TableHead>
+                        <TableHead className="min-w-[100px]">Date</TableHead>
+                        <TableHead className="min-w-[120px]">Customer</TableHead>
+                        <TableHead className="min-w-[80px]">Tax</TableHead>
+                        <TableHead className="min-w-[100px]">Total</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {gstBills.map((bill) => (
+                        <TableRow key={bill.id}>
+                          <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
+                          <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-xs">{bill.customer_name}</TableCell>
+                          <TableCell className="text-xs">₹{(bill.cgst_amount + bill.sgst_amount + bill.igst_amount).toLocaleString()}</TableCell>
+                          <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
 
@@ -924,28 +687,30 @@ export default function ReportsPage() {
                 <CardDescription>All non-GST transactions</CardDescription>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Tax</TableHead>
-                      <TableHead>Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {nonGstBills.map((bill) => (
-                      <TableRow key={bill.id}>
-                        <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
-                        <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-xs">{bill.customer_name}</TableCell>
-                        <TableCell className="text-xs">₹0</TableCell>
-                        <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[120px]">Invoice #</TableHead>
+                        <TableHead className="min-w-[100px]">Date</TableHead>
+                        <TableHead className="min-w-[120px]">Customer</TableHead>
+                        <TableHead className="min-w-[80px]">Tax</TableHead>
+                        <TableHead className="min-w-[100px]">Total</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {nonGstBills.map((bill) => (
+                        <TableRow key={bill.id}>
+                          <TableCell className="font-mono text-xs">{bill.invoice_number}</TableCell>
+                          <TableCell className="text-xs">{new Date(bill.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-xs">{bill.customer_name}</TableCell>
+                          <TableCell className="text-xs">₹0</TableCell>
+                          <TableCell className="text-xs font-medium">₹{bill.total_amount.toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -1021,6 +786,7 @@ export default function ReportsPage() {
           </div>
         </TabsContent>
       </Tabs>
+      
       {/* View Sale Dialog */}
       <Dialog open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -1049,26 +815,28 @@ export default function ReportsPage() {
 
               <div>
                 <h3 className="font-semibold mb-2">Items</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Qty</TableHead>
-                      <TableHead>Rate</TableHead>
-                      <TableHead>Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedSale.sale_items?.map((item: any) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.item?.name || 'Item'}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>₹{item.unit_price}</TableCell>
-                        <TableCell>₹{item.total_price}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Item</TableHead>
+                        <TableHead>Qty</TableHead>
+                        <TableHead>Rate</TableHead>
+                        <TableHead>Total</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {selectedSale.sale_items?.map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.item?.name || 'Item'}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>₹{item.unit_price}</TableCell>
+                          <TableCell>₹{item.total_price}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t">
@@ -1087,7 +855,6 @@ export default function ReportsPage() {
       </Dialog>
 
       {/* Print Dialog */}
-      {/* Map sale object to InvoicePrintDialog props */}
       {saleToPrint && organization && (
         <InvoicePrintDialog
           open={showPrintDialog}
@@ -1102,7 +869,7 @@ export default function ReportsPage() {
             gst_number: saleToPrint.customer?.gst_number || '',
             id: saleToPrint.customer_id || '',
             organization_id: organization.id,
-            customer_type: 'retail', // default
+            customer_type: 'retail',
             credit_limit: 0,
             current_balance: 0,
             created_at: new Date().toISOString()
@@ -1130,7 +897,7 @@ export default function ReportsPage() {
             unit_price: item.unit_price,
             discount_percent: item.discount_percent || 0,
             gst_rate: item.gst_rate,
-            subtotal: item.total_price / (1 + (item.gst_rate / 100)), // Approximate if not stored
+            subtotal: item.total_price / (1 + (item.gst_rate / 100)),
             tax_amount: item.cgst_amount + item.sgst_amount + item.igst_amount,
             total: item.total_price,
           }))}
