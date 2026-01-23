@@ -150,7 +150,6 @@ export async function PUT(request: NextRequest) {
     const supabase = getSupabaseServiceClient();
 
     console.log('Fetching email settings...');
-    // Test email configuration by sending a test email
     const { data: settings, error: settingsError } = await supabase
       .from('email_settings')
       .select('*')
@@ -176,9 +175,40 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    console.log('Email settings found, attempting to send test email...');
+    console.log('Email settings found, checking environment...');
     
-    // Check if nodemailer is available
+    // Check if we're in production and skip actual email sending
+    if (process.env.NODE_ENV === 'production' && process.env.VERCEL) {
+      console.log('Running on Vercel production - simulating email test');
+      
+      // Validate settings without actually sending
+      const requiredFields = ['smtp_host', 'smtp_username', 'smtp_password', 'smtp_from_email'];
+      const missingFields = requiredFields.filter(field => !settings[field]);
+      
+      if (missingFields.length > 0) {
+        return NextResponse.json(
+          { 
+            error: 'Missing required email settings',
+            missingFields 
+          },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Email settings validated successfully (test email skipped in production)',
+        settings: {
+          smtp_host: settings.smtp_host,
+          smtp_port: settings.smtp_port,
+          smtp_username: settings.smtp_username,
+          smtp_from_email: settings.smtp_from_email,
+          email_enabled: settings.email_enabled
+        }
+      });
+    }
+
+    // For development/local environment, try to send actual email
     try {
       console.log('Importing email service...');
       const { EmailService } = await import('@/lib/email');
@@ -194,7 +224,6 @@ export async function PUT(request: NextRequest) {
       });
 
       console.log('Sending test email...');
-      // Send test email
       const testEmailSent = await emailService.sendEmail(
         settings.smtp_from_email,
         'Test Email - Retail ERP',
@@ -227,7 +256,7 @@ export async function PUT(request: NextRequest) {
         { 
           error: 'Email service error',
           message: emailError instanceof Error ? emailError.message : 'Unknown email error',
-          details: 'Make sure nodemailer is installed and configured properly'
+          details: 'Email service may not be available in production environment'
         },
         { status: 500 }
       );

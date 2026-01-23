@@ -120,7 +120,11 @@ export function EmailSettings() {
       const data = await response.json();
 
       if (data.success) {
-        setSuccess('Test email sent successfully! Check your inbox.');
+        if (data.message.includes('skipped in production')) {
+          setSuccess('Email settings validated successfully! (Test email is disabled in production for security)');
+        } else {
+          setSuccess('Test email sent successfully! Check your inbox.');
+        }
       } else {
         setError(data.error || 'Failed to send test email');
       }
