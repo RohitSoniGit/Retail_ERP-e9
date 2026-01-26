@@ -21,7 +21,7 @@ import {
 type CommodityPrice = {
     id: string;
     organization_id: string;
-    rate_name: string;
+    category: string;
     rate_per_unit: number;
     unit: string;
     effective_date: string;
@@ -43,7 +43,7 @@ export function CommodityPriceManager() {
     const [loading, setLoading] = useState(true);
 
     const [formData, setFormData] = useState({
-        rate_name: "",
+        category: "",
         rate_per_unit: "",
         unit: "gram",
         effective_date: new Date().toISOString().split('T')[0],
@@ -87,7 +87,7 @@ export function CommodityPriceManager() {
     };
 
     const handleSave = async () => {
-        if (!formData.rate_name || !formData.rate_per_unit || !formData.effective_date) {
+        if (!formData.category || !formData.rate_per_unit || !formData.effective_date) {
             toast.error("Please fill in all fields");
             return;
         }
@@ -103,7 +103,7 @@ export function CommodityPriceManager() {
                 .from("daily_rates")
                 .insert({
                     organization_id: organizationId,
-                    rate_name: formData.rate_name,
+                    category: formData.category,
                     rate_per_unit: rateValue,
                     unit: formData.unit,
                     effective_date: formData.effective_date,
@@ -120,7 +120,7 @@ export function CommodityPriceManager() {
             toast.success("Commodity rate updated successfully");
             
             // Reset form but keep date and unit
-            setFormData(prev => ({ ...prev, rate_name: "", rate_per_unit: "" }));
+            setFormData(prev => ({ ...prev, category: "", rate_per_unit: "" }));
             
         } catch (error) {
             console.error("Save error:", error);
@@ -130,31 +130,30 @@ export function CommodityPriceManager() {
 
     const handleDelete = async (id: string) => {
         try {
-            const response = await fetch(`/api/commodity-prices?id=${id}`, {
-                method: 'DELETE',
-            })
+            const { error } = await supabase
+                .from("daily_rates")
+                .delete()
+                .eq("id", id);
 
-            const result = await response.json()
-
-            if (!response.ok) {
-                toast.error(`Failed to delete: ${result.error}`);
+            if (error) {
+                toast.error(`Failed to delete: ${error.message}`);
                 return;
             }
 
             await fetchPrices();
-            toast.success("Price record deleted");
+            toast.success("Rate record deleted");
         } catch (error) {
             console.error("Delete error:", error);
-            toast.error("Failed to delete price record");
+            toast.error("Failed to delete rate record");
         }
     };
 
     const getLatestPrices = () => {
-        // Group by commodity and get latest date
+        // Group by rate_name and get latest date
         const latestMap = new Map<string, CommodityPrice>();
         prices.forEach(p => {
-            if (!latestMap.has(p.commodity_name) || new Date(p.date) > new Date(latestMap.get(p.commodity_name)!.date)) {
-                latestMap.set(p.commodity_name, p);
+            if (!latestMap.has(p.rate_name) || new Date(p.effective_date) > new Date(latestMap.get(p.rate_name)!.effective_date)) {
+                latestMap.set(p.rate_name, p);
             }
         });
         return Array.from(latestMap.values());
@@ -183,8 +182,8 @@ export function CommodityPriceManager() {
                                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="date"
-                                    value={formData.date}
-                                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                    value={formData.effective_date}
+                                    onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
                                     className="pl-9"
                                 />
                             </div>
@@ -193,8 +192,8 @@ export function CommodityPriceManager() {
                         <div className="space-y-2">
                             <Label>Commodity</Label>
                             <Select
-                                value={formData.commodity_name}
-                                onValueChange={(val) => setFormData({ ...formData, commodity_name: val })}
+                                value={formData.rate_name}
+                                onValueChange={(val) => setFormData({ ...formData, rate_name: val })}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select commodity" />
@@ -206,29 +205,48 @@ export function CommodityPriceManager() {
                                     <SelectItem value="custom">+ Custom Commodity</SelectItem>
                                 </SelectContent>
                             </Select>
-                            {formData.commodity_name === 'custom' && (
+                            {formData.rate_name === 'custom' && (
                                 <Input
                                     placeholder="Enter commodity name"
                                     className="mt-2"
-                                    onChange={(e) => setFormData(prev => ({ ...prev, commodity_name: e.target.value }))}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, rate_name: e.target.value }))}
                                 />
                             )}
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Price (per unit)</Label>
+                            <Label>Unit</Label>
+                            <Select
+                                value={formData.unit}
+                                onValueChange={(val) => setFormData({ ...formData, unit: val })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="gram">Gram</SelectItem>
+                                    <SelectItem value="kg">Kilogram</SelectItem>
+                                    <SelectItem value="tola">Tola</SelectItem>
+                                    <SelectItem value="ounce">Ounce</SelectItem>
+                                    <SelectItem value="piece">Piece</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Rate (per {formData.unit})</Label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold">₹</span>
                                 <Input
                                     type="number"
                                     placeholder="0.00"
-                                    value={formData.price}
-                                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                                    value={formData.rate_per_unit}
+                                    onChange={(e) => setFormData({ ...formData, rate_per_unit: e.target.value })}
                                     className="pl-8"
                                 />
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Base price for calculations
+                                Base rate for calculations
                             </p>
                         </div>
 
@@ -245,10 +263,10 @@ export function CommodityPriceManager() {
                         {latestPrices.map(p => (
                             <Card key={p.id} className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border-0 shadow-md">
                                 <CardContent className="p-4 flex flex-col items-center text-center">
-                                    <p className="text-sm font-medium text-muted-foreground">{p.commodity_name}</p>
-                                    <p className="text-2xl font-bold text-foreground my-1">₹{p.price.toLocaleString()}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{p.rate_name}</p>
+                                    <p className="text-2xl font-bold text-foreground my-1">₹{p.rate_per_unit.toLocaleString()}</p>
                                     <p className="text-xs text-muted-foreground">
-                                        {new Date(p.date).toLocaleDateString()}
+                                        per {p.unit} • {new Date(p.effective_date).toLocaleDateString()}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -272,16 +290,18 @@ export function CommodityPriceManager() {
                                         <TableRow>
                                             <TableHead>Date</TableHead>
                                             <TableHead>Commodity</TableHead>
-                                            <TableHead>Price</TableHead>
+                                            <TableHead>Rate</TableHead>
+                                            <TableHead>Unit</TableHead>
                                             <TableHead className="w-[50px]"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {prices.map((record) => (
                                             <TableRow key={record.id}>
-                                                <TableCell>{new Date(record.date).toLocaleDateString()}</TableCell>
-                                                <TableCell className="font-medium">{record.commodity_name}</TableCell>
-                                                <TableCell>₹{record.price.toLocaleString()}</TableCell>
+                                                <TableCell>{new Date(record.effective_date).toLocaleDateString()}</TableCell>
+                                                <TableCell className="font-medium">{record.rate_name}</TableCell>
+                                                <TableCell>₹{record.rate_per_unit.toLocaleString()}</TableCell>
+                                                <TableCell>{record.unit}</TableCell>
                                                 <TableCell>
                                                     <Button
                                                         variant="ghost"
@@ -296,7 +316,7 @@ export function CommodityPriceManager() {
                                         ))}
                                         {prices.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                                                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                                                     No history available
                                                 </TableCell>
                                             </TableRow>
