@@ -149,11 +149,11 @@ export function CommodityPriceManager() {
     };
 
     const getLatestPrices = () => {
-        // Group by rate_name and get latest date
+        // Group by category and get latest date
         const latestMap = new Map<string, CommodityPrice>();
         prices.forEach(p => {
-            if (!latestMap.has(p.rate_name) || new Date(p.effective_date) > new Date(latestMap.get(p.rate_name)!.effective_date)) {
-                latestMap.set(p.rate_name, p);
+            if (!latestMap.has(p.category) || new Date(p.effective_date) > new Date(latestMap.get(p.category)!.effective_date)) {
+                latestMap.set(p.category, p);
             }
         });
         return Array.from(latestMap.values());
@@ -192,8 +192,8 @@ export function CommodityPriceManager() {
                         <div className="space-y-2">
                             <Label>Commodity</Label>
                             <Select
-                                value={formData.rate_name}
-                                onValueChange={(val) => setFormData({ ...formData, rate_name: val })}
+                                value={formData.category}
+                                onValueChange={(val) => setFormData({ ...formData, category: val })}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select commodity" />
@@ -205,11 +205,11 @@ export function CommodityPriceManager() {
                                     <SelectItem value="custom">+ Custom Commodity</SelectItem>
                                 </SelectContent>
                             </Select>
-                            {formData.rate_name === 'custom' && (
+                            {formData.category === 'custom' && (
                                 <Input
                                     placeholder="Enter commodity name"
                                     className="mt-2"
-                                    onChange={(e) => setFormData(prev => ({ ...prev, rate_name: e.target.value }))}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                                 />
                             )}
                         </div>
@@ -263,7 +263,7 @@ export function CommodityPriceManager() {
                         {latestPrices.map(p => (
                             <Card key={p.id} className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border-0 shadow-md">
                                 <CardContent className="p-4 flex flex-col items-center text-center">
-                                    <p className="text-sm font-medium text-muted-foreground">{p.rate_name}</p>
+                                    <p className="text-sm font-medium text-muted-foreground">{p.category}</p>
                                     <p className="text-2xl font-bold text-foreground my-1">₹{p.rate_per_unit.toLocaleString()}</p>
                                     <p className="text-xs text-muted-foreground">
                                         per {p.unit} • {new Date(p.effective_date).toLocaleDateString()}
@@ -299,7 +299,7 @@ export function CommodityPriceManager() {
                                         {prices.map((record) => (
                                             <TableRow key={record.id}>
                                                 <TableCell>{new Date(record.effective_date).toLocaleDateString()}</TableCell>
-                                                <TableCell className="font-medium">{record.rate_name}</TableCell>
+                                                <TableCell className="font-medium">{record.category}</TableCell>
                                                 <TableCell>₹{record.rate_per_unit.toLocaleString()}</TableCell>
                                                 <TableCell>{record.unit}</TableCell>
                                                 <TableCell>
