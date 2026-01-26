@@ -71,8 +71,6 @@ export function FABMenu() {
   };
 
   const menuItems = getMenuItems();
-    },
-  ];
 
   return (
     <>

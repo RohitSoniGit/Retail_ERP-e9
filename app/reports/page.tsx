@@ -33,7 +33,7 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useOrganization } from "@/lib/context/organization";
 import useSWR from "swr";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { InvoicePrintDialog } from "@/components/billing/invoice-print-dialog";
 import { Sale } from "@/lib/types";
 
@@ -790,6 +790,7 @@ export default function ReportsPage() {
       {/* View Sale Dialog */}
       <Dialog open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogTitle className="sr-only">View Sale Details</DialogTitle>
           {selectedSale && (
             <div className="space-y-6">
               <div className="flex justify-between items-start border-b pb-4">
