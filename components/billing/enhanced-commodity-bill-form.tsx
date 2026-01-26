@@ -73,20 +73,30 @@ export function EnhancedCommodityBillForm() {
 
   // Fetch commodity prices
   const { data: commodityPrices } = useSWR(
-    organizationId ? `commodity-prices-${organizationId}` : null,
+    organizationId ? `daily-rates-${organizationId}` : null,
     async () => {
       const { data, error } = await supabase
-        .from("commodity_prices")
+        .from("daily_rates")
         .select("*")
         .eq("organization_id", organizationId)
-        .eq("date", new Date().toISOString().split('T')[0])
-        .eq("is_active", true)
-        .order("commodity_name");
+        .eq("effective_date", new Date().toISOString().split('T')[0])
+        .order("category");
 
       if (error) throw error;
       return data as CommodityPrice[];
     }
   );
+
+  // Define CommodityPrice type to match daily_rates structure
+  type CommodityPrice = {
+    id: string;
+    organization_id: string;
+    category: string;
+    rate_per_unit: number;
+    unit: string;
+    effective_date: string;
+    created_at: string;
+  };
 
   // Fetch items
   const { data: items } = useSWR(

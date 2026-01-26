@@ -62,8 +62,6 @@ export function CommodityPriceManager() {
     }, [organizationId]);
 
     const fetchPrices = async () => {
-        console.log("Fetching prices for organization:", organizationId);
-        
         try {
             const { data, error } = await supabase
                 .from("daily_rates")
@@ -72,14 +70,11 @@ export function CommodityPriceManager() {
                 .order("effective_date", { ascending: false })
                 .order("created_at", { ascending: false });
 
-            console.log("Fetch result:", { data, error, organizationId });
-
             if (error) {
                 console.error("Error fetching daily rates:", error);
                 toast.error(`Failed to load rates: ${error.message}`);
                 setPrices([]);
             } else {
-                console.log("Setting prices:", data);
                 setPrices(data || []);
             }
         } catch (error) {
@@ -103,25 +98,16 @@ export function CommodityPriceManager() {
             return;
         }
 
-        console.log("Saving with organization ID:", organizationId);
-        console.log("Form data:", formData);
-
         try {
-            const insertData = {
-                organization_id: organizationId,
-                category: formData.category,
-                rate_per_unit: rateValue,
-                unit: formData.unit,
-                effective_date: formData.effective_date,
-            };
-            
-            console.log("Insert data:", insertData);
-
             const { data, error } = await supabase
                 .from("daily_rates")
-                .insert(insertData);
-
-            console.log("Insert result:", { data, error });
+                .insert({
+                    organization_id: organizationId,
+                    category: formData.category,
+                    rate_per_unit: rateValue,
+                    unit: formData.unit,
+                    effective_date: formData.effective_date,
+                });
 
             if (error) {
                 console.error("Database error:", error);
@@ -188,9 +174,6 @@ export function CommodityPriceManager() {
                         <CardDescription>
                             Update commodity rates for the day
                         </CardDescription>
-                        <div className="text-xs text-muted-foreground mt-2">
-                            Org ID: {organizationId} | Records: {prices.length}
-                        </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">

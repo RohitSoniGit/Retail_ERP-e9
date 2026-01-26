@@ -19,8 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { formatCurrency, type Item, type CommodityPrice, type EnhancedBillItem } from "@/lib/types"
+import { formatCurrency, type Item, type EnhancedBillItem } from "@/lib/types"
 import { Scale, Package } from "lucide-react"
+
+type CommodityPrice = {
+  id: string;
+  organization_id: string;
+  category: string;
+  rate_per_unit: number;
+  unit: string;
+  effective_date: string;
+  created_at: string;
+};
 
 interface CommodityItemSelectorProps {
   item: Item
@@ -53,8 +63,8 @@ export function CommodityItemSelector({
 
       if (!matchedPrice) {
         matchedPrice = commodityPrices.find(cp =>
-          item.name.toLowerCase().includes(cp.commodity_name.toLowerCase()) ||
-          cp.commodity_name.toLowerCase().includes(item.name.toLowerCase())
+          item.name.toLowerCase().includes(cp.category.toLowerCase()) ||
+          cp.category.toLowerCase().includes(item.name.toLowerCase())
         )
       }
 
@@ -69,7 +79,7 @@ export function CommodityItemSelector({
     if (selectedCommodityPrice && weight) {
       const weightNum = parseFloat(weight)
       if (!isNaN(weightNum)) {
-        setCalculatedPrice(weightNum * selectedCommodityPrice.price_per_unit)
+        setCalculatedPrice(weightNum * selectedCommodityPrice.rate_per_unit)
       }
     }
   }, [weight, selectedCommodityPrice])
@@ -89,7 +99,7 @@ export function CommodityItemSelector({
         item: item,
         quantity: qtyNum,
         weight: weightNum,
-        commodity_price: selectedCommodityPrice.price_per_unit,
+        commodity_price: selectedCommodityPrice.rate_per_unit,
         is_commodity: true,
         unit_price: calculatedPrice, // Total price for the weight
         discount_percent: 0,
@@ -168,7 +178,7 @@ export function CommodityItemSelector({
                   <SelectContent className="glass border-0">
                     {commodityPrices.map((cp) => (
                       <SelectItem key={cp.id} value={cp.id}>
-                        {cp.commodity_name} - {formatCurrency(cp.price_per_unit)}/{cp.unit}
+                        {cp.category} - {formatCurrency(cp.rate_per_unit)}/{cp.unit}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -198,7 +208,7 @@ export function CommodityItemSelector({
                     </span>
                   </div>
                   <p className="text-xs text-green-400/70 mt-1">
-                    {weight} {selectedCommodityPrice?.unit} × {formatCurrency(selectedCommodityPrice?.price_per_unit || 0)}
+                    {weight} {selectedCommodityPrice?.unit} × {formatCurrency(selectedCommodityPrice?.rate_per_unit || 0)}
                   </p>
                 </div>
               )}
