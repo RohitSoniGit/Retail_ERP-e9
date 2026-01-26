@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, X, ShoppingCart, Package, Users, Receipt } from "lucide-react";
+import { Plus, X, ShoppingCart, Package, Users, Receipt, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useOrganization } from "@/lib/context/organization";
 
 export function FABMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const { organization } = useOrganization();
 
   useEffect(() => {
     setMounted(true);
@@ -16,38 +18,59 @@ export function FABMenu() {
 
   if (!mounted) return null;
 
-  const menuItems = [
-    {
-      icon: ShoppingCart,
-      label: "New Bill",
-      href: "/billing",
-      gradient: "from-emerald-400 to-emerald-600",
-      shadow: "shadow-emerald-500/30",
-      border: "border-emerald-200 dark:border-emerald-800"
-    },
-    {
-      icon: Package,
-      label: "Purchase Order",
-      href: "/purchase?tab=orders&action=create",
-      gradient: "from-blue-400 to-blue-600",
-      shadow: "shadow-blue-500/30",
-      border: "border-blue-200 dark:border-blue-800"
-    },
-    {
-      icon: Users,
-      label: "Add Supplier",
-      href: "/purchase?tab=suppliers&action=add",
-      gradient: "from-purple-400 to-purple-600",
-      shadow: "shadow-purple-500/30",
-      border: "border-purple-200 dark:border-purple-800"
-    },
-    {
+  const getMenuItems = () => {
+    const baseItems = [
+      {
+        icon: ShoppingCart,
+        label: "New Bill",
+        href: "/billing",
+        gradient: "from-emerald-400 to-emerald-600",
+        shadow: "shadow-emerald-500/30",
+        border: "border-emerald-200 dark:border-emerald-800"
+      },
+      {
+        icon: Package,
+        label: "Purchase Order",
+        href: "/purchase?tab=orders&action=create",
+        gradient: "from-blue-400 to-blue-600",
+        shadow: "shadow-blue-500/30",
+        border: "border-blue-200 dark:border-blue-800"
+      },
+      {
+        icon: Users,
+        label: "Add Supplier",
+        href: "/purchase?tab=suppliers&action=add",
+        gradient: "from-purple-400 to-purple-600",
+        shadow: "shadow-purple-500/30",
+        border: "border-purple-200 dark:border-purple-800"
+      },
+    ];
+
+    // Add commodity features if enabled
+    if (organization?.settings?.enable_commodity_features) {
+      baseItems.push({
+        icon: TrendingUp,
+        label: "Commodity Rates",
+        href: "/settings?tab=commodities",
+        gradient: "from-yellow-400 to-yellow-600",
+        shadow: "shadow-yellow-500/30",
+        border: "border-yellow-200 dark:border-yellow-800"
+      });
+    }
+
+    baseItems.push({
       icon: Receipt,
       label: "Stock Adjustment",
       href: "/inventory?tab=adjustment",
       gradient: "from-amber-400 to-amber-600",
       shadow: "shadow-amber-500/30",
       border: "border-amber-200 dark:border-amber-800"
+    });
+
+    return baseItems;
+  };
+
+  const menuItems = getMenuItems();
     },
   ];
 

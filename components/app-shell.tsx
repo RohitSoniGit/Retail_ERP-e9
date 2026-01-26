@@ -20,6 +20,7 @@ import {
   Settings,
   Sparkles,
   Zap,
+  TrendingUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -53,6 +54,33 @@ const sideNavItems = [
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
+
+// Function to get navigation items based on organization settings
+const getSideNavItems = (organization: any) => {
+  const baseItems = [
+    { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/items", label: "Items", icon: Package },
+    { href: "/categories", label: "Categories", icon: LayoutList },
+    { href: "/billing", label: "Billing", icon: ShoppingCart },
+    { href: "/purchase", label: "Purchase", icon: Receipt },
+    { href: "/customers", label: "Customers", icon: Users },
+    { href: "/ledger", label: "Ledger", icon: BarChart3 },
+    { href: "/inventory", label: "Inventory", icon: Package },
+    { href: "/jobs", label: "Job Work", icon: Zap },
+  ];
+
+  // Add commodity features if enabled
+  if (organization?.settings?.enable_commodity_features) {
+    baseItems.splice(-1, 0, { href: "/commodities", label: "Commodities", icon: TrendingUp });
+  }
+
+  baseItems.push(
+    { href: "/reports", label: "Reports", icon: BarChart3 },
+    { href: "/settings", label: "Settings", icon: Settings }
+  );
+
+  return baseItems;
+};
 
 // Floating particles component
 function FloatingParticles() {
@@ -265,7 +293,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <div className="flex flex-col gap-3 w-full px-3">
-          {sideNavItems.map((item, index) => {
+          {getSideNavItems(organization).map((item, index) => {
             const Icon = item.icon;
             const active = isActive(item.href);
             return (

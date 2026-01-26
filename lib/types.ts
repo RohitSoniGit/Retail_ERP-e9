@@ -23,6 +23,7 @@ export interface OrganizationSettings {
   thermal_printer_width: number;
   invoice_prefix: string;
   low_stock_threshold: number;
+  enable_commodity_features: boolean;
 }
 
 // Supplier Management

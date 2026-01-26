@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PrintFormatManager } from "@/components/settings/print-format-manager";
 import { CommodityPriceManager } from "@/components/settings/commodity-price-manager";
@@ -99,6 +100,7 @@ export default function SettingsPage() {
     lowStockThreshold: 5,
     thermalPrinterWidth: 80,
     taxInclusive: false,
+    enableCommodityFeatures: false,
     logoUrl: "",
     faviconUrl: "",
   });
@@ -145,6 +147,7 @@ export default function SettingsPage() {
         lowStockThreshold: organization.settings?.low_stock_threshold || 5,
         thermalPrinterWidth: organization.settings?.thermal_printer_width || 80,
         taxInclusive: organization.settings?.tax_inclusive || false,
+        enableCommodityFeatures: organization.settings?.enable_commodity_features || false,
         logoUrl: organization.logo_url || "",
         faviconUrl: organization.favicon_url || "",
       });
@@ -171,6 +174,7 @@ export default function SettingsPage() {
           low_stock_threshold: formData.lowStockThreshold,
           thermal_printer_width: formData.thermalPrinterWidth,
           tax_inclusive: formData.taxInclusive,
+          enable_commodity_features: formData.enableCommodityFeatures,
         }
       });
       
@@ -203,6 +207,7 @@ export default function SettingsPage() {
         lowStockThreshold: organization.settings?.low_stock_threshold || 5,
         thermalPrinterWidth: organization.settings?.thermal_printer_width || 80,
         taxInclusive: organization.settings?.tax_inclusive || false,
+        enableCommodityFeatures: organization.settings?.enable_commodity_features || false,
         logoUrl: organization.logo_url || "",
         faviconUrl: organization.favicon_url || "",
       });
@@ -683,6 +688,19 @@ export default function SettingsPage() {
                         </p>
                       </div>
                       <ThemeToggle />
+                    </div>
+                    
+                    <div className="flex items-center justify-between p-4 rounded-2xl glass">
+                      <div className="space-y-1">
+                        <Label className="text-sm font-bold">Commodity Features</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Enable commodity pricing and daily rates
+                        </p>
+                      </div>
+                      <Switch
+                        checked={formData.enableCommodityFeatures}
+                        onCheckedChange={(checked) => setFormData({ ...formData, enableCommodityFeatures: checked })}
+                      />
                     </div>
                   </CardContent>
                 </Card>
