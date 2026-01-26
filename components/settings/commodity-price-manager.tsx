@@ -21,9 +21,10 @@ import {
 type CommodityPrice = {
     id: string;
     organization_id: string;
-    commodity_name: string;
-    price: number;
-    date: string;
+    rate_name: string;
+    rate_per_unit: number;
+    unit: string;
+    effective_date: string;
     created_at: string;
 };
 
@@ -42,11 +43,13 @@ export function CommodityPriceManager() {
     const [loading, setLoading] = useState(true);
 
     const [formData, setFormData] = useState({
-        commodity_name: "",
-        price: "",
-        date: new Date().toISOString().split('T')[0],
+        rate_name: "",
+        rate_per_unit: "",
+        unit: "gram",
+        effective_date: new Date().toISOString().split('T')[0],
     });
 
+    // Create a fresh Supabase client to avoid caching issues
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -61,85 +64,88 @@ export function CommodityPriceManager() {
     const fetchPrices = async () => {
         try {
             const { data, error } = await supabase
-                .from("commodity_prices")
+                .from("daily_rates")
                 .select("*")
                 .eq("organization_id", organizationId)
-                .order("date", { ascending: false })
+                .order("effective_date", { ascending: false })
                 .order("created_at", { ascending: false });
 
             if (error) {
-                // If table doesn't exist, we might get an error.
-                // For demo/prototype purposes, we'll fallback to local state if fetch fails 
-                // (assuming the user hasn't run migration yet)
-                console.error("Error fetching commodity prices:", error);
+                console.error("Error fetching daily rates:", error);
+                toast.error(`Failed to load rates: ${error.message}`);
+                setPrices([]);
             } else {
                 setPrices(data || []);
             }
         } catch (error) {
-            console.error("Error:", error);
+            console.error("Fetch error:", error);
+            toast.error("Failed to load commodity rates");
+            setPrices([]);
         } finally {
             setLoading(false);
         }
     };
 
     const handleSave = async () => {
-        if (!formData.commodity_name || !formData.price || !formData.date) {
+        if (!formData.rate_name || !formData.rate_per_unit || !formData.effective_date) {
             toast.error("Please fill in all fields");
             return;
         }
 
-        const priceValue = parseFloat(formData.price);
-        if (isNaN(priceValue) || priceValue <= 0) {
-            toast.error("Please enter a valid price");
+        const rateValue = parseFloat(formData.rate_per_unit);
+        if (isNaN(rateValue) || rateValue <= 0) {
+            toast.error("Please enter a valid rate");
             return;
         }
 
-        const newPrice = {
-            id: Date.now().toString(), // precise enough for mock/client-side
-            organization_id: organizationId || "org1",
-            commodity_name: formData.commodity_name,
-            price: priceValue,
-            date: formData.date,
-            created_at: new Date().toISOString(),
-        };
-
         try {
-            const { error } = await supabase
-                .from("commodity_prices")
-                .insert(newPrice);
+            const { data, error } = await supabase
+                .from("daily_rates")
+                .insert({
+                    organization_id: organizationId,
+                    rate_name: formData.rate_name,
+                    rate_per_unit: rateValue,
+                    unit: formData.unit,
+                    effective_date: formData.effective_date,
+                });
 
             if (error) {
-                // Fallback for demo if table missing
-                console.warn("Could not save to DB (table might be missing), using local state");
-                setPrices([newPrice as CommodityPrice, ...prices]);
-            } else {
-                await fetchPrices();
+                console.error("Database error:", error);
+                toast.error(`Failed to save: ${error.message}`);
+                return;
             }
 
-            toast.success("Commodity price updated");
-            // Optional: Reset price but keep date? Or reset all? 
-            // Usually user might want to enter multiple commodities for same date.
-            setFormData(prev => ({ ...prev, commodity_name: "", price: "" }));
+            // Success - refresh the data
+            await fetchPrices();
+            toast.success("Commodity rate updated successfully");
+            
+            // Reset form but keep date and unit
+            setFormData(prev => ({ ...prev, rate_name: "", rate_per_unit: "" }));
+            
         } catch (error) {
-            toast.error("Failed to save price");
+            console.error("Save error:", error);
+            toast.error("Failed to save rate - please check console for details");
         }
     };
 
     const handleDelete = async (id: string) => {
         try {
-            const { error } = await supabase
-                .from("commodity_prices")
-                .delete()
-                .eq("id", id);
+            const response = await fetch(`/api/commodity-prices?id=${id}`, {
+                method: 'DELETE',
+            })
 
-            if (error) {
-                setPrices(prices.filter(p => p.id !== id));
-            } else {
-                await fetchPrices();
+            const result = await response.json()
+
+            if (!response.ok) {
+                toast.error(`Failed to delete: ${result.error}`);
+                return;
             }
+
+            await fetchPrices();
             toast.success("Price record deleted");
         } catch (error) {
-            setPrices(prices.filter(p => p.id !== id));
+            console.error("Delete error:", error);
+            toast.error("Failed to delete price record");
         }
     };
 

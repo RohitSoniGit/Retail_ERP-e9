@@ -1,7 +1,7 @@
 "use client";
 
-import { EnhancedBillForm } from "@/components/billing/enhanced-bill-form";
+import { EnhancedCommodityBillForm } from "@/components/billing/enhanced-commodity-bill-form";
 
 export default function BillingPage() {
-  return <EnhancedBillForm />;
+  return <EnhancedCommodityBillForm />;
 }

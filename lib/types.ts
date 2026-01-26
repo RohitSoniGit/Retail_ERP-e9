@@ -309,6 +309,7 @@ export interface Item {
   conversion_unit?: string;
   conversion_factor: number;
   is_rate_variable: boolean;
+  is_commodity?: boolean; // For commodity items that don't need pricing
   last_purchase_date?: string;
   created_at: string;
 }
@@ -484,17 +485,32 @@ export interface GSTCalculation {
   is_igst: boolean;
 }
 
-// Bill Item for Quick Bill
-export interface BillItem {
-  item_id: string;
-  item: Item;
-  quantity: number;
-  unit_price: number;
-  discount_percent: number;
-  gst_rate: number;
-  subtotal: number;
-  tax_amount: number;
-  total: number;
+// Commodity Price List
+export interface CommodityPrice {
+  id: string;
+  organization_id: string;
+  commodity_name: string;
+  category?: string;
+  price_per_unit: number;
+  unit: string; // gram, kg, etc.
+  date: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Enhanced Sale Item for commodity support
+export interface EnhancedSaleItem extends SaleItem {
+  weight?: number; // For commodity items
+  commodity_price?: number; // Price per unit for commodity
+  is_commodity?: boolean;
+}
+
+// Enhanced Bill Item for commodity support
+export interface EnhancedBillItem extends BillItem {
+  weight?: number; // For commodity items
+  commodity_price?: number; // Price per unit for commodity
+  is_commodity?: boolean;
 }
 
 // Indian States for GST

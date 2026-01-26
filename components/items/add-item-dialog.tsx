@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -46,6 +47,7 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
     unit_type: "pcs",
     pieces_per_unit: "1",
     gst_rate: "18",
+    is_commodity: false,
   })
 
   useEffect(() => {
@@ -125,20 +127,23 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
 
     const categoryName = categories.find(c => c.id === formData.category_id)?.name || undefined;
 
-    const { error } = await supabase.from("items").insert({
+    const itemData: any = {
       organization_id: organization.id,
       sku: formData.sku,
       name: formData.name,
       category_id: formData.category_id === "none" ? null : formData.category_id,
       category: categoryName, // Keep backward compatibility
-      wholesale_price: parseFloat(formData.wholesale_price),
-      retail_price: parseFloat(formData.retail_price),
-      purchase_cost: parseFloat(formData.purchase_cost),
+      wholesale_price: formData.is_commodity ? 0 : parseFloat(formData.wholesale_price),
+      retail_price: formData.is_commodity ? 0 : parseFloat(formData.retail_price),
+      purchase_cost: formData.is_commodity ? 0 : parseFloat(formData.purchase_cost),
       current_stock: parseInt(formData.current_stock, 10),
       unit_type: formData.unit_type,
       pieces_per_unit: parseInt(formData.pieces_per_unit, 10),
       gst_rate: parseFloat(formData.gst_rate),
-    })
+      is_commodity: formData.is_commodity, // Always include this field
+    }
+
+    const { error } = await supabase.from("items").insert(itemData)
 
     if (!error) {
       // Reset form and regenerate SKU for next item
@@ -153,6 +158,7 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
         unit_type: "pcs",
         pieces_per_unit: "1",
         gst_rate: "18",
+        is_commodity: false,
       })
       
       // Generate next SKU for the next item
@@ -248,50 +254,64 @@ export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogPr
               </Select>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="purchase_cost" className="text-sm font-semibold">Cost</Label>
-                <Input
-                  id="purchase_cost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.purchase_cost}
-                  onChange={(e) => setFormData({ ...formData, purchase_cost: e.target.value })}
-                  placeholder="0"
-                  required
-                  className="glass border-0 shadow-inner h-11"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="wholesale_price" className="text-sm font-semibold">Wholesale</Label>
-                <Input
-                  id="wholesale_price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.wholesale_price}
-                  onChange={(e) => setFormData({ ...formData, wholesale_price: e.target.value })}
-                  placeholder="0"
-                  required
-                  className="glass border-0 shadow-inner h-11"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="retail_price" className="text-sm font-semibold">Retail</Label>
-                <Input
-                  id="retail_price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={formData.retail_price}
-                  onChange={(e) => setFormData({ ...formData, retail_price: e.target.value })}
-                  placeholder="0"
-                  required
-                  className="glass border-0 shadow-inner h-11"
-                />
-              </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_commodity"
+                checked={formData.is_commodity}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_commodity: !!checked })}
+                className="border-2"
+              />
+              <Label htmlFor="is_commodity" className="text-sm font-semibold cursor-pointer">
+                Commodity Item
+              </Label>
             </div>
+
+            {!formData.is_commodity && (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="purchase_cost" className="text-sm font-semibold">Cost</Label>
+                  <Input
+                    id="purchase_cost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.purchase_cost}
+                    onChange={(e) => setFormData({ ...formData, purchase_cost: e.target.value })}
+                    placeholder="0"
+                    required
+                    className="glass border-0 shadow-inner h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="wholesale_price" className="text-sm font-semibold">Wholesale</Label>
+                  <Input
+                    id="wholesale_price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.wholesale_price}
+                    onChange={(e) => setFormData({ ...formData, wholesale_price: e.target.value })}
+                    placeholder="0"
+                    required
+                    className="glass border-0 shadow-inner h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="retail_price" className="text-sm font-semibold">Retail</Label>
+                  <Input
+                    id="retail_price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.retail_price}
+                    onChange={(e) => setFormData({ ...formData, retail_price: e.target.value })}
+                    placeholder="0"
+                    required
+                    className="glass border-0 shadow-inner h-11"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
