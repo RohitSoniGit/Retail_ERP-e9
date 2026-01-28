@@ -570,7 +570,7 @@ export const INDIAN_STATES = [
 export type StateCode = (typeof INDIAN_STATES)[number]["code"];
 
 // GST Rate Options
-export const GST_RATES = [0, 5, 12, 18, 28];
+export const GST_RATES = [0, 3, 5, 12, 18, 28];
 
 // Payment Modes
 export const PAYMENT_MODES = [

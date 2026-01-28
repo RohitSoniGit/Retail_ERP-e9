@@ -22,14 +22,13 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useOrganization } from "@/lib/context/organization"
 import type { Category } from "@/lib/types"
+import { GST_RATES } from "@/lib/types"
 
 interface AddItemDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess: () => void
 }
-
-const GST_RATES = [0, 5, 12, 18, 28]
 
 export function AddItemDialog({ open, onOpenChange, onSuccess }: AddItemDialogProps) {
   const [loading, setLoading] = useState(false)
