@@ -30,14 +30,23 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const updateOrganization = async (updates: Partial<Organization>) => {
     if (!organization) return
 
-    const updatedOrg = { ...organization, ...updates }
-    setOrganization(updatedOrg)
-
     try {
       const supabase = getSupabaseBrowserClient()
 
-      // Filter out fields that shouldn't be updated (like id, created_at)
-      const { id, created_at, ...updateData } = updates as any
+      // Create a clean update object, excluding read-only fields
+      const updateData: any = {}
+      
+      // Copy allowed fields from updates
+      const allowedFields = [
+        'name', 'gst_number', 'address', 'phone', 'state_code', 
+        'gstin', 'logo_url', 'favicon_url', 'email', 'website', 'settings'
+      ]
+      
+      allowedFields.forEach(field => {
+        if (field in updates) {
+          updateData[field] = updates[field as keyof Organization]
+        }
+      })
 
       const { error } = await supabase
         .from("organizations")
@@ -46,14 +55,15 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         console.error('Failed to update organization:', error)
-        // Revert local state on error
-        setOrganization(organization)
         throw error
       }
+
+      // Update local state only after successful database update
+      const updatedOrg = { ...organization, ...updates }
+      setOrganization(updatedOrg)
+      
     } catch (error) {
       console.error('Error updating organization:', error)
-      // Revert local state on error
-      setOrganization(organization)
       throw error
     }
   }
