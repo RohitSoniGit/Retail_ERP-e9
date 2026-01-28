@@ -507,11 +507,24 @@ export interface EnhancedSaleItem extends SaleItem {
   is_commodity?: boolean;
 }
 
+// Bill Item for invoicing
+export interface BillItem {
+  item_id: string;
+  item: Item;
+  quantity: number;
+  unit_price: number;
+  discount_percent: number;
+  gst_rate: number;
+  subtotal: number;
+  tax_amount: number;
+  total: number;
+  is_commodity?: boolean;
+}
+
 // Enhanced Bill Item for commodity support
 export interface EnhancedBillItem extends BillItem {
   weight?: number; // For commodity items
   commodity_price?: number; // Price per unit for commodity
-  is_commodity?: boolean;
 }
 
 // Indian States for GST

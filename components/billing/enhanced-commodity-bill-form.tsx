@@ -31,6 +31,7 @@ import {
   PAYMENT_MODES,
   type Item,
   type Customer,
+  type BillItem,
   type EnhancedBillItem,
   type CommodityPrice,
 } from "@/lib/types";
@@ -461,6 +462,7 @@ export function EnhancedCommodityBillForm() {
       setSavedInvoice({
         invoiceNumber,
         date: new Date().toISOString(),
+        customer: selectedCustomer,
         items: billItems,
         totals,
       });
@@ -952,7 +954,7 @@ export function EnhancedCommodityBillForm() {
           organization={organization!}
           invoiceNumber={savedInvoice.invoiceNumber}
           date={savedInvoice.date}
-          customer={selectedCustomer}
+          customer={savedInvoice.customer}
           items={savedInvoice.items}
           totals={savedInvoice.totals}
           format={printFormat}

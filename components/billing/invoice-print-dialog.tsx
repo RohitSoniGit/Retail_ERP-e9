@@ -4,33 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, CheckCircle, Cloud } from "lucide-react";
-import type { Organization, Customer } from "@/lib/types";
+import type { Organization, Customer, BillItem } from "@/lib/types";
 import { formatCurrency, numberToWords } from "@/lib/types";
 import { useReactToPrint } from "react-to-print";
 import { PDFGenerator } from "@/lib/pdf-generator";
 import { InvoiceStorageService } from "@/lib/supabase/storage";
 import { toast } from "sonner";
-
-// Define BillItem type locally since it's not exported from types
-interface BillItem {
-    item_id: string;
-    item: {
-        id: string;
-        name: string;
-        sku: string;
-        gst_rate: number;
-    };
-    quantity: number;
-    unit_price: number;
-    discount_percent: number;
-    gst_rate: number;
-    subtotal: number;
-    tax_amount: number;
-    total: number;
-    is_commodity?: boolean;
-    weight?: number;
-    commodity_price?: number;
-}
 
 interface InvoicePrintDialogProps {
     open: boolean;
