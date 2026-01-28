@@ -133,7 +133,8 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    if (organization) {
+    if (organization && !loading) {
+      console.log('Organization data changed, updating form:', organization);
       setFormData({
         name: organization.name || "",
         gstin: organization.gstin || "",
@@ -152,11 +153,13 @@ export default function SettingsPage() {
         faviconUrl: organization.favicon_url || "",
       });
     }
-  }, [organization]);
+  }, [organization, loading]);
 
   const handleSave = async () => {
     setLoading(true);
     try {
+      console.log('Saving settings with form data:', formData);
+      
       await updateOrganization({
         name: formData.name,
         gstin: formData.gstin,
@@ -165,7 +168,7 @@ export default function SettingsPage() {
         email: formData.email,
         website: formData.website,
         logo_url: formData.logoUrl,
-        favicon_url: formData.faviconUrl,
+        // favicon_url: formData.faviconUrl, // Temporarily disabled until column is added
         settings: {
           ...organization?.settings,
           currency: formData.currency,
@@ -186,7 +189,8 @@ export default function SettingsPage() {
       
       toast.success("Settings saved successfully!");
     } catch (error) {
-      toast.error("Failed to save settings");
+      console.error("Save error:", error);
+      toast.error(`Failed to save settings: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
