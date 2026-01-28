@@ -33,30 +33,47 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     try {
       const supabase = getSupabaseBrowserClient()
 
-      // Create a clean update object, excluding read-only fields
+      // Create a clean update object, mapping form fields to database columns
       const updateData: any = {}
       
-      // Copy allowed fields from updates
-      const allowedFields = [
-        'name', 'gst_number', 'address', 'phone', 'state_code', 
-        'gstin', 'logo_url', 'favicon_url', 'email', 'website', 'settings'
+      // Direct field mappings (form field -> database column)
+      const directFields = [
+        'name', 'address', 'phone', 'state_code', 
+        'logo_url', 'email', 'website'
       ]
       
-      allowedFields.forEach(field => {
+      directFields.forEach(field => {
         if (field in updates) {
           updateData[field] = updates[field as keyof Organization]
         }
       })
 
-      const { error } = await supabase
+      // Handle GSTIN field mapping (form uses 'gstin', database has both 'gstin' and 'gst_number')
+      if ('gstin' in updates) {
+        updateData.gstin = updates.gstin
+        updateData.gst_number = updates.gstin // Also update gst_number for compatibility
+      }
+
+      // Handle settings as JSONB
+      if ('settings' in updates && updates.settings) {
+        updateData.settings = updates.settings
+      }
+
+      console.log('Updating organization with data:', updateData)
+
+      const { data, error } = await supabase
         .from("organizations")
         .update(updateData)
         .eq("id", organization.id)
+        .select()
 
       if (error) {
         console.error('Failed to update organization:', error)
+        console.error('Update data that failed:', updateData)
         throw error
       }
+
+      console.log('Successfully updated organization:', data)
 
       // Update local state only after successful database update
       const updatedOrg = { ...organization, ...updates }
@@ -86,6 +103,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         }
 
         if (data && data.length > 0) {
+          console.log('Loaded organization data:', data[0])
           setOrganization(data[0])
           setError(null)
         } else {
