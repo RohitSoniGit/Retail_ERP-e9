@@ -304,6 +304,21 @@ export function EnhancedCommodityBillForm() {
     setBillItems(billItems.filter((bi) => bi.item_id !== itemId));
   };
 
+  // Reset form after invoice dialog closes
+  const handleInvoiceDialogClose = (open: boolean) => {
+    setShowInvoice(open);
+    
+    if (!open) {
+      // Reset form when dialog closes
+      setBillItems([]);
+      setSelectedCustomer(null);
+      setDiscount("");
+      setAmountPaid("");
+      setPaymentMode("cash");
+      setSavedInvoice(null);
+    }
+  };
+
   // Calculate totals
   const calculateTotals = useCallback(() => {
     const subtotal = billItems.reduce((sum, bi) => sum + bi.subtotal, 0);
@@ -459,6 +474,9 @@ export function EnhancedCommodityBillForm() {
       }
 
       // Save for invoice display
+      console.log('Saving invoice with items:', billItems);
+      console.log('Bill items length:', billItems.length);
+      
       setSavedInvoice({
         invoiceNumber,
         date: new Date().toISOString(),
@@ -468,12 +486,7 @@ export function EnhancedCommodityBillForm() {
       });
       setShowInvoice(true);
 
-      // Reset form
-      setBillItems([]);
-      setSelectedCustomer(null);
-      setDiscount("");
-      setAmountPaid("");
-      setPaymentMode("cash");
+      // Don't reset form here - wait for invoice dialog to close
       
       toast.success("Bill saved successfully!");
     } catch (error) {
@@ -950,7 +963,7 @@ export function EnhancedCommodityBillForm() {
       {savedInvoice && (
         <InvoicePrintDialog
           open={showInvoice}
-          onOpenChange={setShowInvoice}
+          onOpenChange={handleInvoiceDialogClose}
           organization={organization!}
           invoiceNumber={savedInvoice.invoiceNumber}
           date={savedInvoice.date}

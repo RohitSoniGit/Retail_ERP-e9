@@ -47,6 +47,10 @@ export function InvoicePrintDialog({
     const [isUploading, setIsUploading] = useState(false);
     const [isUploaded, setIsUploaded] = useState(false);
 
+    // Debug logging
+    console.log('InvoicePrintDialog received items:', items);
+    console.log('Items length:', items?.length || 0);
+
     // Keyboard shortcuts for A4 format
     useEffect(() => {
         if (!open || format !== 'a4') return;
@@ -85,7 +89,14 @@ export function InvoicePrintDialog({
             toast.success("PDF downloaded successfully!");
         } catch (error) {
             console.error('Download error:', error);
-            toast.error("Failed to download PDF");
+            
+            // Show user-friendly error and offer fallback
+            toast.error("PDF generation failed. Try using the Print button instead.", {
+                action: {
+                    label: "Print",
+                    onClick: () => handlePrint()
+                }
+            });
         }
     };
 
@@ -114,7 +125,12 @@ export function InvoicePrintDialog({
             }
         } catch (error) {
             console.error('Cloud save error:', error);
-            toast.error("Failed to save invoice to cloud");
+            toast.error("Failed to generate PDF for cloud storage. Try printing instead.", {
+                action: {
+                    label: "Print",
+                    onClick: () => handlePrint()
+                }
+            });
         } finally {
             setIsUploading(false);
         }

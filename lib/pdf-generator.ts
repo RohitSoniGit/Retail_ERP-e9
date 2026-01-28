@@ -16,51 +16,105 @@ export class PDFGenerator {
     options: PDFGenerationOptions = { format: 'a4' }
   ): Promise<Blob> {
     try {
-      // Configure canvas options based on format - aggressive settings to avoid LAB color issues
+      // Configure canvas options with more aggressive CSS handling
       const canvasOptions: any = {
-        scale: options.quality || 2,
+        scale: options.quality || 1.5, // Reduced scale to avoid memory issues
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        logging: false, // Disable logging to avoid color parse errors
-        foreignObjectRendering: false, // Disable to prevent LAB color issues
+        logging: false,
+        foreignObjectRendering: false,
         imageTimeout: 0,
         removeContainer: true,
-        width: options.format === 'thermal' ? 302 : undefined, // 80mm in pixels
+        width: options.format === 'thermal' ? 302 : undefined,
         height: undefined,
         windowWidth: options.format === 'thermal' ? 302 : 1200,
+        ignoreElements: (element: Element) => {
+          // Skip elements that might cause CSS parsing issues
+          const tagName = element.tagName.toLowerCase();
+          const className = element.className || '';
+          
+          // Skip certain problematic elements
+          if (tagName === 'script' || tagName === 'noscript') return true;
+          if (className.includes('no-print')) return true;
+          
+          return false;
+        },
         onclone: (clonedDoc: Document) => {
-          // Aggressively replace modern color functions in the entire body HTML
-          const body = clonedDoc.body;
-          let bodyHtml = body.innerHTML;
+          try {
+            // Remove all external stylesheets to avoid CSS parsing issues
+            const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+            links.forEach(link => link.remove());
 
-          // Regex to catch lab(), lch(), oklab(), oklch() and replace with a safe color
-          // We replace with white or black depending on context if possible, but here we just safely fallback to a hex code
-          // to prevent the parser from crashing.
-          if (bodyHtml.match(/(lab|lch|oklab|oklch)\(/)) {
-            bodyHtml = bodyHtml.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000');
-            body.innerHTML = bodyHtml;
+            // Remove all style tags that might have problematic CSS
+            const styleTags = clonedDoc.querySelectorAll('style');
+            styleTags.forEach(tag => {
+              const content = tag.innerHTML;
+              // Remove modern CSS features that cause parsing errors
+              const cleanContent = content
+                .replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000')
+                .replace(/color-mix\([^)]+\)/gi, '#000000')
+                .replace(/var\(--[^)]+\)/gi, '#000000')
+                .replace(/@supports[^{]+\{[^}]*\}/gi, '')
+                .replace(/backdrop-filter:[^;]+;/gi, '')
+                .replace(/filter:[^;]+blur[^;]*;/gi, '');
+              
+              tag.innerHTML = cleanContent;
+            });
+
+            // Clean inline styles on all elements
+            const allElements = clonedDoc.querySelectorAll('*');
+            allElements.forEach((el: any) => {
+              const style = el.getAttribute('style');
+              if (style) {
+                const cleanStyle = style
+                  .replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000')
+                  .replace(/color-mix\([^)]+\)/gi, '#000000')
+                  .replace(/var\(--[^)]+\)/gi, '#000000')
+                  .replace(/backdrop-filter:[^;]+;/gi, '')
+                  .replace(/filter:[^;]+blur[^;]*;/gi, '');
+                
+                el.setAttribute('style', cleanStyle);
+              }
+
+              // Remove problematic classes
+              const classList = el.classList;
+              if (classList) {
+                // Remove classes that might have problematic CSS
+                const problematicClasses = ['glass', 'backdrop-blur', 'holographic', 'gradient-text'];
+                problematicClasses.forEach(cls => {
+                  if (classList.contains(cls)) {
+                    classList.remove(cls);
+                  }
+                });
+              }
+            });
+
+            // Add basic styling to ensure readability
+            const basicStyle = clonedDoc.createElement('style');
+            basicStyle.innerHTML = `
+              * {
+                box-sizing: border-box;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+              }
+              body {
+                font-family: Arial, sans-serif;
+                color: #000000;
+                background: #ffffff;
+                margin: 0;
+                padding: 0;
+              }
+              .text-white { color: #000000 !important; }
+              .bg-transparent { background: #ffffff !important; }
+              .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
+              .border-0 { border: 1px solid #e5e5e5 !important; }
+            `;
+            clonedDoc.head.appendChild(basicStyle);
+
+          } catch (error) {
+            console.warn('Error cleaning CSS for PDF generation:', error);
           }
-
-          // Also specifically target style tags in head/body
-          const styleTags = clonedDoc.querySelectorAll('style');
-          styleTags.forEach(tag => {
-            if (tag.innerHTML.match(/(lab|lch|oklab|oklch)\(/)) {
-              tag.innerHTML = tag.innerHTML.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000');
-            }
-          });
-
-          // And inline styles on all elements
-          const allElements = clonedDoc.querySelectorAll('*');
-          allElements.forEach((el: any) => {
-            const style = el.getAttribute('style');
-            if (style && style.match(/(lab|lch|oklab|oklch)\(/)) {
-              el.setAttribute('style', style.replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000'));
-            }
-
-            // Also check computed style properties that might cause issues if they were set via classes
-            // This is harder to patch but removing the style attribute helps
-          });
         }
       };
 
@@ -97,7 +151,7 @@ export class PDFGenerator {
       return pdf.output('blob');
     } catch (error) {
       console.error('PDF generation error:', error);
-      throw new Error('Failed to generate PDF');
+      throw new Error(`Failed to generate PDF: ${error.message}`);
     }
   }
 
@@ -123,6 +177,18 @@ export class PDFGenerator {
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error('PDF download error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fallback method using window.print() if PDF generation fails
+   */
+  static async printFallback(): Promise<void> {
+    try {
+      window.print();
+    } catch (error) {
+      console.error('Print fallback error:', error);
       throw error;
     }
   }
