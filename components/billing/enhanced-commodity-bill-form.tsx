@@ -115,7 +115,7 @@ export function EnhancedCommodityBillForm() {
   );
 
   // Fetch customers
-  const { data: customers } = useSWR(
+  const { data: customers, mutate: mutateCustomers } = useSWR(
     organizationId ? `customers-billing-${organizationId}` : null,
     async () => {
       const { data, error } = await supabase
@@ -142,6 +142,59 @@ export function EnhancedCommodityBillForm() {
       customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
       customer.phone?.includes(customerSearch)
   );
+
+  // Check if search term could be a new customer name
+  const isNewCustomerName = customerSearch.trim().length > 0 && 
+    !filteredCustomers?.some(c => c.name.toLowerCase() === customerSearch.toLowerCase().trim());
+
+  // Create new customer function
+  const createNewCustomer = async (name: string) => {
+    if (!organizationId || !name.trim()) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .insert({
+          organization_id: organizationId,
+          name: name.trim(),
+          customer_type: "retail",
+          current_balance: 0,
+          credit_limit: 0,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Refresh customers list
+      mutateCustomers();
+
+      return data as Customer;
+    } catch (error) {
+      console.error("Error creating customer:", error);
+      toast.error("Failed to create customer");
+      return null;
+    }
+  };
+
+  // Handle customer selection or creation
+  const handleCustomerSelect = async (customer: Customer | string) => {
+    if (typeof customer === "string") {
+      // Create new customer
+      const newCustomer = await createNewCustomer(customer);
+      if (newCustomer) {
+        setSelectedCustomer(newCustomer);
+        setShowCustomerDialog(false);
+        setCustomerSearch("");
+        toast.success(`Customer "${newCustomer.name}" created successfully!`);
+      }
+    } else {
+      // Select existing customer
+      setSelectedCustomer(customer);
+      setShowCustomerDialog(false);
+      setCustomerSearch("");
+    }
+  };
 
   // Recalculate all items when GST toggle changes
   useEffect(() => {
@@ -479,14 +532,45 @@ export function EnhancedCommodityBillForm() {
                 </Button>
               </div>
             ) : (
-              <Button
-                variant="outline"
-                className="flex-1 justify-start text-muted-foreground glass border-0 shadow-sm hover:bg-white/10"
-                onClick={() => setShowCustomerDialog(true)}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Select Customer (Optional)
-              </Button>
+              <div className="flex-1 relative">
+                <Input
+                  placeholder="Type customer name or search existing..."
+                  value={customerSearch}
+                  onChange={(e) => setCustomerSearch(e.target.value)}
+                  onFocus={() => setShowCustomerDialog(true)}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && customerSearch.trim()) {
+                      e.preventDefault();
+                      const trimmedName = customerSearch.trim();
+                      const existingCustomer = customers?.find(c => 
+                        c.name.toLowerCase() === trimmedName.toLowerCase()
+                      );
+                      
+                      if (existingCustomer) {
+                        setSelectedCustomer(existingCustomer);
+                        setCustomerSearch("");
+                      } else {
+                        // Create new customer
+                        const newCustomer = await createNewCustomer(trimmedName);
+                        if (newCustomer) {
+                          setSelectedCustomer(newCustomer);
+                          setCustomerSearch("");
+                          toast.success(`Customer "${newCustomer.name}" created successfully!`);
+                        }
+                      }
+                    }
+                  }}
+                  className="glass border-0 shadow-sm pr-10"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-white/10"
+                  onClick={() => setShowCustomerDialog(true)}
+                >
+                  <User className="h-4 w-4" />
+                </Button>
+              </div>
             )}
 
             <Select value={customerStateCode} onValueChange={setCustomerStateCode}>
@@ -802,15 +886,29 @@ export function EnhancedCommodityBillForm() {
               />
             </div>
             <div className="max-h-[300px] overflow-y-auto space-y-2 custom-scrollbar pr-1">
+              {/* Show create new customer option if search doesn't match existing */}
+              {isNewCustomerName && (
+                <button
+                  className="w-full p-4 text-left hover:bg-emerald-500/10 rounded-xl border border-emerald-500/20 hover:border-emerald-500/40 transition-all flex items-center justify-between group bg-emerald-500/5"
+                  onClick={() => handleCustomerSelect(customerSearch.trim())}
+                >
+                  <div>
+                    <p className="font-bold text-sm text-emerald-400 group-hover:text-emerald-300 transition-colors">
+                      Create "{customerSearch.trim()}"
+                    </p>
+                    <p className="text-xs text-emerald-500/70 mt-1">
+                      Create new retail customer
+                    </p>
+                  </div>
+                  <Plus className="h-4 w-4 text-emerald-400" />
+                </button>
+              )}
+              
               {filteredCustomers?.map((customer) => (
                 <button
                   key={customer.id}
                   className="w-full p-4 text-left hover:bg-white/5 rounded-xl border border-transparent hover:border-white/10 transition-all flex items-center justify-between group"
-                  onClick={() => {
-                    setSelectedCustomer(customer);
-                    setShowCustomerDialog(false);
-                    setCustomerSearch("");
-                  }}
+                  onClick={() => handleCustomerSelect(customer)}
                 >
                   <div>
                     <p className="font-bold text-sm text-foreground group-hover:text-indigo-400 transition-colors">{customer.name}</p>
@@ -825,7 +923,7 @@ export function EnhancedCommodityBillForm() {
                   )}
                 </button>
               ))}
-              {filteredCustomers?.length === 0 && (
+              {!isNewCustomerName && filteredCustomers?.length === 0 && (
                 <p className="text-center py-8 text-muted-foreground text-sm glass rounded-xl border-dashed border border-white/10">
                   No customers found
                 </p>
