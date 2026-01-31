@@ -145,7 +145,7 @@ export function EnhancedCommodityBillForm() {
   );
 
   // Check if search term could be a new customer name
-  const isNewCustomerName = customerSearch.trim().length > 0 && 
+  const isNewCustomerName = customerSearch.trim().length > 0 &&
     !filteredCustomers?.some(c => c.name.toLowerCase() === customerSearch.toLowerCase().trim());
 
   // Create new customer function
@@ -260,7 +260,7 @@ export function EnhancedCommodityBillForm() {
   const handleAddCommodityItem = (billItem: EnhancedBillItem) => {
     const gstRate = isGstBill ? billItem.item.gst_rate : 0;
     const gst = calculateGST(billItem.subtotal, gstRate, organization?.state_code || "07", customerStateCode);
-    
+
     setBillItems([
       ...billItems,
       {
@@ -270,7 +270,7 @@ export function EnhancedCommodityBillForm() {
         total: gst.grand_total,
       },
     ]);
-    
+
     setSelectedItemForCommodity(null);
   };
 
@@ -307,7 +307,7 @@ export function EnhancedCommodityBillForm() {
   // Reset form after invoice dialog closes
   const handleInvoiceDialogClose = (open: boolean) => {
     setShowInvoice(open);
-    
+
     if (!open) {
       // Reset form when dialog closes
       setBillItems([]);
@@ -433,16 +433,18 @@ export function EnhancedCommodityBillForm() {
           sgst_amount: totals.isIGST ? 0 : bi.tax_amount / 2,
           igst_amount: totals.isIGST ? bi.tax_amount : 0,
           total_price: bi.total,
-          is_commodity: bi.is_commodity || false,
         };
 
-        // Add commodity-specific fields
-        if (bi.is_commodity) {
-          saleItemData.weight = bi.weight;
-          saleItemData.commodity_price = bi.commodity_price;
-        }
+        // Note: Commodity-specific fields (is_commodity, weight, commodity_price) don't exist in schema
+        // Commodity info is preserved in item_name and calculated unit_price
 
-        await supabase.from("sale_items").insert(saleItemData);
+        const { error: itemError } = await supabase.from("sale_items").insert(saleItemData);
+
+        if (itemError) {
+          console.error("Error inserting sale item:", bi.item.name, itemError);
+          toast.error(`Failed to save item: ${bi.item.name}`);
+          throw itemError;
+        }
 
         // Update stock
         await supabase
@@ -476,7 +478,7 @@ export function EnhancedCommodityBillForm() {
       // Save for invoice display
       console.log('Saving invoice with items:', billItems);
       console.log('Bill items length:', billItems.length);
-      
+
       setSavedInvoice({
         invoiceNumber,
         date: new Date().toISOString(),
@@ -487,7 +489,7 @@ export function EnhancedCommodityBillForm() {
       setShowInvoice(true);
 
       // Don't reset form here - wait for invoice dialog to close
-      
+
       toast.success("Bill saved successfully!");
     } catch (error) {
       console.error("Error saving bill:", error);
@@ -557,10 +559,10 @@ export function EnhancedCommodityBillForm() {
                     if (e.key === 'Enter' && customerSearch.trim()) {
                       e.preventDefault();
                       const trimmedName = customerSearch.trim();
-                      const existingCustomer = customers?.find(c => 
+                      const existingCustomer = customers?.find(c =>
                         c.name.toLowerCase() === trimmedName.toLowerCase()
                       );
-                      
+
                       if (existingCustomer) {
                         setSelectedCustomer(existingCustomer);
                         setCustomerSearch("");
@@ -918,7 +920,7 @@ export function EnhancedCommodityBillForm() {
                   <Plus className="h-4 w-4 text-emerald-400" />
                 </button>
               )}
-              
+
               {filteredCustomers?.map((customer) => (
                 <button
                   key={customer.id}

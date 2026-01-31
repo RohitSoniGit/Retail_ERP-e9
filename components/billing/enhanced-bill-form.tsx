@@ -328,7 +328,7 @@ export function EnhancedBillForm() {
 
       // Create sale items and update stock (Same logic)
       for (const bi of billItems) {
-        await supabase.from("sale_items").insert({
+        const { error: itemError } = await supabase.from("sale_items").insert({
           sale_id: sale.id,
           item_id: bi.item_id,
           item_name: bi.item.name,
@@ -344,6 +344,12 @@ export function EnhancedBillForm() {
           igst_amount: totals.isIGST ? bi.tax_amount : 0,
           total_price: bi.total,
         });
+
+        if (itemError) {
+          console.error("Error inserting sale item:", bi.item.name, itemError);
+          toast.error(`Failed to save item: ${bi.item.name}`);
+          throw itemError;
+        }
 
         // Update stock
         await supabase

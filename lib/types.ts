@@ -24,6 +24,15 @@ export interface OrganizationSettings {
   invoice_prefix: string;
   low_stock_threshold: number;
   enable_commodity_features: boolean;
+  bank_details?: BankDetails;
+}
+
+export interface BankDetails {
+  bank_name: string;
+  account_number: string;
+  ifsc_code: string;
+  branch_name?: string;
+  account_holder_name?: string;
 }
 
 // Supplier Management

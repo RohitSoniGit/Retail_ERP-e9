@@ -28,6 +28,7 @@ import {
   Mail,
   Loader2,
   AlertTriangle,
+  CreditCard,
 } from "lucide-react";
 import { EmailSettings } from "@/components/settings/email-settings";
 import {
@@ -103,6 +104,12 @@ export default function SettingsPage() {
     enableCommodityFeatures: false,
     logoUrl: "",
     faviconUrl: "",
+    // Bank Details
+    bankName: "",
+    accountNumber: "",
+    ifscCode: "",
+    branchName: "",
+    accountHolderName: "",
   });
 
   useEffect(() => {
@@ -151,6 +158,12 @@ export default function SettingsPage() {
         enableCommodityFeatures: organization.settings?.enable_commodity_features || false,
         logoUrl: organization.logo_url || "",
         faviconUrl: organization.favicon_url || "",
+        // Bank Details
+        bankName: organization.settings?.bank_details?.bank_name || "",
+        accountNumber: organization.settings?.bank_details?.account_number || "",
+        ifscCode: organization.settings?.bank_details?.ifsc_code || "",
+        branchName: organization.settings?.bank_details?.branch_name || "",
+        accountHolderName: organization.settings?.bank_details?.account_holder_name || "",
       });
     }
   }, [organization, loading]);
@@ -178,6 +191,13 @@ export default function SettingsPage() {
           thermal_printer_width: formData.thermalPrinterWidth,
           tax_inclusive: formData.taxInclusive,
           enable_commodity_features: formData.enableCommodityFeatures,
+          bank_details: {
+            bank_name: formData.bankName,
+            account_number: formData.accountNumber,
+            ifsc_code: formData.ifscCode,
+            branch_name: formData.branchName,
+            account_holder_name: formData.accountHolderName,
+          }
         }
       });
       
@@ -214,6 +234,12 @@ export default function SettingsPage() {
         enableCommodityFeatures: organization.settings?.enable_commodity_features || false,
         logoUrl: organization.logo_url || "",
         faviconUrl: organization.favicon_url || "",
+        // Bank Details
+        bankName: organization.settings?.bank_details?.bank_name || "",
+        accountNumber: organization.settings?.bank_details?.account_number || "",
+        ifscCode: organization.settings?.bank_details?.ifsc_code || "",
+        branchName: organization.settings?.bank_details?.branch_name || "",
+        accountHolderName: organization.settings?.bank_details?.account_holder_name || "",
       });
       toast.info("Settings reset to original values");
     }
@@ -643,6 +669,76 @@ export default function SettingsPage() {
                           value={formData.thermalPrinterWidth}
                           onChange={(e) => setFormData({ ...formData, thermalPrinterWidth: Number(e.target.value) })}
                           placeholder="80"
+                          className="glass border-0 shadow-lg h-12"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bank Details Section */}
+                    <div className="space-y-4 p-6 rounded-2xl glass border border-white/10">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 rounded-xl bg-green-500/10 text-green-500">
+                          <CreditCard className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold gradient-text">Bank Details</h4>
+                          <p className="text-sm text-muted-foreground">Configure bank details for invoices</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <Label htmlFor="bankName" className="text-sm font-bold">Bank Name</Label>
+                          <Input
+                            id="bankName"
+                            value={formData.bankName}
+                            onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                            placeholder="e.g., AXIS BANK"
+                            className="glass border-0 shadow-lg h-12"
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="branchName" className="text-sm font-bold">Branch Name</Label>
+                          <Input
+                            id="branchName"
+                            value={formData.branchName}
+                            onChange={(e) => setFormData({ ...formData, branchName: e.target.value })}
+                            placeholder="e.g., RANCHOD NAGAR"
+                            className="glass border-0 shadow-lg h-12"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <Label htmlFor="accountNumber" className="text-sm font-bold">Account Number</Label>
+                          <Input
+                            id="accountNumber"
+                            value={formData.accountNumber}
+                            onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                            placeholder="Bank account number"
+                            className="glass border-0 shadow-lg h-12 font-mono"
+                          />
+                        </div>
+                        <div className="space-y-3">
+                          <Label htmlFor="ifscCode" className="text-sm font-bold">IFSC Code</Label>
+                          <Input
+                            id="ifscCode"
+                            value={formData.ifscCode}
+                            onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}
+                            placeholder="e.g., UTIB0002866"
+                            className="glass border-0 shadow-lg h-12 font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <Label htmlFor="accountHolderName" className="text-sm font-bold">Account Holder Name</Label>
+                        <Input
+                          id="accountHolderName"
+                          value={formData.accountHolderName}
+                          onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
+                          placeholder="Account holder name"
                           className="glass border-0 shadow-lg h-12"
                         />
                       </div>

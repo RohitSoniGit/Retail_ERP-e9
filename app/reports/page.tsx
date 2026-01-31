@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,6 +33,10 @@ import {
   DollarSign,
   Eye,
   Printer,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 
 // Mock data for reports
@@ -48,6 +59,12 @@ export default function ReportsPage() {
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [inventoryCurrentPage, setInventoryCurrentPage] = useState(1);
+  const [purchaseCurrentPage, setPurchaseCurrentPage] = useState(1);
+
   // Fetch Sales Data
   const { data: salesData, error: salesError } = useSWR(
     organizationId ? `sales-report-${organizationId}-${dateFrom}-${dateTo}` : null,
@@ -56,7 +73,10 @@ export default function ReportsPage() {
         .from("sales")
         .select(`
           *,
-          sale_items (*)
+          sale_items (
+            *,
+            item:items(*)
+          )
         `)
         .eq("organization_id", organizationId)
         .gte("created_at", `${dateFrom}T00:00:00`)
@@ -104,18 +124,39 @@ export default function ReportsPage() {
   const gstBills = sales.filter((s: Sale) => s.is_gst_bill);
   const nonGstBills = sales.filter((s: Sale) => !s.is_gst_bill);
 
-  const inventory = (inventoryData || []).map((item: any) => ({
-    ...item,
-    total_value: (item.purchase_cost || 0) * (item.current_stock || 0),
-    category: item.category?.name || 'Uncategorized'
-  }));
+  // Pagination calculations
+  const totalSalesCount = sales.length;
+  const totalPages = Math.ceil(totalSalesCount / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedSales = sales.slice(startIndex, endIndex);
 
+  // Purchase pagination
   const purchases = (purchaseData || []).map((po: any) => ({
     ...po,
     date: po.po_date,
     supplier_name: po.supplier?.name || 'Unknown',
     status: po.status
   }));
+
+  const totalPurchaseCount = purchases.length;
+  const totalPurchasePages = Math.ceil(totalPurchaseCount / itemsPerPage);
+  const purchaseStartIndex = (purchaseCurrentPage - 1) * itemsPerPage;
+  const purchaseEndIndex = purchaseStartIndex + itemsPerPage;
+  const paginatedPurchases = purchases.slice(purchaseStartIndex, purchaseEndIndex);
+
+  // Inventory processing and pagination
+  const inventory = (inventoryData || []).map((item: any) => ({
+    ...item,
+    total_value: (item.purchase_cost || 0) * (item.current_stock || 0),
+    category: item.category?.name || 'Uncategorized'
+  }));
+
+  const totalInventoryCount = inventory.length;
+  const totalInventoryPages = Math.ceil(totalInventoryCount / itemsPerPage);
+  const inventoryStartIndex = (inventoryCurrentPage - 1) * itemsPerPage;
+  const inventoryEndIndex = inventoryStartIndex + itemsPerPage;
+  const paginatedInventory = inventory.slice(inventoryStartIndex, inventoryEndIndex);
 
   const totalSales = sales.reduce((sum: number, s: Sale) => sum + s.total_amount, 0);
   const totalTaxCollected = sales.reduce((sum: number, s: Sale) => sum + s.cgst_amount + s.sgst_amount + s.igst_amount, 0);
@@ -149,6 +190,117 @@ export default function ReportsPage() {
 
   const totalGstSales = gstBills.reduce((sum: number, s: any) => sum + s.total_amount, 0);
   const totalNonGstSales = nonGstBills.reduce((sum: number, s: any) => sum + s.total_amount, 0);
+
+  // Pagination component
+  const PaginationControls = ({
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    onPageChange,
+    onItemsPerPageChange,
+    startIndex,
+    endIndex
+  }: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
+    onItemsPerPageChange: (items: number) => void;
+    startIndex: number;
+    endIndex: number;
+  }) => (
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span>Show</span>
+        <Select value={itemsPerPage.toString()} onValueChange={(value) => onItemsPerPageChange(Number(value))}>
+          <SelectTrigger className="w-20 h-8">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="5">5</SelectItem>
+            <SelectItem value="10">10</SelectItem>
+            <SelectItem value="25">25</SelectItem>
+            <SelectItem value="50">50</SelectItem>
+            <SelectItem value="100">100</SelectItem>
+          </SelectContent>
+        </Select>
+        <span>entries</span>
+      </div>
+
+      <div className="text-sm text-muted-foreground">
+        Showing {Math.min(startIndex + 1, totalItems)} to {Math.min(endIndex, totalItems)} of {totalItems} entries
+      </div>
+
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          className="h-8 w-8 p-0"
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="h-8 w-8 p-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+
+        <div className="flex items-center gap-1">
+          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+            let pageNum;
+            if (totalPages <= 5) {
+              pageNum = i + 1;
+            } else if (currentPage <= 3) {
+              pageNum = i + 1;
+            } else if (currentPage >= totalPages - 2) {
+              pageNum = totalPages - 4 + i;
+            } else {
+              pageNum = currentPage - 2 + i;
+            }
+
+            return (
+              <Button
+                key={pageNum}
+                variant={currentPage === pageNum ? "default" : "outline"}
+                size="sm"
+                onClick={() => onPageChange(pageNum)}
+                className="h-8 w-8 p-0"
+              >
+                {pageNum}
+              </Button>
+            );
+          })}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="h-8 w-8 p-0"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages}
+          className="h-8 w-8 p-0"
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-4 pb-24 md:pb-4">
@@ -294,12 +446,12 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {sales.length === 0 ? (
+                    {paginatedSales.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No sales records found for this period</TableCell>
                       </TableRow>
                     ) : (
-                      sales.map((sale) => (
+                      paginatedSales.map((sale) => (
                         <TableRow key={sale.id}>
                           <TableCell className="font-mono">{sale.invoice_number}</TableCell>
                           <TableCell>{new Date(sale.created_at).toLocaleDateString()}</TableCell>
@@ -314,18 +466,18 @@ export default function ReportsPage() {
                           <TableCell className="font-medium">₹{sale.total_amount.toLocaleString()}</TableCell>
                           <TableCell>
                             <div className="flex gap-1 min-w-[120px]">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 onClick={() => setSelectedSale(sale)}
                                 className="touch-manipulation min-h-[36px] px-3"
                               >
                                 <Eye className="h-3 w-3 mr-1" />
                                 View
                               </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 onClick={() => handlePrint(sale)}
                                 className="touch-manipulation min-h-[36px] px-3"
                               >
@@ -340,6 +492,23 @@ export default function ReportsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Sales Pagination */}
+              {totalSalesCount > 0 && (
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalSalesCount}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={(items) => {
+                    setItemsPerPage(items);
+                    setCurrentPage(1);
+                  }}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -436,12 +605,12 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {inventory.length === 0 ? (
+                    {paginatedInventory.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No inventory items found</TableCell>
                       </TableRow>
                     ) : (
-                      inventory.map((item: any) => (
+                      paginatedInventory.map((item: any) => (
                         <TableRow key={item.id}>
                           <TableCell className="font-mono">{item.sku}</TableCell>
                           <TableCell className="font-medium">{item.name}</TableCell>
@@ -466,6 +635,23 @@ export default function ReportsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Inventory Pagination */}
+              {totalInventoryCount > 0 && (
+                <PaginationControls
+                  currentPage={inventoryCurrentPage}
+                  totalPages={totalInventoryPages}
+                  totalItems={totalInventoryCount}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setInventoryCurrentPage}
+                  onItemsPerPageChange={(items) => {
+                    setItemsPerPage(items);
+                    setInventoryCurrentPage(1);
+                  }}
+                  startIndex={inventoryStartIndex}
+                  endIndex={inventoryEndIndex}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -560,12 +746,12 @@ export default function ReportsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {purchases.length === 0 ? (
+                    {paginatedPurchases.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No purchase orders found</TableCell>
                       </TableRow>
                     ) : (
-                      purchases.map((po: any) => (
+                      paginatedPurchases.map((po: any) => (
                         <TableRow key={po.id}>
                           <TableCell className="font-mono">{po.po_number}</TableCell>
                           <TableCell>{new Date(po.date).toLocaleDateString()}</TableCell>
@@ -584,6 +770,23 @@ export default function ReportsPage() {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Purchase Pagination */}
+              {totalPurchaseCount > 0 && (
+                <PaginationControls
+                  currentPage={purchaseCurrentPage}
+                  totalPages={totalPurchasePages}
+                  totalItems={totalPurchaseCount}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setPurchaseCurrentPage}
+                  onItemsPerPageChange={(items) => {
+                    setItemsPerPage(items);
+                    setPurchaseCurrentPage(1);
+                  }}
+                  startIndex={purchaseStartIndex}
+                  endIndex={purchaseEndIndex}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -786,7 +989,7 @@ export default function ReportsPage() {
           </div>
         </TabsContent>
       </Tabs>
-      
+
       {/* View Sale Dialog */}
       <Dialog open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -829,7 +1032,7 @@ export default function ReportsPage() {
                     <TableBody>
                       {selectedSale.sale_items?.map((item: any) => (
                         <TableRow key={item.id}>
-                          <TableCell>{item.item?.name || 'Item'}</TableCell>
+                          <TableCell>{item.item_name || item.item?.name || 'Unknown Item'}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
                           <TableCell>₹{item.unit_price}</TableCell>
                           <TableCell>₹{item.total_price}</TableCell>
@@ -875,42 +1078,49 @@ export default function ReportsPage() {
             current_balance: 0,
             created_at: new Date().toISOString()
           }}
-          items={(saleToPrint.sale_items || []).map((item: any) => ({
-            item_id: item.item_id,
-            item: item.item || {
-              id: item.item_id,
-              name: item.item_name || 'Unknown Item',
-              unit_type: item.unit_type || 'pcs',
-              sku: '',
-              organization_id: organization.id,
-              wholesale_price: 0,
-              retail_price: item.unit_price,
-              purchase_cost: 0,
-              current_stock: 0,
-              min_stock_level: 0,
-              gst_rate: item.gst_rate,
-              pieces_per_unit: 1,
-              conversion_factor: 1,
-              is_rate_variable: false,
-              created_at: new Date().toISOString()
-            },
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            discount_percent: item.discount_percent || 0,
-            gst_rate: item.gst_rate,
-            subtotal: item.total_price / (1 + (item.gst_rate / 100)),
-            tax_amount: item.cgst_amount + item.sgst_amount + item.igst_amount,
-            total: item.total_price,
-          }))}
+          items={(saleToPrint.sale_items || []).map((saleItem: any) => {
+            const item = saleItem.item || {};
+            return {
+              item_id: saleItem.item_id,
+              item: {
+                id: saleItem.item_id,
+                name: saleItem.item_name || item.name || 'Unknown Item',
+                hsn_code: saleItem.hsn_code || item.hsn_code || '',
+                unit_type: saleItem.unit_name || item.unit_type || 'PCS',
+                sku: item.sku || '',
+                organization_id: organization.id,
+                wholesale_price: item.wholesale_price || 0,
+                retail_price: item.retail_price || saleItem.unit_price || 0,
+                purchase_cost: saleItem.purchase_price || item.purchase_cost || 0,
+                current_stock: item.current_stock || 0,
+                min_stock_level: item.min_stock_level || 0,
+                gst_rate: saleItem.gst_rate || item.gst_rate || 0,
+                pieces_per_unit: item.pieces_per_unit || 1,
+                conversion_factor: item.conversion_factor || 1,
+                is_rate_variable: item.is_rate_variable || false,
+                created_at: item.created_at || new Date().toISOString()
+              },
+              quantity: saleItem.quantity || 0,
+              unit_price: saleItem.unit_price || 0,
+              discount_percent: saleItem.discount_percent || 0,
+              gst_rate: saleItem.gst_rate || 0,
+              subtotal: saleItem.total_price || 0,
+              tax_amount: (saleItem.cgst_amount || 0) + (saleItem.sgst_amount || 0) + (saleItem.igst_amount || 0),
+              total: saleItem.total_price || 0,
+              is_commodity: saleItem.is_commodity || false,
+              weight: saleItem.weight,
+              commodity_price: saleItem.commodity_price
+            };
+          })}
           totals={{
-            subtotal: saleToPrint.subtotal,
+            subtotal: saleToPrint.subtotal || 0,
             discountAmount: saleToPrint.discount_amount || 0,
-            cgst: saleToPrint.cgst_amount,
-            sgst: saleToPrint.sgst_amount,
-            igst: saleToPrint.igst_amount,
-            roundedTotal: saleToPrint.total_amount,
+            cgst: saleToPrint.cgst_amount || 0,
+            sgst: saleToPrint.sgst_amount || 0,
+            igst: saleToPrint.igst_amount || 0,
+            roundedTotal: saleToPrint.total_amount || 0,
             roundOff: saleToPrint.round_off || 0,
-            isIGST: saleToPrint.igst_amount > 0
+            isIGST: (saleToPrint.igst_amount || 0) > 0
           }}
           format="a4"
         />

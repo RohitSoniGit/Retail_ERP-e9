@@ -16,9 +16,9 @@ export class PDFGenerator {
     options: PDFGenerationOptions = { format: 'a4' }
   ): Promise<Blob> {
     try {
-      // Configure canvas options with more aggressive CSS handling
+      // Configure canvas options with simplified, safer approach
       const canvasOptions: any = {
-        scale: options.quality || 1.5, // Reduced scale to avoid memory issues
+        scale: options.quality || 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
@@ -29,91 +29,97 @@ export class PDFGenerator {
         width: options.format === 'thermal' ? 302 : undefined,
         height: undefined,
         windowWidth: options.format === 'thermal' ? 302 : 1200,
-        ignoreElements: (element: Element) => {
-          // Skip elements that might cause CSS parsing issues
-          const tagName = element.tagName.toLowerCase();
-          const className = element.className || '';
-          
-          // Skip certain problematic elements
-          if (tagName === 'script' || tagName === 'noscript') return true;
-          if (className.includes('no-print')) return true;
-          
-          return false;
+        ignoreElements: (el: Element) => {
+          try {
+            const tagName = el.tagName?.toLowerCase() || '';
+            if (tagName === 'script' || tagName === 'noscript') return true;
+
+            // Use classList instead of className to avoid SVG issues
+            if (el.classList?.contains('no-print')) return true;
+
+            return false;
+          } catch (e) {
+            return false;
+          }
         },
         onclone: (clonedDoc: Document) => {
           try {
-            // Remove all external stylesheets to avoid CSS parsing issues
-            const links = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
-            links.forEach(link => link.remove());
+            // Remove all scripts and external stylesheets that might contain oklch/lab
+            const scripts = clonedDoc.querySelectorAll('script, noscript');
+            scripts.forEach(s => s.remove());
 
-            // Remove all style tags that might have problematic CSS
-            const styleTags = clonedDoc.querySelectorAll('style');
-            styleTags.forEach(tag => {
-              const content = tag.innerHTML;
-              // Remove modern CSS features that cause parsing errors
-              const cleanContent = content
-                .replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000')
-                .replace(/color-mix\([^)]+\)/gi, '#000000')
-                .replace(/var\(--[^)]+\)/gi, '#000000')
-                .replace(/@supports[^{]+\{[^}]*\}/gi, '')
-                .replace(/backdrop-filter:[^;]+;/gi, '')
-                .replace(/filter:[^;]+blur[^;]*;/gi, '');
-              
-              tag.innerHTML = cleanContent;
-            });
+            // Remove ALL existing styles and link stylesheets to prevent html2canvas parsing errors
+            const stylesAndLinks = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+            stylesAndLinks.forEach(s => s.remove());
+
+            // Inject a single, clean, safe standard-only stylesheet
+            const printStyle = clonedDoc.createElement('style');
+            printStyle.innerHTML = `
+              * {
+                box-sizing: border-box !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color: #000000 !important;
+                border-color: #000000 !important;
+              }
+              body {
+                font-family: Arial, Helvetica, sans-serif !important;
+                color: #000000 !important;
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              .no-print { display: none !important; }
+              /* Basic layout helpers (since we removed Tailwind) */
+              .flex { display: flex !important; }
+              .flex-col { flex-direction: column !important; }
+              .flex-row { flex-direction: row !important; }
+              .justify-between { justify-content: space-between !important; }
+              .grid { display: grid !important; }
+              .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+              .grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)) !important; }
+              .col-span-7 { grid-column: span 7 / span 7 !important; }
+              .col-span-5 { grid-column: span 5 / span 5 !important; }
+              .p-4 { padding: 1rem !important; }
+              .border-b-2 { border-bottom: 2px solid #000000 !important; }
+              .font-bold { font-weight: bold !important; }
+              .text-right { text-align: right !important; }
+              .text-center { text-align: center !important; }
+              .text-xs { font-size: 8pt !important; }
+              .text-sm { font-size: 10pt !important; }
+              table { width: 100% !important; border-collapse: collapse !important; }
+              th, td { border: 1px solid #000000 !important; padding: 4px !important; }
+            `;
+            clonedDoc.head.appendChild(printStyle);
 
             // Clean inline styles on all elements
             const allElements = clonedDoc.querySelectorAll('*');
-            allElements.forEach((el: any) => {
-              const style = el.getAttribute('style');
-              if (style) {
-                const cleanStyle = style
-                  .replace(/(lab|lch|oklab|oklch)\([^)]+\)/gi, '#000000')
-                  .replace(/color-mix\([^)]+\)/gi, '#000000')
-                  .replace(/var\(--[^)]+\)/gi, '#000000')
-                  .replace(/backdrop-filter:[^;]+;/gi, '')
-                  .replace(/filter:[^;]+blur[^;]*;/gi, '');
-                
-                el.setAttribute('style', cleanStyle);
-              }
+            allElements.forEach((el: Element) => {
+              try {
+                const htmlEl = el as HTMLElement;
+                if (htmlEl.style) {
+                  const properties = ['color', 'backgroundColor', 'borderColor', 'outlineColor', 'fill', 'stroke'];
+                  properties.forEach(prop => {
+                    const style = htmlEl.style as any;
+                    const val = style[prop];
+                    if (val && typeof val === 'string' && (val.includes('lab(') || val.includes('oklch('))) {
+                      style[prop] = '#000000';
+                    }
+                  });
+                }
 
-              // Remove problematic classes
-              const classList = el.classList;
-              if (classList) {
-                // Remove classes that might have problematic CSS
-                const problematicClasses = ['glass', 'backdrop-blur', 'holographic', 'gradient-text'];
-                problematicClasses.forEach(cls => {
-                  if (classList.contains(cls)) {
-                    classList.remove(cls);
-                  }
-                });
-              }
+                // Remove modern functions and variables from raw style attribute
+                const styleAttr = el.getAttribute?.('style');
+                if (styleAttr) {
+                  const cleaned = styleAttr
+                    .replace(/(?:lab|oklch|color-mix)\s*\((?:[^()]+|\([^()]*\))*\)/gi, '#000000')
+                    .replace(/var\(--[^)]+\)/gi, '#000000');
+                  el.setAttribute('style', cleaned);
+                }
+              } catch (e) { }
             });
-
-            // Add basic styling to ensure readability
-            const basicStyle = clonedDoc.createElement('style');
-            basicStyle.innerHTML = `
-              * {
-                box-sizing: border-box;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-              }
-              body {
-                font-family: Arial, sans-serif;
-                color: #000000;
-                background: #ffffff;
-                margin: 0;
-                padding: 0;
-              }
-              .text-white { color: #000000 !important; }
-              .bg-transparent { background: #ffffff !important; }
-              .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
-              .border-0 { border: 1px solid #e5e5e5 !important; }
-            `;
-            clonedDoc.head.appendChild(basicStyle);
-
           } catch (error) {
-            console.warn('Error cleaning CSS for PDF generation:', error);
+            console.warn('Error in onclone:', error);
           }
         }
       };
@@ -149,9 +155,9 @@ export class PDFGenerator {
 
       // Return as blob
       return pdf.output('blob');
-    } catch (error) {
+    } catch (error: any) {
       console.error('PDF generation error:', error);
-      throw new Error(`Failed to generate PDF: ${error.message}`);
+      throw new Error(`Failed to generate PDF: ${error?.message || String(error) || 'Unknown error'}`);
     }
   }
 
